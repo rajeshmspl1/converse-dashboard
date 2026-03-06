@@ -47,7 +47,7 @@ function JourneyCol() {
       <div className="text-[7.5px] font-bold tracking-widest uppercase mb-2" style={{ color: 'var(--dim)' }}>Your Journey</div>
       <div className="flex items-center pb-4">
         {JOURNEY_STAGES.map((s, i) => (
-          <div key={s.n} className="flex items-center flex-1 last:flex-none">
+          <div key={i} className="flex items-center flex-1 last:flex-none">
             {i > 0 && (
               <div className="h-px" style={{
                 flex: 1, background: 'var(--b1)',
@@ -67,7 +67,7 @@ function JourneyCol() {
                 color: highlighted && i === 0 ? '#fff' : 'var(--dim)',
                 transition: 'opacity .3s ease, transform .3s ease, background .45s ease, box-shadow .45s ease, color .3s ease',
               }}>
-              {s.n}
+              {s.label}
               <div className="absolute whitespace-nowrap text-[7.5px] text-center left-1/2 -translate-x-1/2"
                 style={{ top: '26px', color: 'var(--dim)' }}>{s.label}</div>
             </div>
