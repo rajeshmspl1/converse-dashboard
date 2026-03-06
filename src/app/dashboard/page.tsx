@@ -538,7 +538,7 @@ export default function DashboardPage(){
           <>
             {tab==='overview'   &&<OverviewTab data={overviewData}/>}
             {tab==='intel'      &&<IntelTab data={overviewData}/>}
-            {tab==='sessions'   &&<SessionsTab sessions={sessionsData} total={sessionsTotal} page={sessionsPage} onPage={p=>load('sessions',days,p)} onOpen={openSession} selected={selectedSession} onBack={()=>setSelectedSession(null)}/>}
+            {tab==='sessions'   &&<SessionsTab sessions={sessionsData} total={sessionsTotal} page={sessionsPage} onPage={(p: number)=>load('sessions',days,p)} onOpen={openSession} selected={selectedSession} onBack={()=>setSelectedSession(null)}/>}
             {tab==='costs'      &&<CostsTab data={costsData}/>}
             {tab==='quality'    &&<QualityTab data={qualityData}/>}
             {tab==='recordings' &&<RecordingsTab data={recordingsData}/>}
