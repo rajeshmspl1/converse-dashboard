@@ -1,0 +1,24 @@
+name: Build and Deploy Dashboard
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Build and push Docker image
+        run: |
+          docker build -t converseaicr.azurecr.io/converse-dashboard:${{ github.sha }} .
+          docker build -t converseaicr.azurecr.io/converse-dashboard:latest .
+          
+      - name: Push to ACR
+        run: |
+          az acr login --name converseaicr
+          docker push converseaicr.azurecr.io/converse-dashboard:${{ github.sha }}
+          docker push converseaicr.azurecr.io/converse-dashboard:latest
+        env:
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
