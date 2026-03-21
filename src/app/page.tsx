@@ -1,27 +1,38 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useStore } from '@/lib/store'
 import {
   EXPERIENCES, INTENTS, INTENT_KEYS, MODE_LABELS, MODE_RATES, MODE_COLOR, EXP_COLOR,
   REVEAL_TIMINGS, DEMO_SCENARIOS, JOURNEY_STAGES, CURRENCY_CONFIG, INFRA_CONFIG, DEPLOY_CONFIG,
 } from '@/lib/data'
+import { JOURNEY_CONFIGS, JOURNEY_STEPS, SENTENCES } from '@/lib/journeyData'
 import { formatCost, formatDuration, resolveExp } from '@/lib/utils'
-import LiveCallPanel from '@/components/call/LiveCallPanel'
-import DemoTimeline from '@/components/demo/DemoTimeline'
-import PostCallCelebration from '@/components/demo/PostCallCelebration'
+import IvrDialpad from '@/components/call/IvrDialpad'
+import NudgeSystem from '@/components/call/NudgeSystem'
+import PostCallBoxes from '@/components/demo/PostCallBoxes'
 import ConversionCTA from '@/components/demo/ConversionCTA'
 import InfraMigrationDemo from '@/components/demo/InfraMigrationDemo'
+import HomepageSections from '@/components/homepage/HomepageSections'
+import FloatingIVRBar from '@/components/homepage/FloatingIVRBar'
 import { useLiveKitCall } from '@/hooks/useLiveKitCall'
 import type { IntentKey, Currency, JourneyStageKey } from '@/types'
+import SignUpModal from '@/components/auth/SignUpModal'
+import UnifiedHeader from '@/components/layout/UnifiedHeader'
+import { getUser, clearAuth, type CxUser } from '@/lib/auth'
 
 interface TxLine { who: 'user' | 'ai' | 'sys'; text: string; meta?: string; ts?: number }
 
 // ── Config ─────────────────────────────────────────────────────────────────
 const SERVICE_B_URL = 'http://127.0.0.1:9000'
-const TENANT_KEY    = 'hdfc'
-const IVR_KEY       = 'retail'
+const TENANT_KEY    = 'experience_shop'
+const DEFAULT_IVR_KEY = 'global_banking'
 
 export default function Home() {
+  const searchParams = useSearchParams()
+  const qTenant = searchParams.get("tenant_key")
+  const qIvr = searchParams.get("ivr_key")
   const currency    = useStore(s => s.currency)
   const setCurrency = useStore(s => s.setCurrency)
   const baseExp     = useStore(s => s.baseExp)
@@ -39,21 +50,93 @@ export default function Home() {
   const nextTicker  = useStore(s => s.nextTicker)
   const cum         = useStore(s => s.cum)
 
+  // ── Auth state ──────────────────────────────────────────────────────────
+  const router = useRouter()
+  const [currentUser, setCurrentUser] = useState<CxUser | null>(null)
+  useEffect(() => { setCurrentUser(getUser()) }, [])
+  const handleSignOut = useCallback(() => {
+    clearAuth()
+    setCurrentUser(null)
+  }, [])
+
+  // ── Industry switcher ──────────────────────────────────────────────────
+  const INDUSTRY_OPTIONS = [
+    { key: 'global_banking',    label: 'Banking',     icon: '🏦' },
+    { key: 'global_insurance',  label: 'Insurance',   icon: '🛡️' },
+    { key: 'global_healthcare', label: 'Healthcare',  icon: '🏥' },
+    { key: 'global_telecom',    label: 'Telecom',     icon: '📱' },
+    { key: 'global_ecommerce',  label: 'E-Commerce',  icon: '🛒' },
+    { key: 'global_hospitality', label: 'Hospitality', icon: '🏨' },
+  ] as const
+  const [selectedIvr, setSelectedIvr] = useState(DEFAULT_IVR_KEY)
+  const selectedIvrRef = useRef(DEFAULT_IVR_KEY)
+  const updateSelectedIvr = useCallback((key: string) => {
+    setSelectedIvr(key)
+    selectedIvrRef.current = key
+  }, [])
+
   // ── Demo journey ─────────────────────────────────────────────────────────
   const [demoStep, setDemoStep]                 = useState(0)
   const [scenarioTimes, setScenarioTimes]       = useState<(number|null)[]>(Array(6).fill(null))
   const [demoStartTime, setDemoStartTime]       = useState<number|null>(null)
   const [totalDemoElapsed, setTotalDemoElapsed] = useState(0)
   const [callStartTime, setCallStartTime]       = useState<number|null>(null)
-  const [showCelebration, setShowCelebration]   = useState(false)
   const [callEndDuration, setCallEndDuration]   = useState(0)
+  const [showCelebration, setShowCelebration]   = useState(false)
   const [currencyDropdown, setCurrencyDropdown] = useState(false)
   const [scenarioTransition, setScenarioTransition] = useState(false)
-  const [everStarted, setEverStarted]           = useState(false)
+  const [everStarted, setEverStarted]           = useState(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('autostart') === 'true'
+    }
+    return false
+  })
   const [transcript, setTranscript]             = useState<TxLine[]>([])
   const [toast, setToast]                       = useState('')
   const [toastOn, setToastOn]                   = useState(false)
+  const [showIVRBar, setShowIVRBar]             = useState(false)
+  const [txCollapsed, setTxCollapsed]           = useState(false)
+  const [finalIntents, setFinalIntents]         = useState<any[]>([])
+  const [finalCost, setFinalCost]               = useState(0)
+  const [sessionDisplayId, setSessionDisplayId] = useState('')
+  const [showSignUp, setShowSignUp] = useState(false)
+  const [signUpSource, setSignUpSource] = useState('homepage')
+  const [signUpRedirect, setSignUpRedirect] = useState<string | undefined>(undefined)
   const txRef = useRef<HTMLDivElement>(null)
+
+  // ── CRM Demo Profile (Journey 4 — sales) ──────────────────────────────────
+  const [demoProfile, setDemoProfile] = useState<{
+    name: string; mobile: string; classification: string;
+    account_summary: string; story_hook: string; recommended_action: string;
+    preferred_language: string; country_code: string; country_name: string;
+  } | null>(null)
+  const [demoProfileLoading, setDemoProfileLoading] = useState(false)
+  const [callerCountry, setCallerCountry] = useState('India')
+
+  useEffect(() => {
+    fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(3000) })
+      .then(r => r.ok ? r.json() : null)
+      .then(geo => {
+        if (geo?.country_name) setCallerCountry(geo.country_name)
+        if (geo?.currency === 'INR') setCurrency('INR' as Currency)
+      })
+      .catch(() => {})
+  }, [])
+
+  const openSignUp = useCallback((src: string, redirect?: string) => {
+    setSignUpSource(src)
+    setSignUpRedirect(redirect)
+    setShowSignUp(true)
+  }, [])
+
+  /** Navigate to /migrate if logged in, or open signup with redirect to /migrate */
+  const handleMigrate = useCallback((src: string) => {
+    if (currentUser) {
+      router.push('/migrate')
+    } else {
+      openSignUp(src, '/migrate')
+    }
+  }, [currentUser, router, openSignUp])
 
   // ── LiveKit ───────────────────────────────────────────────────────────────
   const liveCall = useLiveKitCall()
@@ -65,6 +148,9 @@ export default function Home() {
   const mc              = MODE_COLOR[mode]
   const callActive      = callStatus === 'active'
   const callEnded       = callStatus === 'ended'
+  const jConfig         = JOURNEY_CONFIGS[demoStep]
+  const jNum            = demoStep + 1
+  const hasIntents      = liveCall.liveIntents.length > 0
 
   // ── Timers ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -90,6 +176,24 @@ export default function Home() {
     if (txRef.current) txRef.current.scrollTop = txRef.current.scrollHeight
   }, [transcript])
 
+  // ── Autostart from /migrate redirect ──────────────────────────────────────
+  useEffect(() => {
+    if (searchParams.get("autostart") === "true" && !everStarted) {
+      setEverStarted(true)
+    }
+  }, [searchParams, everStarted])
+
+  // ── Deep-link to specific journey from /pricing ───────────────────────────
+  useEffect(() => {
+    const j = searchParams.get("journey")
+    if (j !== null && !everStarted) {
+      const step = parseInt(j, 10)
+      if (!isNaN(step) && step >= 0 && step <= 3) {
+        setDemoStep(step)
+        setEverStarted(true)
+      }
+    }
+  }, [searchParams, everStarted])
   // ── Bridge LiveKit → local transcript ─────────────────────────────────────
   const lastSyncedIdx = useRef(0)
   useEffect(() => {
@@ -114,21 +218,67 @@ export default function Home() {
   const addTx = useCallback((line: TxLine) =>
     setTranscript(t => [...t, { ...line, ts: line.ts ?? Date.now() }]), [])
 
-  // ── Auto-stop when agent disconnects ──────────────────────────────────────
+  // ── Store session data for read-only dashboard ────────────────────────────
+  const storeSessionData = useCallback((dur: number) => {
+    const roomName = liveCall.state.roomName
+    // Extract timestamp from room name (e.g. hdfc__retail__1772979291191 → 1772979291191)
+    const parts = roomName.split('__')
+    const ts = parts[parts.length - 1] || String(Date.now())
+    const displayId = `CVS-${ts}`
+    setSessionDisplayId(displayId)
+
+    const data = {
+      sessionId: roomName,
+      displayId,
+      createdAt: parseInt(ts) || Date.now(),
+      demoStep,
+      duration: dur,
+      intents: [...liveCall.liveIntents],
+      totalCost: liveCall.liveCost,
+      transcript: [...transcript],
+      journeyName: jConfig?.name || 'Demo Call',
+      journeyExp: jConfig?.exp || 'Exp 5',
+      stack: jConfig?.stack || [],
+    }
+
+    try {
+      sessionStorage.setItem(`cvs_session_${displayId}`, JSON.stringify(data))
+    } catch { /* storage full, ignore */ }
+
+    return displayId
+  }, [liveCall, demoStep, transcript, jConfig])
+
+  // ── Advance to next journey ───────────────────────────────────────────────
+  const advanceToNextJourney = useCallback(() => {
+    if (demoStep < DEMO_SCENARIOS.length - 1) {
+      setDemoStep(prev => prev + 1)
+      setTranscript([])
+    } else {
+      // Last scenario → show conversion
+      setDemoStep(DEMO_SCENARIOS.length)
+    }
+  }, [demoStep])
+
+  // ── Auto-stop when agent disconnects ────────────────────────────────────
   const prevLiveStatus = useRef(liveCall.state.status)
   useEffect(() => {
     if (prevLiveStatus.current === 'connected' && liveCall.state.status === 'disconnected') {
       if (callStatus === 'active') {
-        endCall()
+        // Snapshot live data before endCall
+        setFinalIntents([...liveCall.liveIntents])
+        setFinalCost(liveCall.liveCost)
         const dur = callStartTime ? Math.floor((Date.now() - callStartTime) / 1000) : elapsed
         setCallEndDuration(dur)
         setScenarioTimes(prev => { const n=[...prev]; n[demoStep]=dur; return n })
-        addTx({ who: 'sys', text: `Call ended · ${formatDuration(dur)} · ${liveCall.liveIntents.length} intent(s) · ₹${liveCall.liveCost.toFixed(2)}` })
+        // Store session data for read-only dashboard
+        storeSessionData(dur)
+        // Always show post-call boxes
         setShowCelebration(true)
+        endCall()
       }
     }
     prevLiveStatus.current = liveCall.state.status
-  }, [liveCall.state.status, callStatus, endCall, addTx, elapsed, liveCall.liveIntents.length, liveCall.liveCost, callStartTime, demoStep])
+  }, [liveCall.state.status, callStatus, endCall, elapsed, callStartTime, demoStep, liveCall.liveIntents, liveCall.liveCost, storeSessionData])
 
   // ── Auto-switch exp + mode on demoStep change ─────────────────────────────
   useEffect(() => {
@@ -140,18 +290,44 @@ export default function Home() {
     return () => clearTimeout(t)
   }, [demoStep]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Fetch CRM demo profile when entering sales journey ─────────────────────
+  useEffect(() => {
+    if (!scenario || scenario.mode !== 'sales') {
+      setDemoProfile(null)
+      return
+    }
+    let cancelled = false
+    setDemoProfileLoading(true)
+    const industry = (selectedIvrRef.current || 'global_banking').replace('global_', '')
+    fetch(`${SERVICE_B_URL.replace(':9000', ':9700')}/crm/demo-profile?country=${encodeURIComponent(callerCountry)}&industry=${industry}`)
+      .then(r => r.json())
+      .then(data => {
+        if (!cancelled && data?.mobile) setDemoProfile(data)
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setDemoProfileLoading(false) })
+    return () => { cancelled = true }
+  }, [demoStep, scenario, selectedIvr, callerCountry])
+
   // ── Start call ────────────────────────────────────────────────────────────
   const handleStart = useCallback(() => {
     if (isInfraDemo) return
     setEverStarted(true)
     setShowCelebration(false)
+    setFinalIntents([])
+    setFinalCost(0)
     startCall()
     lastSyncedIdx.current = 0
     setTranscript([])
+    setTxCollapsed(false)
     setCallStartTime(Date.now())
     if (!demoStartTime) setDemoStartTime(Date.now())
-    addTx({ who: 'sys', text: 'Connecting to Converse AI…' })
-    liveCall.connect(TENANT_KEY, IVR_KEY, SERVICE_B_URL)
+    addTx({ who: 'sys', text: 'Connecting to AiIVRs…' })
+    liveCall.connect(qTenant || (currentUser?.tenant_key ?? TENANT_KEY), qIvr || (currentUser?.ivr_keys?.[0] ?? selectedIvrRef.current), SERVICE_B_URL, {
+      routingMode: scenario?.mode,
+      ...(scenario?.experienceLevel ? { experienceLevel: scenario.experienceLevel } : {}),
+      ...(scenario?.mode === 'sales' ? { callerMobile: demoProfile?.mobile || '+919876543210' } : {}),
+    })
 
     if (!revealed.has('cards')) {
       setTimeout(() => reveal('cards'),      REVEAL_TIMINGS.cards)
@@ -160,31 +336,39 @@ export default function Home() {
       setTimeout(() => reveal('security'),   REVEAL_TIMINGS.security)
       setTimeout(() => reveal('deployment'), REVEAL_TIMINGS.deployment)
     }
-  }, [startCall, addTx, reveal, liveCall, demoStartTime, revealed, isInfraDemo])
+  }, [startCall, addTx, reveal, liveCall, demoStartTime, revealed, isInfraDemo, currentUser])
 
-  // ── Toggle call ───────────────────────────────────────────────────────────
-  const handleToggle = useCallback(() => {
+  // ── End call ────────────────────────────────────────────────────────────
+  const handleEndCall = useCallback(() => {
     if (callStatus === 'active') {
-      endCall()
-      liveCall.disconnect()
+      // Snapshot live data BEFORE disconnect wipes it
+      setFinalIntents([...liveCall.liveIntents])
+      setFinalCost(liveCall.liveCost)
       const dur = callStartTime ? Math.floor((Date.now() - callStartTime) / 1000) : elapsed
       setCallEndDuration(dur)
       setScenarioTimes(prev => { const n=[...prev]; n[demoStep]=dur; return n })
-      addTx({ who: 'sys', text: `Call ended · ${formatDuration(dur)} · ${liveCall.liveIntents.length} intent(s) · ₹${liveCall.liveCost.toFixed(2)}` })
+      // Store session data for read-only dashboard
+      storeSessionData(dur)
+      // Always show post-call boxes
       setShowCelebration(true)
-    } else {
-      handleStart()
+      // THEN end call and disconnect
+      endCall()
+      liveCall.disconnect()
     }
-  }, [callStatus, endCall, addTx, elapsed, liveCall, callStartTime, demoStep, handleStart])
+  }, [callStatus, endCall, elapsed, liveCall, callStartTime, demoStep, storeSessionData])
 
-  // ── Try next scenario ─────────────────────────────────────────────────────
+  // ── Try next (from PostCallBoxes) ─────────────────────────────────────────
   const handleTryNext = useCallback(() => {
-    if (demoStep < DEMO_SCENARIOS.length) {
-      setDemoStep(prev => prev + 1)
-      setShowCelebration(false)
-      setTranscript([])
-    }
-  }, [demoStep])
+    setShowCelebration(false)
+    advanceToNextJourney()
+  }, [advanceToNextJourney])
+
+  // ── Navigate to specific journey (from billing panel "Try →") ─────────────
+  const handleNavigateJourney = useCallback((step: number) => {
+    setShowCelebration(false)
+    setDemoStep(step)
+    setTranscript([])
+  }, [])
 
   // ── Infra demo complete ───────────────────────────────────────────────────
   const handleInfraComplete = useCallback(() => {
@@ -196,16 +380,15 @@ export default function Home() {
     setShowCelebration(true)
   }, [demoStartTime, totalDemoElapsed])
 
+  // ── Homepage start (from hero) ────────────────────────────────────────────
+  const handleHomepageStart = useCallback(() => {
+    setEverStarted(true)
+  }, [])
+
   // ── Derived ───────────────────────────────────────────────────────────────
   const ic = scenario ? INFRA_CONFIG[scenario.infra]   : INFRA_CONFIG.shared
   const dc = scenario ? DEPLOY_CONFIG[scenario.deploy] : DEPLOY_CONFIG.cloud
-  const activeJourneyStage: JourneyStageKey = scenario?.journeyStage || 'explore'
-
-  // ── Infra strip data for current scenario ─────────────────────────────────
-  const infraItems = scenario ? [
-    { label: 'Data', icon: scenario.infraIcon,   text: ic.label,  color: ic.color },
-    { label: 'Deploy', icon: scenario.deployIcon, text: dc.label,  color: dc.color },
-  ] : []
+  const nextJourneyConfig = jConfig ? JOURNEY_CONFIGS[jConfig.next] : null
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER
@@ -220,417 +403,529 @@ export default function Home() {
         @keyframes pulse       { 0%,100% { opacity:1; } 50% { opacity:.5; } }
         @keyframes micPulse    { 0%,100% { box-shadow:0 0 0 0 rgba(24,196,138,.3); } 50% { box-shadow:0 0 18px 4px rgba(24,196,138,.2); } }
         @keyframes wave        { 0% { transform:scale(1); opacity:.35; } 100% { transform:scale(1.4); opacity:0; } }
+        @keyframes demoPulse   { 0% { transform:scale(1); opacity:1; } 14% { transform:scale(1.18); opacity:1; } 28% { transform:scale(1); opacity:.85; } 42% { transform:scale(1.12); opacity:1; } 70% { transform:scale(1); opacity:.75; } 100% { transform:scale(1); opacity:1; } }
         @keyframes switchGlow  { 0% { box-shadow:0 0 0 0 rgba(245,158,11,.4); } 50% { box-shadow:0 0 16px 4px rgba(245,158,11,.2); } 100% { box-shadow:0 0 0 0 transparent; } }
+        @keyframes blink       { 0%,100% { opacity:1; } 50% { opacity:.3; } }
       `}</style>
 
-      {/* ══ NAV ══ */}
-      <nav
-        className="flex items-center justify-between px-3 sm:px-5 h-10 sm:h-11 border-b flex-shrink-0 sticky top-0 z-50"
-        style={{ borderColor: 'var(--b1)', background: 'rgba(7,13,26,.96)' }}>
+      {/* ══ NAV (Unified Header) ══ */}
+      <UnifiedHeader
+        variant={everStarted ? 'journey' : 'homepage'}
+        user={currentUser}
+        onSignIn={() => router.push('/login')}
+        onSignOut={handleSignOut}
+        onLogoClick={() => setEverStarted(false)}
+        onGetStarted={handleHomepageStart}
+        onMigrateClick={() => handleMigrate('header_nav_migrate')}
+        currency={currency}
+        onCurrencyChange={setCurrency}
+      />
 
-        {/* Logo */}
-        <div className="flex items-center gap-1.5 font-extrabold text-[12px] sm:text-[14px] tracking-tight"
-          style={{ color: 'var(--bright)' }}>
-          <div className="w-[22px] h-[22px] rounded-[7px] flex items-center justify-center text-[11px]"
-            style={{ background: 'linear-gradient(135deg,#3370e8,#0ea8b8)' }}>🎙</div>
-          Converse AI
-        </div>
-
-        {/* Scenario tabs — shown once demo has started */}
-        {everStarted && !showConversion && (
-          <div className="hidden md:flex items-center gap-1">
-            {DEMO_SCENARIOS.filter(s => !s.isInfraDemo).map((s, i) => {
-              const done   = i < demoStep
-              const active = i === demoStep
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => { if (done) { setDemoStep(i); setShowCelebration(false); setTranscript([]) } }}
-                  className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-semibold transition-all"
-                  style={{
-                    background: active ? 'rgba(99,102,241,.15)' : done ? 'rgba(34,197,94,.08)' : 'transparent',
-                    color: active ? '#a5b4fc' : done ? '#6ee7b7' : 'var(--dim)',
-                    border: active ? '1px solid rgba(99,102,241,.3)' : '1px solid transparent',
-                    cursor: done ? 'pointer' : 'default',
-                  }}>
-                  {done && <span className="text-[8px]">✓</span>}
-                  {s.icon} {s.title}
-                </button>
-              )
-            })}
-          </div>
-        )}
-
-        {/* Right controls */}
-        <div className="flex items-center gap-1 sm:gap-1.5">
-          {/* Currency switcher */}
-          <div className="flex rounded overflow-hidden border relative"
-            style={{ background: 'var(--card)', borderColor: 'var(--b1)' }}>
-            {(['inr','usd'] as const).map(c => (
-              <button key={c} onClick={() => setCurrency(c)}
-                className="px-1.5 sm:px-2.5 py-[3px] text-[9px] sm:text-[10px] font-bold font-mono transition-all"
-                style={{
-                  background: currency === c ? 'var(--blue)' : 'transparent',
-                  color: currency === c ? '#fff' : 'var(--dim)',
-                }}>
-                {CURRENCY_CONFIG[c].flag} {CURRENCY_CONFIG[c].label}
-              </button>
-            ))}
-            <button
-              onClick={(e) => { e.stopPropagation(); setCurrencyDropdown(!currencyDropdown) }}
-              className="px-1 py-[3px] text-[9px] font-bold border-l transition-all"
-              style={{ borderColor: 'var(--b1)', color: 'var(--dim)' }}>▾</button>
-            {currencyDropdown && (
-              <div className="absolute top-full right-0 mt-1 rounded-lg border shadow-xl z-50 min-w-[110px]"
-                style={{ background: 'var(--card)', borderColor: 'var(--b2)' }}
-                onClick={e => e.stopPropagation()}>
-                {(['eur','gbp','aed','sgd','jpy','aud'] as Currency[]).map(c => (
-                  <button key={c} onClick={() => { setCurrency(c); setCurrencyDropdown(false) }}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-[9px] font-mono hover:bg-white/5"
-                    style={{ color: currency === c ? 'var(--blue)' : 'var(--text)' }}>
-                    {CURRENCY_CONFIG[c].flag} <span className="font-bold">{CURRENCY_CONFIG[c].label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <button className="hidden sm:block px-3 py-1 text-[11px] font-semibold rounded border"
-            style={{ borderColor: 'var(--b2)', color: 'var(--text)', background: 'transparent' }}>Sign In</button>
-          <button className="px-2 sm:px-3 py-1 text-[10px] sm:text-[11px] font-semibold rounded"
-            style={{ background: 'var(--blue)', color: '#fff' }}>Get Started</button>
-        </div>
-      </nav>
-
-      {/* ══ DEMO TIMELINE ══ */}
-      {everStarted && (
-        <DemoTimeline
-          demoStep={demoStep}
-          scenarioTimes={scenarioTimes}
-          totalElapsed={totalDemoElapsed}
-          isCallActive={callActive}
-        />
-      )}
-
-      {/* ══ CONTEXT BAR ══ */}
-      {everStarted && scenario && (
-        <div className="flex items-center justify-between px-3 sm:px-5 py-1 border-b flex-shrink-0"
+      {/* ══ JOURNEY BAR ══ */}
+      {everStarted && !showConversion && (
+        <div className="flex items-center px-4 sm:px-8 py-2.5 border-b flex-shrink-0"
           style={{
             borderColor: 'var(--b1)',
             background: 'var(--surf)',
             animation: scenarioTransition ? 'switchGlow 0.6s ease-out' : 'none',
           }}>
-          {/* Journey stages */}
-          <div className="flex items-center gap-0.5 sm:gap-1">
-            {JOURNEY_STAGES.map((stage, i) => {
-              const isActive = stage.key === activeJourneyStage
-              const isDone   = JOURNEY_STAGES.findIndex(s => s.key === activeJourneyStage) > i
+          <div className="flex items-center flex-1">
+            {JOURNEY_STEPS.map((step, i) => {
+              const isCurrent = demoStep === i
+              const isDone = demoStep > i
               return (
-                <div key={stage.key} className="flex items-center gap-0.5 sm:gap-1">
-                  <div className="flex items-center gap-1 px-1 sm:px-1.5 py-0.5 rounded text-[7px] sm:text-[8px] font-bold transition-all duration-500"
-                    style={{
-                      background: isActive ? 'rgba(34,197,94,.15)' : 'transparent',
-                      color: isActive ? '#22c55e' : isDone ? '#22c55e' : 'var(--dim)',
-                      border: isActive ? '1px solid rgba(34,197,94,.3)' : '1px solid transparent',
-                    }}>
-                    {isDone  && <span className="text-[7px]">✓</span>}
-                    {isActive && <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />}
-                    {stage.label}
-                    {stage.isFree && !isActive && !isDone && (
-                      <span className="text-[5px] px-0.5 rounded" style={{ background: '#f59e0b', color: '#000' }}>FREE</span>
-                    )}
+                <div key={step.num} className={`flex items-center ${i < JOURNEY_STEPS.length - 1 ? 'flex-1' : ''}`}>
+                  <div
+                    onClick={() => {
+                      if (isCurrent && showCelebration) {
+                        setShowCelebration(false); setTranscript([])
+                      } else if (!isCurrent) {
+                        setDemoStep(i); setShowCelebration(false); setTranscript([])
+                      }
+                    }}
+                    className="flex items-center gap-1.5 flex-shrink-0 transition-all"
+                    style={{ cursor: (isCurrent && !showCelebration) ? 'default' : 'pointer' }}>
+                    <div className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[9px] font-bold transition-all"
+                      style={{
+                        background: isDone ? '#00c9b1' : 'transparent',
+                        border: isCurrent ? '2px solid #f5a623' : isDone ? '2px solid #00c9b1' : '2px solid var(--b2)',
+                        color: isDone ? '#000' : isCurrent ? '#f5a623' : 'var(--dim)',
+                        boxShadow: isCurrent ? '0 0 0 3px rgba(245,166,35,.1)' : 'none',
+                      }}>
+                      {step.num}
+                    </div>
+                    <span className="text-[10px] hidden sm:inline"
+                      style={{
+                        color: isDone ? '#00c9b1' : isCurrent ? '#f5a623' : 'var(--dim)',
+                        fontWeight: isCurrent ? 600 : 400,
+                      }}>
+                      {step.icon} {step.label}
+                    </span>
                   </div>
-                  {i < JOURNEY_STAGES.length - 1 && (
-                    <span className="text-[7px]" style={{ color: 'var(--b2)' }}>→</span>
+                  {i < JOURNEY_STEPS.length - 1 && (
+                    <div className="h-[2px] mx-2 sm:mx-3 flex-1"
+                      style={{ background: isDone ? '#00c9b1' : 'var(--b1)' }} />
                   )}
                 </div>
               )
             })}
           </div>
-          {/* Infra + deploy badges */}
-          <div className="flex items-center gap-1.5 sm:gap-2 transition-all duration-500">
-            <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded"
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {callActive && (
+              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[8px]"
+                style={{ background: 'var(--card2)', border: '1px solid var(--b1)' }}>
+                <span style={{ color: 'var(--dim)' }}>⏱ Demo time:</span>
+                <span className="font-mono text-[11px] font-bold" style={{ color: 'var(--bright)' }}>
+                  {Math.floor(totalDemoElapsed / 60)}:{String(totalDemoElapsed % 60).padStart(2, '0')}
+                </span>
+              </span>
+            )}
+            <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded hidden sm:inline-flex"
               style={{ background: `${ic.color}15`, color: ic.color, border: `1px solid ${ic.color}33` }}>
-              {scenario.infraIcon} {ic.label}
+              {scenario?.infraIcon} {ic.label}
             </span>
-            <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded"
+            <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded hidden sm:inline-flex"
               style={{ background: `${dc.color}15`, color: dc.color, border: `1px solid ${dc.color}33` }}>
-              {scenario.deployIcon} {dc.label}
-            </span>
-            <span className="hidden sm:inline text-[7px]" style={{ color: 'var(--dim)' }}>
-              {scenario.dataResides}
+              {scenario?.deployIcon} {dc.label}
             </span>
           </div>
         </div>
       )}
 
-      {/* ══ MAIN: 2 columns ══ */}
-      <div className="flex flex-1 overflow-hidden min-h-0">
+      {/* ═══════════════════════════════════════════════════════════════════════
+          HOMEPAGE
+          ═══════════════════════════════════════════════════════════════════════ */}
+      {!everStarted ? (
+        <HomepageSections
+          onStartCall={handleHomepageStart}
+          onNavigateJourney={handleNavigateJourney}
+          onToggleIVRBar={() => setShowIVRBar(v => !v)}
+          onSignUp={() => handleMigrate('homepage_migrate')}
+        />
 
-        {/* ── CENTER ── */}
-        <div className="flex-1 flex flex-col overflow-hidden min-h-0 border-r"
-          style={{ borderColor: 'var(--b1)' }}>
+      /* ═══════════════════════════════════════════════════════════════════════
+         DEMO FLOW
+         ═══════════════════════════════════════════════════════════════════════ */
+      ) : (
+        <div className="flex flex-1 overflow-hidden min-h-0">
 
-          {/* ══ CONVERSION CTA — after all scenarios ══ */}
-          {showConversion ? (
-            <div className="flex-1 overflow-y-auto p-3 sm:p-5">
-              <ConversionCTA />
-            </div>
+          {/* ── CENTER PANEL ── */}
+          <div className={`flex-1 flex flex-col overflow-hidden min-h-0 ${callActive ? 'border-r' : ''}`}
+            style={{ borderColor: 'var(--b1)' }}>
 
-          /* ══ INFRA DEMO — scenario 6 ══ */
-          ) : isInfraDemo ? (
-            showCelebration ? (
+            {/* CONVERSION CTA */}
+            {showConversion ? (
               <div className="flex-1 overflow-y-auto p-3 sm:p-5">
-                <PostCallCelebration
-                  demoStep={demoStep} intents={[]} totalCost={0}
-                  currency={currency} onTryNext={handleTryNext} callDuration={0} />
-              </div>
-            ) : (
-              <InfraMigrationDemo onComplete={handleInfraComplete} />
-            )
-
-          /* ══ PRE-CALL PITCH ══ */
-          ) : !callActive && !showCelebration ? (
-            <div className="flex-1 flex flex-col items-center justify-center gap-4 p-5 sm:p-8 overflow-y-auto">
-              {/* Industry First badge */}
-              <div className="text-[9px] font-bold tracking-widest uppercase px-3 py-1 rounded"
-                style={{ background: 'rgba(245,158,11,.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,.25)' }}>
-                {scenario?.industryFirst}
+                <ConversionCTA />
               </div>
 
-              {/* Title */}
-              <div className="text-[28px] sm:text-[36px] font-extrabold text-center leading-tight"
-                style={{ color: 'var(--bright)' }}>
-                {scenario?.icon} {scenario?.title}
-              </div>
-
-              {/* AI IVR Mode description */}
-              <div className="max-w-lg text-center text-[12px] sm:text-[13px] leading-relaxed px-4 py-3 rounded-xl border"
-                style={{
-                  color: 'var(--text)',
-                  borderColor: 'var(--b1)',
-                  background: 'rgba(255,255,255,.02)',
-                }}>
-                {MODE_LABELS[mode].desc}
-              </div>
-
-              {/* Say this */}
-              <div className="w-full max-w-lg rounded-xl border px-5 py-4"
-                style={{
-                  borderColor: 'rgba(6,182,212,.25)',
-                  background: 'linear-gradient(135deg, rgba(6,182,212,.06), rgba(99,102,241,.03))',
-                }}>
-                <div className="text-[9px] font-bold uppercase tracking-widest mb-2"
-                  style={{ color: 'var(--dim)' }}>📣 Start the call and say</div>
-                <div className="text-[16px] sm:text-[18px] font-bold" style={{ color: '#06b6d4' }}>
-                  "{scenario?.suggestedPhrase}"
+            /* INFRA DEMO */
+            ) : isInfraDemo ? (
+              showCelebration ? (
+                <div className="flex-1 overflow-y-auto p-3 sm:p-5">
+                  <PostCallBoxes
+                    demoStep={demoStep} intents={[]} totalCost={0}
+                    currency={currency} callDuration={0}
+                    onTryNext={handleTryNext} onStartCall={handleStart} onNavigateJourney={handleNavigateJourney} sessionDisplayId={sessionDisplayId} onSignUp={() => openSignUp('post_call_infra')}
+                    onSelectIndustry={updateSelectedIvr} selectedIvr={selectedIvr} />
                 </div>
-              </div>
+              ) : (
+                <InfraMigrationDemo onComplete={handleInfraComplete} />
+              )
 
-              {/* Start Call button */}
-              <button
-                onClick={handleStart}
-                className="flex items-center gap-2 px-8 py-3 rounded-xl font-extrabold text-[15px] tracking-tight transition-all hover:opacity-90 hover:scale-[1.02]"
-                style={{ background: mc.start, color: mc.startText, boxShadow: `0 4px 24px ${mc.bg}` }}>
-                📞 Start Call
-              </button>
-
-              <div className="text-[9px]" style={{ color: 'var(--dim)' }}>
-                Free · No sign-up · {scenario?.infraFootnote}
-              </div>
-            </div>
-
-          /* ══ ACTIVE CALL + POST-CALL ══ */
-          ) : (
-            <div className="flex flex-col flex-1 overflow-hidden min-h-0">
-
-              {/* Call header */}
-              <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-b flex-shrink-0"
-                style={{ borderColor: 'var(--b1)', background: 'rgba(255,255,255,.02)' }}>
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-[18px] flex-shrink-0">{scenario?.icon}</span>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[7px] font-bold uppercase tracking-[.15em] px-1.5 py-0.5 rounded flex-shrink-0"
-                        style={{ background: 'rgba(245,158,11,.15)', color: '#f59e0b' }}>
-                        {scenario?.industryFirst}
-                      </span>
-                      <span className="font-bold text-[12px] sm:text-[13px] truncate"
-                        style={{ color: 'var(--bright)' }}>{scenario?.title}</span>
-                    </div>
-                    <div className="text-[8px] mt-0.5 flex items-center gap-1.5"
-                      style={{ color: 'var(--dim)' }}>
-                      <span style={{ color: EXP_COLOR[baseExp] }}>Exp {baseExp}</span>
-                      <span>·</span>
-                      <span>{MODE_LABELS[mode].label}</span>
-                      <span>·</span>
-                      <span>AI IVR Mode</span>
-                    </div>
+            /* JOURNEY INTRO — full width, no right panel */
+            ) : !callActive && !showCelebration ? (
+              <div className="flex-1 overflow-y-auto">
+                <div className="max-w-[700px] mx-auto px-6 py-8 text-center">
+                  <div className="inline-flex px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide mb-3.5"
+                    style={{ background: jConfig?.bg, color: jConfig?.color }}>
+                    {jConfig?.icon} Industry First #{jNum} of 4
                   </div>
-                </div>
-                <div className="flex gap-3 items-center flex-shrink-0">
-                  <div className="text-right">
-                    <div className="text-[7px] uppercase tracking-wide" style={{ color: 'var(--dim)' }}>Rate</div>
-                    <div className="font-mono text-[13px] font-bold" style={{ color: EXP_COLOR[baseExp] }}>
-                      {formatCost(MODE_RATES[mode][baseExp], currency)}<span className="text-[9px] font-normal">/int</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[7px] uppercase tracking-wide" style={{ color: 'var(--dim)' }}>Session</div>
-                    <div className="font-mono text-[13px] font-bold" style={{ color: 'var(--bright)' }}>
-                      {formatCost(liveCall.liveCost, currency)}
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Transcript + celebration */}
-              <div ref={txRef} className="flex-1 overflow-y-auto p-2 sm:p-3 flex flex-col gap-1.5">
-                {transcript.length === 0 && !showCelebration && (
-                  <div className="flex flex-col items-center justify-center h-full gap-2"
-                    style={{ color: 'var(--dim)' }}>
-                    <div className="text-[28px] opacity-25">💬</div>
-                    <div className="text-[11px]">Transcript will appear here</div>
-                  </div>
-                )}
+                  <h2 className="text-[28px] font-bold mb-2" style={{ color: 'var(--bright)' }}>
+                    {jConfig?.name}
+                  </h2>
 
-                {transcript.map((tx, i) => (
-                  <div key={i} className="flex gap-2 items-start">
-                    <div className="text-[7px] font-mono w-10 flex-shrink-0 mt-1 text-right"
-                      style={{ color: 'var(--dim)' }}>
-                      {tx.ts ? new Date(tx.ts).toLocaleTimeString('en-GB', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }) : ''}
-                    </div>
-                    <div className="text-[7px] font-bold w-6 flex-shrink-0 mt-1 px-1 py-px rounded text-center"
-                      style={{
-                        background: tx.who === 'user' ? 'rgba(51,112,232,.15)' : tx.who === 'ai' ? 'rgba(24,196,138,.12)' : 'rgba(255,255,255,.05)',
-                        color:      tx.who === 'user' ? '#80aaf4'                : tx.who === 'ai' ? 'var(--green)'         : 'var(--dim)',
-                      }}>
-                      {tx.who === 'user' ? 'YOU' : tx.who === 'ai' ? 'AI' : '···'}
-                    </div>
-                    <div className="flex-1 rounded-md border p-1.5"
-                      style={{
-                        background:  tx.who === 'user' ? 'rgba(51,112,232,.07)' : 'var(--card2)',
-                        borderColor: tx.who === 'user' ? 'rgba(51,112,232,.15)' : 'var(--b1)',
-                      }}>
-                      <div className="text-[11px] sm:text-[12px] leading-snug" style={{ color: 'var(--text)' }}>{tx.text}</div>
-                      {tx.meta && <div className="font-mono text-[8px] mt-0.5" style={{ color: 'var(--amber)' }}>{tx.meta}</div>}
-                    </div>
-                  </div>
-                ))}
+                  <p className="text-[14px] leading-relaxed mb-5 mx-auto" style={{ color: 'var(--text)', maxWidth: 520 }}
+                    dangerouslySetInnerHTML={{ __html: jConfig?.desc || '' }} />
 
-                {/* POST-CALL CELEBRATION */}
-                {showCelebration && !showConversion && (
-                  liveCall.liveIntents.length > 0 ? (
-                    <PostCallCelebration
-                      demoStep={demoStep}
-                      intents={liveCall.liveIntents}
-                      totalCost={liveCall.liveCost}
-                      currency={currency}
-                      onTryNext={handleTryNext}
-                      callDuration={callEndDuration}
-                    />
-                  ) : (
-                    <div className="rounded-xl border p-3 mt-2 text-center"
-                      style={{ borderColor: 'var(--b1)', background: 'rgba(255,255,255,.02)', animation: 'fadeSlideIn 0.6s ease-out' }}>
-                      <div className="text-[13px] mb-2" style={{ color: 'var(--text)' }}>No business intents detected.</div>
-                      <div className="text-[10px] mb-3" style={{ color: 'var(--dim)' }}>Try: "{scenario?.suggestedPhrase}"</div>
-                      <div className="flex items-center justify-center gap-3 flex-wrap">
-                        <button onClick={handleToggle}
-                          className="px-6 py-2 rounded-lg font-bold text-[12px]"
-                          style={{ background: mc.start, color: mc.startText }}>
-                          📞 Try Again
-                        </button>
-                        {!isLastScenario && (
-                          <button onClick={handleTryNext}
-                            className="px-6 py-2 rounded-lg font-bold text-[12px] border"
-                            style={{ borderColor: 'var(--b2)', color: 'var(--text)', background: 'transparent' }}>
-                            Skip →
-                          </button>
-                        )}
+                  {jConfig && (
+                    <div className="flex gap-3 justify-center mb-5 flex-wrap">
+                      {jConfig.prices.map((p, i) => (
+                        <div key={i} className="px-5 py-3.5 rounded-[10px] border text-center min-w-[120px]"
+                          style={{ background: 'var(--card)', borderColor: 'var(--b1)' }}>
+                          <div className="text-[8px] uppercase tracking-wide mb-0.5" style={{ color: 'var(--dim)' }}>{p.l}</div>
+                          <div className="font-mono text-[22px] font-bold my-0.5" style={{ color: p.c }}>{p.v}</div>
+                          <div className="text-[9px]" style={{ color: 'var(--dim)' }}>{p.s}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* ── CRM Demo Profile Card (sales journey only) ── */}
+                  {scenario?.mode === 'sales' && demoProfile && (
+                    <div className="mx-auto mb-5 px-5 py-4 rounded-xl border text-left"
+                      style={{ maxWidth: 440, background: 'rgba(51,112,232,.06)', borderColor: 'rgba(51,112,232,.18)' }}>
+                      <div className="text-[9px] uppercase tracking-wide font-bold mb-2" style={{ color: '#3370E8' }}>
+                        You are calling as
+                      </div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-[14px] font-bold"
+                          style={{ background: 'rgba(51,112,232,.15)', color: '#3370E8' }}>
+                          {demoProfile.name.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="text-[15px] font-bold" style={{ color: 'var(--bright)' }}>{demoProfile.name}</div>
+                          <div className="text-[10px]" style={{ color: 'var(--dim)' }}>{demoProfile.country_name}</div>
+                        </div>
+                        <div className="ml-auto px-2 py-0.5 rounded text-[9px] font-bold uppercase"
+                          style={{
+                            background: demoProfile.classification === 'HIGH_VALUE' ? 'rgba(0,222,122,.1)'
+                              : demoProfile.classification === 'AT_RISK' ? 'rgba(240,48,96,.1)'
+                              : demoProfile.classification === 'SALES_READY' ? 'rgba(245,166,35,.1)'
+                              : 'rgba(122,144,181,.1)',
+                            color: demoProfile.classification === 'HIGH_VALUE' ? '#00DE7A'
+                              : demoProfile.classification === 'AT_RISK' ? '#F03060'
+                              : demoProfile.classification === 'SALES_READY' ? '#F5A623'
+                              : '#7A90B5',
+                          }}>
+                          {demoProfile.classification?.replace('_', ' ')}
+                        </div>
+                      </div>
+                      <div className="text-[11px] leading-relaxed" style={{ color: 'var(--text)' }}>
+                        {demoProfile.story_hook}
+                      </div>
+                      <div className="text-[10px] mt-1.5" style={{ color: 'var(--dim)' }}>
+                        {demoProfile.account_summary}
+                      </div>
+                      {demoProfile.recommended_action && (
+                        <div className="mt-2 px-2.5 py-1 rounded-md inline-block text-[9px] font-semibold"
+                          style={{ background: 'rgba(0,201,177,.08)', color: '#00C9B1' }}>
+                          Recommended: {demoProfile.recommended_action.replace(/_/g, ' ')}
+                        </div>
+                      )}
+                      <div className="mt-2 text-[9px]" style={{ color: '#3370E8', cursor: 'pointer' }}
+                        onClick={() => {
+                          setDemoProfileLoading(true)
+                          const ind = (selectedIvrRef.current || 'global_banking').replace('global_', '')
+                          fetch(`${SERVICE_B_URL.replace(':9000', ':9700')}/crm/demo-profile?country=${encodeURIComponent(callerCountry)}&industry=${ind}`)
+                            .then(r => r.json())
+                            .then(data => { if (data?.mobile) setDemoProfile(data) })
+                            .catch(() => {})
+                            .finally(() => setDemoProfileLoading(false))
+                        }}>
+                        {demoProfileLoading ? '↻ Loading...' : '↻ Different customer'}
                       </div>
                     </div>
-                  )
-                )}
-              </div>
-
-              {/* Meters */}
-              <div className="border-t flex-shrink-0" style={{ borderColor: 'var(--b1)' }}>
-                <div className="flex">
-                  {[
-                    { label: '⏱ Duration', val: formatDuration(elapsed),                 sub: callActive ? 'Running…' : 'Ended', color: 'var(--bright)' },
-                    { label: '💰 Cost',     val: formatCost(liveCall.liveCost, currency), sub: 'This call',                       color: 'var(--green)' },
-                    { label: '🎯 Intents',  val: String(liveCall.liveIntents.length),     sub: 'Business',                        color: '#8a4ee8' },
-                  ].map((m, i) => (
-                    <div key={i} className="flex-1 p-2 border-r last:border-r-0"
-                      style={{ borderColor: 'var(--b1)' }}>
-                      <div className="text-[7px] font-bold tracking-wide uppercase mb-0.5" style={{ color: 'var(--dim)' }}>{m.label}</div>
-                      <div className="font-mono text-[18px] sm:text-[22px] font-semibold leading-none" style={{ color: m.color }}>{m.val}</div>
-                      <div className="text-[7px] mt-0.5" style={{ color: 'var(--dim)' }}>{m.sub}</div>
+                  )}
+                  {scenario?.mode === 'sales' && !demoProfile && demoProfileLoading && (
+                    <div className="mx-auto mb-5 text-[11px]" style={{ color: 'var(--dim)' }}>
+                      Loading customer profile…
                     </div>
-                  ))}
-                </div>
+                  )}
 
-                {/* End call + engage strip */}
-                <div className="px-3 py-2 border-t" style={{ borderColor: 'var(--b1)' }}>
-                  <button
-                    onClick={handleToggle}
-                    className="w-full py-2.5 rounded-lg font-bold text-[13px] flex items-center justify-center gap-2 transition-all hover:opacity-85"
-                    style={callActive
-                      ? { background: '#d44444', color: '#fff' }
-                      : { background: mc.start, color: mc.startText }}>
-                    {callActive ? '📵 End Call' : '📞 Start Again'}
+                  <button onClick={handleStart}
+                    className="inline-flex items-center gap-2 px-12 py-4 rounded-xl text-[17px] font-bold cursor-pointer transition-all hover:-translate-y-0.5 mb-1 border-none"
+                    style={{
+                      background: jConfig?.color,
+                      color: jConfig?.color === '#f03060' ? '#fff' : '#000',
+                      boxShadow: '0 4px 20px rgba(0,0,0,.3)',
+                    }}>
+                    ▶ {demoStep === 0 ? 'Try routine intent demo' : demoStep === 1 ? 'Try revenue discovery demo' : demoStep === 2 ? 'Try frustration escalation demo' : 'Try value-based routing demo'}
                   </button>
+                  <div className="text-[9px] mb-2" style={{ color: 'var(--dim)' }}>Zero integration · Zero cost · In 17 minutes</div>
 
-                  {/* Engage inline strip — always visible */}
-                  <div className="flex items-center justify-center gap-2 mt-2 text-[9px]"
-                    style={{ color: 'var(--dim)' }}>
-                    <span>Like what you hear?</span>
-                    <button
-                      onClick={() => alert('Opening calendar...')}
-                      className="font-bold transition-colors hover:underline"
-                      style={{ background: 'none', border: 'none', color: '#18c48a', cursor: 'pointer', fontSize: '9px' }}>
-                      📅 Book a call →
-                    </button>
-                    <span style={{ color: 'var(--b2)' }}>|</span>
-                    <button
-                      onClick={() => alert('IVR import coming soon')}
-                      className="font-bold transition-colors hover:underline"
-                      style={{ background: 'none', border: 'none', color: '#06b6d4', cursor: 'pointer', fontSize: '9px' }}>
-                      Give us your IVR #
-                    </button>
+                  <div className="text-[11px] mb-3" style={{ color: 'var(--dim)' }}>{jConfig?.hint}</div>
+
+                  <div className="mb-3">
+                    <div onClick={() => handleMigrate('journey_migrate')}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full cursor-pointer transition-all hover:opacity-90"
+                      style={{ background: 'rgba(0,201,177,.08)', border: '1px solid rgba(0,201,177,.12)' }}>
+                      <span className="text-[10px] font-semibold" style={{ color: '#00c9b1' }}>📱 Migrate Your IVR</span>
+                      <span className="text-[9px]" style={{ color: '#4a5f80' }}>·</span>
+                      <span className="text-[9px]" style={{ color: '#7a90b5' }}>Zero integration · Zero cost · In 17 minutes</span>
+                      <span className="text-[10px]" style={{ color: '#00c9b1' }}>→</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 justify-center flex-wrap">
+                    {INDUSTRY_OPTIONS.map(ind => (
+                      <span key={ind.key}
+                        onClick={() => {
+                          if (callActive) return
+                          updateSelectedIvr(ind.key)
+                        }}
+                        className="px-3 py-1.5 rounded-md border text-[10px] transition-all"
+                        style={{
+                          cursor: callActive ? 'not-allowed' : 'pointer',
+                          opacity: callActive && selectedIvr !== ind.key ? 0.35 : 1,
+                          background: selectedIvr === ind.key ? 'rgba(0,201,177,.12)' : 'var(--card2)',
+                          borderColor: selectedIvr === ind.key ? '#00c9b1' : 'var(--b1)',
+                          color: selectedIvr === ind.key ? '#00c9b1' : 'var(--dim)',
+                          boxShadow: selectedIvr === ind.key ? '0 0 0 1px rgba(0,201,177,.2)' : 'none',
+                        }}>
+                        {ind.icon} {ind.label}
+                        {callActive && selectedIvr === ind.key && <span className="ml-1 text-[7px]">●</span>}
+                      </span>
+                    ))}
                   </div>
                 </div>
+              </div>
+
+            /* ══ POST-CALL — 3 boxes with real billing ══ */
+            ) : showCelebration && !callActive ? (
+              <div className="flex-1 overflow-y-auto p-3 sm:p-5">
+                <PostCallBoxes
+                  demoStep={demoStep}
+                  intents={finalIntents}
+                  totalCost={finalCost}
+                  currency={currency}
+                  callDuration={callEndDuration}
+                  onTryNext={handleTryNext}
+                  onStartCall={handleStart}
+                  onNavigateJourney={handleNavigateJourney}
+                  sessionDisplayId={sessionDisplayId}
+                  onSignUp={() => openSignUp('post_call')}
+                  onSelectIndustry={updateSelectedIvr}
+                  selectedIvr={selectedIvr}
+                />
+              </div>
+
+            /* ══ ACTIVE CALL ══ */
+            ) : (
+              <div className="flex flex-col flex-1 overflow-hidden min-h-0">
+
+                {/* Status bar */}
+                <div className="flex items-center gap-1.5 px-3 py-1.5 mx-3 mt-2 rounded-md flex-shrink-0"
+                  style={{ background: 'rgba(0,201,177,.05)', border: '1px solid rgba(0,201,177,.1)' }}>
+                  <div className="w-[7px] h-[7px] rounded-full"
+                    style={{ background: '#00c9b1', animation: 'blink 1.2s infinite' }} />
+                  <span className="text-[11px]" style={{ color: 'var(--text)' }}>
+                    {elapsed < 3 ? 'Connecting you...' : `Live · ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.icon || '🏦'} ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.label || 'Banking'} · ${jConfig?.exp}`}
+                  </span>
+                  <span className="ml-auto">
+                    <span className="px-2 py-0.5 rounded text-[8px] font-bold"
+                      style={{
+                        background: 'rgba(240,48,96,.15)', color: '#f03060',
+                        animation: 'demoPulse 1.5s ease-in-out infinite',
+                      }}>
+                      🔴 DEMO CALL
+                    </span>
+                  </span>
+                </div>
+
+                {/* Nudge system — fades when intent detected */}
+                <div className="px-3 pt-2">
+                  <NudgeSystem
+                    demoStep={demoStep}
+                    callActive={callActive}
+                    intentDetected={hasIntents}
+                  />
+                </div>
+
+                {/* CRM caller identity — compact bar during active sales call */}
+                {scenario?.mode === 'sales' && demoProfile && callActive && (
+                  <div className="mx-3 mt-1.5 px-3 py-2 rounded-lg flex items-center gap-2"
+                    style={{ background: 'rgba(51,112,232,.06)', border: '1px solid rgba(51,112,232,.12)' }}>
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
+                      style={{ background: 'rgba(51,112,232,.15)', color: '#3370E8' }}>
+                      {demoProfile.name.charAt(0)}
+                    </div>
+                    <span className="text-[10px] font-semibold" style={{ color: 'var(--bright)' }}>{demoProfile.name}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase"
+                      style={{
+                        background: demoProfile.classification === 'HIGH_VALUE' ? 'rgba(0,222,122,.1)' : 'rgba(245,166,35,.1)',
+                        color: demoProfile.classification === 'HIGH_VALUE' ? '#00DE7A' : '#F5A623',
+                      }}>
+                      {demoProfile.classification?.replace('_', ' ')}
+                    </span>
+                    <span className="text-[9px] ml-auto" style={{ color: 'var(--dim)' }}>{demoProfile.story_hook}</span>
+                  </div>
+                )}
+
+                {/* Transcription header */}
+                <div className="mx-3 mt-1.5 mb-0">
+                  <div className="flex items-center justify-between px-2 py-1 cursor-pointer"
+                    onClick={() => setTxCollapsed(!txCollapsed)}>
+                    <span className="text-[9px] font-semibold uppercase tracking-wide" style={{ color: 'var(--dim)' }}>
+                      📝 Live Transcription
+                    </span>
+                    <span className="text-[10px] transition-transform duration-200"
+                      style={{ color: 'var(--dim)', transform: txCollapsed ? 'rotate(-90deg)' : 'none' }}>
+                      ▼
+                    </span>
+                  </div>
+                </div>
+
+                {/* Transcript */}
+                {!txCollapsed && (
+                  <div ref={txRef} className="flex-1 overflow-y-auto px-3 pb-2 flex flex-col gap-1.5"
+                    style={{ borderTop: '1px solid var(--b1)' }}>
+
+                    {transcript.length === 0 && (
+                      <div className="flex flex-col items-center justify-center h-full gap-2"
+                        style={{ color: 'var(--dim)' }}>
+                        <div className="text-[28px] opacity-25">💬</div>
+                        <div className="text-[11px]">Transcript will appear here</div>
+                      </div>
+                    )}
+
+                    {transcript.map((tx, i) => (
+                      <div key={i} className="flex gap-2 items-start">
+                        <div className="text-[7px] font-mono w-10 flex-shrink-0 mt-1 text-right"
+                          style={{ color: 'var(--dim)' }}>
+                          {tx.ts ? new Date(tx.ts).toLocaleTimeString('en-GB', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }) : ''}
+                        </div>
+                        <div className="text-[7px] font-bold w-6 flex-shrink-0 mt-1 px-1 py-px rounded text-center"
+                          style={{
+                            background: tx.who === 'user' ? 'rgba(51,112,232,.15)' : tx.who === 'ai' ? 'rgba(24,196,138,.12)' : 'rgba(255,255,255,.05)',
+                            color:      tx.who === 'user' ? '#80aaf4'                : tx.who === 'ai' ? 'var(--green)'         : 'var(--dim)',
+                          }}>
+                          {tx.who === 'user' ? 'YOU' : tx.who === 'ai' ? 'AI' : '···'}
+                        </div>
+                        <div className="flex-1 rounded-md border p-1.5"
+                          style={{
+                            background:  tx.who === 'user' ? 'rgba(51,112,232,.07)' : 'var(--card2)',
+                            borderColor: tx.who === 'user' ? 'rgba(51,112,232,.15)' : 'var(--b1)',
+                          }}>
+                          <div className="text-[11px] sm:text-[12px] leading-snug" style={{ color: 'var(--text)' }}>{tx.text}</div>
+                          {tx.meta && <div className="font-mono text-[8px] mt-0.5" style={{ color: 'var(--amber)' }}>{tx.meta}</div>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Meters */}
+                <div className="border-t flex-shrink-0" style={{ borderColor: 'var(--b1)' }}>
+                  <div className="flex">
+                    {[
+                      { label: '⏱ Duration', val: formatDuration(elapsed),                 sub: 'Running…', color: 'var(--bright)' },
+                      { label: '💰 Cost',     val: formatCost(liveCall.liveCost, currency), sub: 'This call', color: 'var(--green)' },
+                      { label: '🎯 Intents',  val: String(liveCall.liveIntents.length),     sub: 'Business',  color: '#8a4ee8' },
+                    ].map((m, i) => (
+                      <div key={i} className="flex-1 p-2 border-r last:border-r-0"
+                        style={{ borderColor: 'var(--b1)' }}>
+                        <div className="text-[7px] font-bold tracking-wide uppercase mb-0.5" style={{ color: 'var(--dim)' }}>{m.label}</div>
+                        <div className="font-mono text-[18px] sm:text-[22px] font-semibold leading-none" style={{ color: m.color }}>{m.val}</div>
+                        <div className="text-[7px] mt-0.5" style={{ color: 'var(--dim)' }}>{m.sub}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* End call button */}
+                  <div className="px-3 py-2 border-t" style={{ borderColor: 'var(--b1)' }}>
+                    <button
+                      onClick={handleEndCall}
+                      className="w-full py-2.5 rounded-lg font-bold text-[13px] flex items-center justify-center gap-2 transition-all hover:opacity-85"
+                      style={hasIntents && nextJourneyConfig
+                        ? { background: 'linear-gradient(90deg, #d44444, #e09820)', color: '#fff', fontSize: '12px' }
+                        : { background: '#d44444', color: '#fff' }}>
+                      {hasIntents && nextJourneyConfig
+                        ? `🔴 End Call & Try ${nextJourneyConfig.icon} ${nextJourneyConfig.name} Journey →`
+                        : '📵 End Call'}
+                    </button>
+
+                    <div className="flex items-center justify-center gap-2 mt-2 text-[9px]"
+                      style={{ color: 'var(--dim)' }}>
+                      <span>Like what you hear?</span>
+                      <button
+                        onClick={() => openSignUp('active_call_book')}
+                        className="font-bold transition-colors hover:underline"
+                        style={{ background: 'none', border: 'none', color: '#18c48a', cursor: 'pointer', fontSize: '9px' }}>
+                        📅 Book a call →
+                      </button>
+                      <span style={{ color: 'var(--b2)' }}>|</span>
+                      <button
+                        onClick={() => setShowIVRBar(true)}
+                        className="font-bold transition-colors hover:underline"
+                        style={{ background: 'none', border: 'none', color: '#06b6d4', cursor: 'pointer', fontSize: '9px' }}>
+                        Give us your IVR #
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Promo strip */}
+            <div className="flex items-center gap-1.5 px-3 py-1 border-t flex-shrink-0"
+              style={{ borderColor: 'rgba(51,112,232,.18)', background: 'linear-gradient(90deg,#0f2050,#0c3040)' }}>
+              <span className="text-[7px] font-extrabold px-1 py-px rounded"
+                style={{ background: 'var(--amber)', color: '#080d18' }}>FREE</span>
+              <span className="text-[8px]" style={{ color: '#6090b0' }}>
+                Real AI · No credit card · Migrate your IVR in 17 minutes
+              </span>
+            </div>
+          </div>
+
+          {/* ── RIGHT PANEL — only during active call, dial pad only ── */}
+          {callActive && (
+            <div className="w-[260px] xl:w-[280px] flex-shrink-0 flex-col overflow-hidden hidden lg:flex"
+              style={{ borderLeft: '1px solid var(--b1)', background: 'var(--card)' }}>
+
+              {/* Dial pad */}
+              <div className="px-3 pt-4 pb-2">
+                <div className="text-[7.5px] font-bold uppercase tracking-widest mb-2 text-center" style={{ color: 'var(--dim)' }}>
+                  📟 IVR Dial Pad
+                </div>
+                <IvrDialpad
+                  visible={true}
+                  onPress={liveCall.pressDTMF}
+                  lastDigit={liveCall.state.lastDigit}
+                  trigger="data_channel_signal"
+                />
+                <div className="text-center mt-2 text-[7px]" style={{ color: 'var(--dim)' }}>
+                  Press ✱ for phone menu
+                </div>
+              </div>
+
+              {/* Connection status strip */}
+              <div className="mt-auto px-3 py-1.5 border-t flex items-center gap-1.5 flex-shrink-0"
+                style={{ borderColor: 'var(--b1)', background: 'rgba(0,0,0,.12)' }}>
+                <div
+                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{
+                    background:
+                      liveCall.state.status === 'connected'
+                        ? '#22c55e'
+                        : liveCall.state.status === 'connecting'
+                        ? '#3b82f6'
+                        : '#6b7280',
+                    animation: liveCall.state.status === 'connected' ? 'pulse 2s infinite' : 'none',
+                  }}
+                />
+                <span className="text-[8px]" style={{ color: 'var(--dim)' }}>
+                  {liveCall.state.status === 'connected'
+                    ? liveCall.state.micEnabled
+                      ? 'Mic active — AI is listening'
+                      : 'Connected — mic off'
+                    : liveCall.state.status === 'connecting'
+                    ? 'Connecting…'
+                    : 'Idle'}
+                </span>
               </div>
             </div>
           )}
 
-          {/* Promo strip */}
-          <div className="flex items-center gap-1.5 px-3 py-1 border-t flex-shrink-0"
-            style={{ borderColor: 'rgba(51,112,232,.18)', background: 'linear-gradient(90deg,#0f2050,#0c3040)' }}>
-            <span className="text-[7px] font-extrabold px-1 py-px rounded"
-              style={{ background: 'var(--amber)', color: '#080d18' }}>FREE</span>
-            <span className="text-[8px]" style={{ color: '#6090b0' }}>
-              Real AI · No credit card · Import your IVR in 30 minutes
-            </span>
-          </div>
         </div>
+      )}
 
-        {/* ── RIGHT PANEL ── */}
-        <div className="w-[260px] xl:w-[280px] flex-shrink-0 flex flex-col overflow-hidden">
-          <LiveCallPanel
-            state={liveCall.state}
-            onDTMF={liveCall.pressDTMF}
-            liveTranscript={liveCall.liveTranscript}
-            liveIntents={liveCall.liveIntents}
-            liveCost={liveCall.liveCost}
-            currentExp={liveCall.currentExp}
-            crmName={liveCall.crmName}
-            callActive={callActive}
-            callEnded={callEnded}
-            scenarioSteps={scenario?.steps ?? []}
-          />
-        </div>
+      {/* ══ FLOATING IVR BAR ══ */}
+      <FloatingIVRBar visible={showIVRBar} onClose={() => setShowIVRBar(false)} />
 
-      </div>
+      {/* ══ SIGN UP MODAL ══ */}
+      <SignUpModal
+        open={showSignUp}
+        onClose={() => setShowSignUp(false)}
+        source={signUpSource}
+        redirectTo={signUpRedirect}
+        onSuccess={() => {
+          // User signed up — refresh header to show avatar
+          setCurrentUser(getUser())
+        }}
+      />
 
       {/* ══ TOAST ══ */}
       <div

@@ -83,6 +83,7 @@ export interface DemoScenario {
   nextButtonLabel: string
   isSimulated?: boolean
   isInfraDemo?: boolean
+  experienceLevel?: number  // override experience level via Service B (3=Gemini, 5=pipeline, etc)
 }
 
 export interface RotatingCTA {

@@ -136,11 +136,11 @@ export const CURRENCY_CONFIG: Record<Currency, { symbol: string; label: string; 
 // ══════════════════════════════════════════════════════════════════════════════
 
 export const DEMO_SCENARIOS: DemoScenario[] = [
-  // ── SCENARIO 1: Per-Intent Pricing ── Explore stage · Shared · Cloud ──
+  // ── SCENARIO 1: Lower Cost Per Resolution ── Explore stage · Shared · Cloud ──
   {
     id: 0,
     icon: '⚡',
-    title: 'Per-Intent Pricing',
+    title: 'Lower Cost Per Resolution',
     industryFirst: 'INDUSTRY FIRST #1',
     pitch: [
       'Your IVR charges per minute. Every second costs you — even hold time, even silence.',
@@ -163,33 +163,34 @@ export const DEMO_SCENARIOS: DemoScenario[] = [
     deployLabel: 'Cloud hosted by Converse',
     dataResides: 'Converse shared DB',
     infraFootnote: 'Explore stage · Shared infrastructure · Cloud hosted',
-    postBadgeTitle: 'Per-Intent Pricing',
+    postBadgeTitle: 'Lower Cost Per Resolution',
     postBadgeBody: 'You paid for one resolved intent. Not per minute. Not per call. Per intent.',
     tradCostComparison: 'Traditional IVR: ~₹2.50/min × 35s = ₹1.46',
     nextPrompt: [
-      'That was a standard savings account customer. But what happens when a Gold-tier wealth management customer calls? Should they get the same basic agent?',
-      'In your Try stage, you\'d have your own dedicated database with CRM data isolated — let\'s see what that experience looks like.',
+      'That was per-intent pricing in action. But what if the AI could do more than resolve intents?',
+      'What if during that same call, the AI detected a sales opportunity from the customer\'s CRM profile — and turned a service call into revenue?',
     ],
-    nextButtonLabel: 'Try Customer Value Routing →',
+    nextButtonLabel: 'Try revenue discovery demo →',
   },
-  // ── SCENARIO 2: Customer Value Routing ── Try stage · Secure · Hybrid ──
+  // ── SCENARIO 2: Turn Service Calls Into Revenue ── Try stage · Secure · Hybrid ──
   {
     id: 1,
-    icon: '🎯',
-    title: 'Customer Value Routing',
+    icon: '💰',
+    title: 'Turn Service Calls Into Revenue',
     industryFirst: 'INDUSTRY FIRST #2',
     pitch: [
-      'Not every customer deserves the same AI. A prepaid user checking balance doesn\'t need the same agent as a Gold-tier customer managing ₹50L in investments.',
-      'Watch the system detect the customer\'s CRM value and switch to a premium voice agent — live, mid-call.',
+      'Your customer calls about their balance. Routine query. But your CRM knows they\'re pre-approved for a Regalia credit card.',
+      'Watch the AI detect the sales opportunity and switch to a warm, persuasive agent that handles the upsell — without the customer ever knowing they were routed.',
     ],
-    suggestedPhrase: 'I want to check my account balance',
+    suggestedPhrase: 'Tell me about credit card offers',
     steps: [
-      'Ask: "I am a Gold member, check my account balance"',
-      'Ask: "Tell me about my wealth management portfolio"',
-      'Ask: "Send me a detailed statement by email"',
+      'Ask: "What is my account balance?"',
+      'Ask: "Tell me about credit card offers available for me"',
+      'Ask: "Yes, go ahead and apply for the card"',
     ],
     exp: 5,
-    mode: 'premium',
+    mode: 'sales',
+    experienceLevel: 5,
     journeyStage: 'try',
     infra: 'secure',
     infraIcon: '🔒',
@@ -199,21 +200,22 @@ export const DEMO_SCENARIOS: DemoScenario[] = [
     deployLabel: 'Cloud AI + On-prem data',
     dataResides: 'Your own DB — CRM data on your network',
     infraFootnote: 'Try stage · Secure (dedicated DB) · Hybrid deployment',
-    postBadgeTitle: 'Customer Value Routing',
-    postBadgeBody: 'Your HNI customer gets 3x better experience for only 2.5x the cost. Automatic. Every call.',
-    tradCostComparison: 'Basic ₹0.42 vs Premium ₹1.06 — 3x better for 2.5x cost',
+    postBadgeTitle: 'Turn Service Calls Into Revenue',
+    postBadgeBody: 'Every service call is a revenue opportunity. AI finds it for you.',
+    tradCostComparison: '1 intent resolved + 1 upsell = revenue opportunity captured',
     nextPrompt: [
-      'That routing was based on who the customer is. But what about what they ask?',
-      'What if a basic customer starts simple — then suddenly asks about a personal loan? Should the cheap agent struggle with it?',
-      'In your Pilot stage, you\'d have dedicated services and dedicated database — your own compute handling real SIP traffic. Let\'s see the AI escalate mid-call.',
+      'You just turned a routine service call into a revenue opportunity. But what happens when a customer is frustrated?',
+      'What if the AI could detect rising frustration and instantly switch to a more empathetic, higher-quality agent — mid-call, no transfer?',
+      'In your Pilot stage, you\'d have dedicated services and dedicated database — your own compute. Let\'s see the AI recover a frustrated caller.',
     ],
-    nextButtonLabel: 'Try In-Call Escalation →',
+    nextButtonLabel: 'Try frustration escalation demo →',
+    isSimulated: true,
   },
-  // ── SCENARIO 3: In-Call Escalation ── Pilot stage · Premium · Cloud ──
+  // ── SCENARIO 3: Recover Frustrated Calls Live ── Pilot stage · Premium · Cloud ──
   {
     id: 2,
     icon: '🔥',
-    title: 'In-Call Escalation',
+    title: 'Recover Frustrated Calls Live',
     industryFirst: 'INDUSTRY FIRST #3',
     pitch: [
       'Start with the cheapest agent — ₹0.38/intent. Ask something simple like "check my balance."',
@@ -236,34 +238,34 @@ export const DEMO_SCENARIOS: DemoScenario[] = [
     deployLabel: 'Your own compute and storage on the cloud',
     dataResides: 'Your own compute + storage',
     infraFootnote: 'Pilot stage · Premium (dedicated svc + DB) · Cloud',
-    postBadgeTitle: 'In-Call Escalation',
+    postBadgeTitle: 'Recover Frustrated Calls Live',
     postBadgeBody: 'Simple queries stay cheap. Complex queries get the best AI. Per intent. Automatic.',
     tradCostComparison: 'Both on premium = ₹2.96 → Adaptive = ₹1.86 → 37% savings',
     nextPrompt: [
-      'So far you\'ve seen routing by customer value and by query complexity. But what about revenue?',
-      'What if the AI could detect that a customer is eligible for a credit card upgrade — and switch to a persuasive upsell agent, right there in the call?',
-      'In your Launch stage, you\'d have fully owned infrastructure on-premises — complete data sovereignty. Let\'s see sales discovery on production-grade infra.',
+      'So far you\'ve seen revenue discovery and frustration recovery. But what about routing by customer value?',
+      'What if a Gold-tier wealth management customer calls? Should they get the same basic agent as a prepaid user?',
+      'In your Launch stage, you\'d have fully owned infrastructure on-premises — complete data sovereignty. Let\'s see value-based routing.',
     ],
-    nextButtonLabel: 'Try Sales Discovery →',
+    nextButtonLabel: 'Try value-based routing demo →',
   },
-  // ── SCENARIO 4: Sales Discovery ── Launch stage · Owned · On-Prem ──
+  // ── SCENARIO 4: Route AI by Customer Value ── Launch stage · Owned · On-Prem ──
   {
     id: 3,
-    icon: '💰',
-    title: 'Sales Discovery',
+    icon: '🎯',
+    title: 'Route AI by Customer Value',
     industryFirst: 'INDUSTRY FIRST #4',
     pitch: [
-      'Your customer calls about their balance. Routine query. But your CRM knows they\'re pre-approved for a Regalia credit card.',
-      'Watch the AI detect the sales opportunity and switch to a warm, persuasive agent that handles the upsell — without the customer ever knowing they were routed.',
+      'Not every customer deserves the same AI. A prepaid user checking balance doesn\'t need the same agent as a Gold-tier customer managing ₹50L in investments.',
+      'Watch the system detect the customer\'s CRM value and switch to a premium voice agent — live, mid-call.',
     ],
-    suggestedPhrase: 'Tell me about credit card offers',
+    suggestedPhrase: 'I want to check my account balance',
     steps: [
-      'Ask: "What is my account balance?"',
-      'Ask: "Tell me about credit card offers available for me"',
-      'Ask: "Yes, go ahead and apply for the card"',
+      'Ask: "I am a Gold member, check my account balance"',
+      'Ask: "Tell me about my wealth management portfolio"',
+      'Ask: "Send me a detailed statement by email"',
     ],
     exp: 5,
-    mode: 'sales',
+    mode: 'premium',
     journeyStage: 'launch',
     infra: 'owned',
     infraIcon: '🏛',
@@ -273,15 +275,14 @@ export const DEMO_SCENARIOS: DemoScenario[] = [
     deployLabel: 'On-premises — complete data sovereignty',
     dataResides: 'Your data center — your hardware, your network',
     infraFootnote: 'Launch stage · Fully owned · On-premises',
-    postBadgeTitle: 'Sales Discovery',
-    postBadgeBody: 'Every service call is a revenue opportunity. AI finds it for you.',
-    tradCostComparison: '1 intent resolved + 1 upsell = revenue opportunity captured',
+    postBadgeTitle: 'Route AI by Customer Value',
+    postBadgeBody: 'Your HNI customer gets 3x better experience for only 2.5x the cost. Automatic. Every call.',
+    tradCostComparison: 'Basic ₹0.42 vs Premium ₹1.06 — 3x better for 2.5x cost',
     nextPrompt: [
       'You\'ve seen 4 Industry Firsts — all in English. And you\'ve moved through every journey stage: Explore → Try → Pilot → Launch.',
       'But India has 22 official languages. What happens when a customer calls in Hindi, Tamil, or Kannada? See the complete sovereign Indian language stack — at the lowest cost in the industry.',
     ],
     nextButtonLabel: 'Try Indian Language AI →',
-    isSimulated: true,
   },
   // ── SCENARIO 5: Indian Language Stack ── Explore stage · Shared · Cloud ──
   {

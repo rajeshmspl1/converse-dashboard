@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://aiivrs.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://aiivrs.com/pricing</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://aiivrs.com/how-it-works</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://aiivrs.com/faq</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://aiivrs.com/contact-sales</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://aiivrs.com/industries</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://aiivrs.com/industries/banking</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://aiivrs.com/industries/insurance</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://aiivrs.com/industries/healthcare</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://aiivrs.com/industries/telecom</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://aiivrs.com/industries/ecommerce</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://aiivrs.com/industries/hospitality</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://aiivrs.com/compare</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://aiivrs.com/compare/retell-ai</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://aiivrs.com/compare/vapi</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://aiivrs.com/compare/polyai</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+</urlset>

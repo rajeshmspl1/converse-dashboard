@@ -37,9 +37,16 @@ export interface LiveCallState {
   micEnabled: boolean
 }
 
+/** Optional params for connect — additive, all fields optional */
+export interface ConnectOpts {
+  routingMode?: string    // 'premium' | 'complexity' | 'sales' | 'hybrid'
+  callerMobile?: string   // test phone for CRM lookup (Journey 4)
+  experienceLevel?: number // override experience level (3=Gemini, 5=pipeline, etc)
+}
+
 export interface UseLiveKitCallReturn {
   state: LiveCallState
-  connect: (tenantKey: string, ivrKey: string, serviceBUrl: string) => Promise<void>
+  connect: (tenantKey: string, ivrKey: string, serviceBUrl: string, opts?: ConnectOpts) => Promise<void>
   disconnect: () => Promise<void>
   pressDTMF: (digit: string) => void
   /* ── Live data from Service A data channel ── */
@@ -76,6 +83,9 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
   const [currentExp, setCurrentExp]         = useState<number | null>(null)
   const [crmName, setCrmName]               = useState<string | null>(null)
 
+  // Ref to track IVR mode — event handler closures can't see useState updates
+  const ivrModeRef = useRef(false)
+
   const patch = useCallback((p: Partial<LiveCallState>) =>
     setState(s => ({ ...s, ...p })), [])
 
@@ -100,7 +110,7 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
 
   /* ── Connect ────────────────────────────────────────────────────────────── */
 
-  const connect = useCallback(async (tenantKey: string, ivrKey: string, serviceBUrl: string) => {
+  const connect = useCallback(async (tenantKey: string, ivrKey: string, serviceBUrl: string, opts?: ConnectOpts) => {
     const base = serviceBUrl.replace(/\/$/, '')
 
     // Generate unique room name: {tenant}__{ivr}__{timestamp}
@@ -120,6 +130,23 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
     try {
       // ── Step 1: Create session in Service B ──
       // This registers the call, creates the DB record, and triggers agent dispatch
+      // ── Geo lookup (non-blocking, best-effort) ──
+      let callerGeo: any = {}
+      try {
+        const geoResp = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(3000) })
+        if (geoResp.ok) {
+          const geo = await geoResp.json()
+          callerGeo = {
+            caller_ip: geo.ip || null,
+            caller_country: geo.country_name || null,
+            caller_city: geo.city || null,
+            caller_currency: geo.currency || null,
+            caller_timezone: geo.timezone || null,
+          }
+          addLog(`Geo: ${callerGeo.caller_country} · ${callerGeo.caller_city} · ${callerGeo.caller_currency}`)
+        }
+      } catch (_) { /* geo lookup failed, continue without */ }
+
       addLog('Creating session via Service B...')
       const sessResp = await fetch(`${base}/sessions/create`, {
         method: 'POST',
@@ -132,6 +159,9 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
           session_id: roomName,
           ivr_key: ivrKey,
           channel: 'web',
+          ...callerGeo,
+          ...(opts?.routingMode ? { routing_mode: opts.routingMode } : {}),
+          ...(opts?.experienceLevel ? { experience_level: opts.experienceLevel } : {}),
         }),
       })
       if (!sessResp.ok) {
@@ -155,6 +185,9 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
           ivr_key: ivrKey,
           room_name: roomName,
           identity: `web_user_${Date.now()}`,
+          ...(opts?.routingMode ? { routing_mode: opts.routingMode } : {}),
+          ...(opts?.experienceLevel ? { experience_level: opts.experienceLevel } : {}),
+          ...(opts?.callerMobile ? { metadata: { caller_mobile: opts.callerMobile } } : {}),
         }),
       })
       if (!tokenResp.ok) throw new Error(`Token fetch failed: ${tokenResp.status}`)
@@ -188,8 +221,14 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
       room.on(RoomEvent.RoomMetadataChanged, (metadata: string) => {
         try {
           const data = JSON.parse(metadata)
-          if (data.ivr_mode === true && data.show_dialpad === true) patch({ mode: 'ivr' })
-          if (data.ivr_mode === false) patch({ mode: 'ai' })
+          if (data.ivr_mode === true && data.show_dialpad === true) {
+            ivrModeRef.current = true
+            patch({ mode: 'ivr' })
+          }
+          if (data.ivr_mode === false) {
+            ivrModeRef.current = false
+            patch({ mode: 'ai' })
+          }
         } catch { /* ignore */ }
       })
 
@@ -199,10 +238,52 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
         if (p.identity.startsWith('agent-')) {
           addTx({ who: 'sys', text: `Agent joined` })
         }
+        if (p.identity.startsWith('service-d-audio')) {
+          addTx({ who: 'sys', text: `IVR agent connected` })
+          addLog('Service D joined — IVR audio active')
+        }
       })
       room.on(RoomEvent.ParticipantDisconnected, (p) => {
         addLog(`Left: ${p.identity}`)
+
+        // Service D (IVR) left
+        if (p.identity.startsWith('service-d-audio')) {
+          ivrModeRef.current = false
+          patch({ mode: 'ai' })
+
+          // R9 guard: if an agent-* participant is already in the room,
+          // D left because it handed back to A — do NOT disconnect.
+          const hasAgent = Array.from(room.remoteParticipants.values()).some(
+            rp => rp.identity.startsWith('agent-')
+          )
+          if (hasAgent) {
+            addTx({ who: 'sys', text: `IVR ended — back to AI agent` })
+            addLog('Service D left but agent present — R9 return, staying connected')
+            return
+          }
+
+          // No agent in room — normal IVR exit, disconnect
+          addTx({ who: 'sys', text: `IVR session ended` })
+          addLog('Service D left — no agent present, disconnecting')
+          setTimeout(() => {
+            if (roomRef.current) {
+              roomRef.current.disconnect()
+              roomRef.current = null
+            }
+            setState(prev => ({ ...prev, status: 'disconnected', mode: 'ai', micEnabled: false }))
+          }, 1500)
+          return
+        }
+
         if (p.identity.startsWith('agent-')) {
+          // If IVR mode is active, Service A leaving is EXPECTED — D takes over.
+          // Do NOT disconnect. D is already in the room or about to join.
+          if (ivrModeRef.current) {
+            addTx({ who: 'sys', text: `AI agent handed off to IVR — stay connected` })
+            addLog('Agent left but IVR mode active — staying connected for Service D')
+            return
+          }
+          // Normal AI mode — agent left means call is over
           addTx({ who: 'sys', text: `Agent disconnected — call ended` })
           addLog('Agent left room — auto-disconnecting')
           // Small delay to let any final data channel messages arrive
@@ -367,10 +448,12 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
       // ── IVR mode toggle (existing protocol) ──
       case 'ivr_mode': {
         if (msg.ivr_mode === true && msg.show_dialpad === true) {
+          ivrModeRef.current = true
           patch({ mode: 'ivr' })
           addLog('IVR mode activated — dialpad ready')
         }
         if (msg.ivr_mode === false) {
+          ivrModeRef.current = false
           patch({ mode: 'ai' })
           addLog('AI mode restored')
         }
@@ -399,6 +482,7 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
   /* ── Disconnect ─────────────────────────────────────────────────────────── */
 
   const disconnect = useCallback(async () => {
+    ivrModeRef.current = false
     if (roomRef.current) {
       await roomRef.current.disconnect()
       roomRef.current = null
