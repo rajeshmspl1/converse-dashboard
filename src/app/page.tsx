@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { useStore } from '@/lib/store'
 import {
@@ -29,7 +30,7 @@ const SERVICE_B_URL = 'http://127.0.0.1:9000'
 const TENANT_KEY    = 'experience_shop'
 const DEFAULT_IVR_KEY = 'global_banking'
 
-export default function Home() {
+function HomeInner() {
   const searchParams = useSearchParams()
   const qTenant = searchParams.get("tenant_key")
   const qIvr = searchParams.get("ivr_key")
@@ -936,5 +937,13 @@ export default function Home() {
         }}
         dangerouslySetInnerHTML={{ __html: toast }} />
     </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeInner />
+    </Suspense>
   )
 }

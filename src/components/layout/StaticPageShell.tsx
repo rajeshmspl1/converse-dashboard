@@ -36,7 +36,7 @@ export default function StaticPageShell({ children }: { children: React.ReactNod
         onLogoClick={() => router.push('/')}
         onGetStarted={() => router.push('/')}
         onMigrateClick={() => router.push('/migrate')}
-        currency="USD"
+        currency="usd"
         onCurrencyChange={() => {}}
       />
 
