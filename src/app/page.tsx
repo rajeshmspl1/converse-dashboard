@@ -26,7 +26,8 @@ import { getUser, clearAuth, type CxUser } from '@/lib/auth'
 interface TxLine { who: 'user' | 'ai' | 'sys'; text: string; meta?: string; ts?: number }
 
 // ── Config ─────────────────────────────────────────────────────────────────
-const SERVICE_B_URL = 'http://127.0.0.1:9000'
+import { getEnv } from '@/lib/env'
+const SERVICE_B_URL = getEnv().serviceB
 const TENANT_KEY    = 'experience_shop'
 const DEFAULT_IVR_KEY = 'global_banking'
 
