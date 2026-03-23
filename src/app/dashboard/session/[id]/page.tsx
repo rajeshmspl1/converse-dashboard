@@ -1,4 +1,5 @@
 'use client'
+import { getEnv } from '@/lib/env'
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { CURRENCY_CONFIG } from '@/lib/data'
@@ -318,7 +319,7 @@ export default function SessionDashboard() {
                       setAudioLoading(true); setAudioError('')
                       try {
                         // Fetch recording list for this session from Service B
-                        const listResp = await fetch(`http://localhost:9000/recordings/session/${encodeURIComponent(session.sessionId)}`, {
+                        const listResp = await fetch(`${getEnv().serviceB}/recordings/session/${encodeURIComponent(session.sessionId)}`, {
                           headers: { 'X-Tenant-Key': session.sessionId.split('__')[0] || 'hdfc' }
                         })
                         if (listResp.ok) {
@@ -331,11 +332,11 @@ export default function SessionDashboard() {
                           const recId = audioRec?.id || audioRec?.recording_id
                           if (recId) {
                             // Try /stream first, then /play
-                            let streamResp = await fetch(`http://localhost:9000/recordings/${recId}/stream`, {
+                            let streamResp = await fetch(`${getEnv().serviceB}/recordings/${recId}/stream`, {
                               headers: { 'X-Tenant-Key': session.sessionId.split('__')[0] || 'hdfc' }
                             })
                             if (!streamResp.ok) {
-                              streamResp = await fetch(`http://localhost:9000/recordings/${recId}/play`, {
+                              streamResp = await fetch(`${getEnv().serviceB}/recordings/${recId}/play`, {
                                 headers: { 'X-Tenant-Key': session.sessionId.split('__')[0] || 'hdfc' }
                               })
                             }
@@ -356,7 +357,7 @@ export default function SessionDashboard() {
                         } else {
                           setAudioError('Could not fetch recordings. Service B returned ' + listResp.status)
                         }
-                      } catch (e) { setAudioError('Could not load recording. Ensure Service B is running on localhost:9000.') }
+                      } catch (e) { setAudioError('Could not load recording. Could not load recording.') }
                       setAudioLoading(false)
                     }}
                     disabled={audioLoading}
