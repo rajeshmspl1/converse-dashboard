@@ -1,4 +1,5 @@
 'use client'
+import { getEnv } from '@/lib/env'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { getUser, clearAuth, fetchI, isLoggedIn, type CxUser } from '@/lib/auth'
@@ -9,7 +10,7 @@ import TelephonyTab from '@/components/dashboard/TelephonyTab'
 async function fetchB(path: string, method: string = 'POST', body?: any): Promise<any> {
   const token = (await import('@/lib/auth')).getAccessToken()
   if (!token) throw new Error('Not authenticated')
-  const SERVICE_B = process.env.NEXT_PUBLIC_SERVICE_B_URL || 'http://localhost:9000'
+  const SERVICE_B = typeof window !== "undefined" ? getEnv().serviceB : "http://localhost:9000"
   const res = await fetch(`${SERVICE_B}${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -359,9 +360,9 @@ function RecordingsTab({data}:{data:any}){
   const handlePlayClick = async (recordingId: number, sessionId: string) => {
     try {
       const token = localStorage.getItem('access_token')
-      const tenant = localStorage.getItem('tenant_key') || 'hdfc'
+      const tenant = JSON.parse(localStorage.getItem('cx_user')||'{}').tenant_key || 'experience_shop'
       
-      const response = await fetch(`http://localhost:9000/recordings/${recordingId}/stream`, {
+      const response = await fetch(`${getEnv().serviceB}/recordings/${recordingId}/stream`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'X-Tenant-Key': tenant,
@@ -1366,7 +1367,7 @@ export default function DashboardPage(){
       else if(t==='sessions'){const data=await fetchI('/api/i/sessions',{days:d,limit:20,offset:page*20});setSessionsData(data.sessions||[]);setSessionsTotal(data.total||0);setSessionsPage(page)}
       else if(t==='costs'){const data=await fetchI('/api/i/costs',{days:d});setCostsData(data)}
       if(!xRates.live){try{const xr=await fetchI('/api/i/recordings/exchange-rates',{});if(xr?.rates){setXRates(xr)}}catch(_){}}
-      else if(t==='quality'){const data=await fetchI('/api/i/quality',{days:d});setQualityData(data)}
+      if(t==='quality'){const data=await fetchI('/api/i/quality',{days:d});setQualityData(data)}
       else if(t==='recordings'){const data=await fetchI('/api/i/recordings',{days:d});setRecordingsData(data)}
       else if(t==='provisioning'){
         if(user?.role==='super_admin'){

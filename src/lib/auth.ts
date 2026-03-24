@@ -1,3 +1,4 @@
+import { getEnv } from "./env"
 const ACCESS_KEY  = 'cx_access_token'
 const REFRESH_KEY = 'cx_refresh_token'
 const USER_KEY    = 'cx_user'
@@ -52,8 +53,8 @@ export function isLoggedIn(): boolean {
   return !!getAccessToken() && !!getUser()
 }
 
-const SERVICE_B_URL = process.env.NEXT_PUBLIC_SERVICE_B_URL || 'http://localhost:9000'
-const SERVICE_I_URL = process.env.NEXT_PUBLIC_SERVICE_I_URL || 'http://localhost:8004'
+const SERVICE_B_URL = typeof window !== "undefined" ? getEnv().serviceB : "http://localhost:9000"
+const SERVICE_I_URL = typeof window !== "undefined" ? getEnv().serviceI : "http://localhost:8004"
 
 export async function login(email: string, password: string): Promise<AuthTokens> {
   const res = await fetch(`${SERVICE_B_URL}/auth/login`, {

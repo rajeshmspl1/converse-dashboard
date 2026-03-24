@@ -1,4 +1,5 @@
-'use client';
+'use client'
+import { getEnv } from '@/lib/env';
 
 import React, { useState, useEffect } from 'react';
 
@@ -10,7 +11,7 @@ import React, { useState, useEffect } from 'react';
    a new "Leads" tab.
    ──────────────────────────────────────────────────────────── */
 
-const SERVICE_B_URL = process.env.NEXT_PUBLIC_SERVICE_B_URL || 'http://localhost:9000';
+const SERVICE_B_URL = typeof window !== "undefined" ? getEnv().serviceB : "http://localhost:9000";
 
 function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
