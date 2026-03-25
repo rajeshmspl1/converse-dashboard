@@ -40,8 +40,9 @@ export interface LiveCallState {
 /** Optional params for connect — additive, all fields optional */
 export interface ConnectOpts {
   routingMode?: string    // 'premium' | 'complexity' | 'sales' | 'hybrid'
-  callerMobile?: string   // test phone for CRM lookup (Journey 4)
+  callerMobile?: string   // test phone for CRM lookup (Journey 2 sales + Journey 4 value)
   experienceLevel?: number // override experience level (3=Gemini, 5=pipeline, etc)
+  crmTier?: string        // R157: 'gold' | 'silver' | 'bronze' — for Route by Value (J4)
 }
 
 export interface UseLiveKitCallReturn {
@@ -162,6 +163,7 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
           ...callerGeo,
           ...(opts?.routingMode ? { routing_mode: opts.routingMode } : {}),
           ...(opts?.experienceLevel ? { experience_level: opts.experienceLevel } : {}),
+          ...(opts?.crmTier ? { crm_tier: opts.crmTier } : {}),
         }),
       })
       if (!sessResp.ok) {
@@ -187,7 +189,8 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
           identity: `web_user_${Date.now()}`,
           ...(opts?.routingMode ? { routing_mode: opts.routingMode } : {}),
           ...(opts?.experienceLevel ? { experience_level: opts.experienceLevel } : {}),
-          ...(opts?.callerMobile ? { metadata: { caller_mobile: opts.callerMobile } } : {}),
+          ...(opts?.callerMobile ? { metadata: { caller_mobile: opts.callerMobile, ...(opts?.crmTier ? { crm_tier: opts.crmTier } : {}) } } : 
+              opts?.crmTier ? { metadata: { crm_tier: opts.crmTier } } : {}),
         }),
       })
       if (!tokenResp.ok) throw new Error(`Token fetch failed: ${tokenResp.status}`)

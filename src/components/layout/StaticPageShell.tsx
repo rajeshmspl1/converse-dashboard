@@ -5,7 +5,7 @@ import Logo from '@/components/ui/Logo'
 
 const FOOTER_LINKS = {
   Product: [
-    { label: 'Experience Shop', href: '/' },
+    { label: 'Experience Shop', href: '/?journey=0' },
     { label: 'Pricing', href: '/pricing' },
     { label: 'How It Works', href: '/how-it-works' },
     { label: 'FAQ', href: '/faq' },
@@ -15,6 +15,8 @@ const FOOTER_LINKS = {
     { label: 'Insurance', href: '/industries/insurance' },
     { label: 'Healthcare', href: '/industries/healthcare' },
     { label: 'Telecom', href: '/industries/telecom' },
+    { label: 'E-Commerce', href: '/industries/ecommerce' },
+    { label: 'Hospitality', href: '/industries/hospitality' },
   ],
   Company: [
     { label: 'Contact Sales', href: '/contact-sales' },

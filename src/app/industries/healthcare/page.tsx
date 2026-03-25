@@ -16,7 +16,7 @@ export default function HealthcarePage() {
       { label: 'CSAT', before: '2.9', after: '4.6' },
       { label: 'Containment', before: '22%', after: '75%' },
       { label: 'No-show reduction', before: '18%', after: '8%' },
-      { label: 'Cost per call', before: '$0.06', after: '$0.006' },
+      { label: 'Cost per call', before: '$0.06', after: '$0.005' },
     ]}
     challenges={[
       { problem: 'Patients wait 10+ minutes to book a simple appointment', solution: 'AI books in 10 seconds. Sends SMS confirmation. No-show reminders automated.' },

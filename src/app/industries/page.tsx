@@ -41,7 +41,7 @@ export default function IndustriesPage() {
                   <div className="text-[8px]" style={{ color: 'var(--tx3)' }}>CSAT</div>
                 </div>
                 <div className="text-center p-2 rounded-lg" style={{ background: 'var(--s2)' }}>
-                  <div className="text-[10px] font-bold" style={{ color: 'var(--tx2)' }}>$0.006</div>
+                  <div className="text-[10px] font-bold" style={{ color: 'var(--tx2)' }}>$0.005</div>
                   <div className="text-[8px]" style={{ color: 'var(--tx3)' }}>From/intent</div>
                 </div>
               </div>

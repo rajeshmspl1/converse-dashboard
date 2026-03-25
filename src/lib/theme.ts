@@ -58,7 +58,7 @@ export const T = {
 
 // ── Typography ───────────────────────────────────────────────────
 export const FONTS = {
-  ui:   'Inter, system-ui, -apple-system, sans-serif',
+  ui:   "'DM Sans', 'Inter', system-ui, -apple-system, sans-serif",
   mono: "'JetBrains Mono', 'Fira Code', monospace",
 } as const
 

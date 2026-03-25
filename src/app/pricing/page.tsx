@@ -38,15 +38,15 @@ export default function PricingPage() {
               <span className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: '#00c9b1', color: '#000' }}>1</span>
               <span className="text-[12px] font-bold">Lower Cost</span>
             </div>
-            <div className="text-[24px] sm:text-[28px] font-extrabold mb-0.5" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#00c9b1' }}>$0.006</div>
+            <div className="text-[24px] sm:text-[28px] font-extrabold mb-0.5" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#00c9b1' }}>$0.005</div>
             <div className="text-[10px] mb-3" style={{ color: 'var(--tx3)' }}>per intent · ~35s avg</div>
             <div className="text-[10px] leading-relaxed mb-3 flex-1" style={{ color: 'var(--tx2)' }}>
-              Flat rate. Every resolved intent costs $0.006. Disconnects = $0. Hold = $0. Uses Exp 5 (Azure STT + GPT-4o-mini + Azure TTS).
+              Flat rate. Every resolved intent costs $0.005. Disconnects = $0. Hold = $0. Uses Exp 5 (Azure STT + GPT-4o-mini + Azure TTS).
             </div>
             <div className="p-2.5 rounded-lg text-[9px] mb-3" style={{ background: 'var(--s2, #111d30)' }}>
               <div className="flex justify-between mb-1"><span style={{ color: 'var(--tx3)' }}>Traditional (35s)</span><span style={{ color: '#f03060' }}>$0.04</span></div>
-              <div className="flex justify-between"><span style={{ color: 'var(--tx3)' }}>AiIVRs</span><span className="font-bold" style={{ color: '#00c9b1' }}>$0.006</span></div>
-              <div className="mt-1 font-bold" style={{ color: '#00de7a' }}>85% savings</div>
+              <div className="flex justify-between"><span style={{ color: 'var(--tx3)' }}>AiIVRs</span><span className="font-bold" style={{ color: '#00c9b1' }}>$0.005</span></div>
+              <div className="mt-1 font-bold" style={{ color: '#00de7a' }}>90% savings</div>
             </div>
             <button onClick={() => goJourney(0)} className="w-full py-2.5 rounded-lg text-[11px] font-bold cursor-pointer border-none"
               style={{ background: '#00c9b1', color: '#000' }}>▶ Try Lower Cost Demo</button>
@@ -58,13 +58,13 @@ export default function PricingPage() {
               <span className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: '#00de7a', color: '#000' }}>2</span>
               <span className="text-[12px] font-bold">Service → Revenue</span>
             </div>
-            <div className="text-[24px] sm:text-[28px] font-extrabold mb-0.5" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#00de7a' }}>$0.006</div>
+            <div className="text-[24px] sm:text-[28px] font-extrabold mb-0.5" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#00de7a' }}>$0.005</div>
             <div className="text-[10px] mb-3" style={{ color: 'var(--tx3)' }}>same price + commission on conversions</div>
             <div className="text-[10px] leading-relaxed mb-3 flex-1" style={{ color: 'var(--tx2)' }}>
-              Same $0.006/intent. After resolving, AI surfaces ONE CRM offer. Sales leads = free. Commission only on conversions. ~40–50s avg.
+              Same $0.005/intent. After resolving, AI surfaces ONE CRM offer. Sales leads = free. Commission only on conversions. ~40–50s avg.
             </div>
             <div className="p-2.5 rounded-lg text-[9px] mb-3" style={{ background: 'var(--s2, #111d30)' }}>
-              <div className="flex justify-between mb-1"><span style={{ color: 'var(--tx3)' }}>Per-intent</span><span className="font-bold" style={{ color: '#00c9b1' }}>$0.006</span></div>
+              <div className="flex justify-between mb-1"><span style={{ color: 'var(--tx3)' }}>Per-intent</span><span className="font-bold" style={{ color: '#00c9b1' }}>$0.005</span></div>
               <div className="flex justify-between mb-1"><span style={{ color: 'var(--tx3)' }}>Sales leads</span><span className="font-bold" style={{ color: '#00de7a' }}>FREE</span></div>
               <div className="flex justify-between"><span style={{ color: 'var(--tx3)' }}>Commission</span><span className="font-bold" style={{ color: '#f5a623' }}>On conversion only</span></div>
             </div>
@@ -79,16 +79,16 @@ export default function PricingPage() {
               <span className="text-[12px] font-bold">Recover Frustrated</span>
             </div>
             <div className="text-[20px] sm:text-[24px] font-extrabold mb-0.5" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-              <span style={{ color: '#00c9b1' }}>$0.006</span>
+              <span style={{ color: '#00c9b1' }}>$0.005</span>
               <span className="text-[14px]" style={{ color: 'var(--tx3)' }}> → </span>
               <span style={{ color: '#f03060' }}>$0.018</span>
             </div>
             <div className="text-[10px] mb-3" style={{ color: 'var(--tx3)' }}>auto-escalates on frustration · ~35–45s</div>
             <div className="text-[10px] leading-relaxed mb-3 flex-1" style={{ color: 'var(--tx2)' }}>
-              Starts at $0.006. Frustration detected → hot-swap to empathetic AI ($0.018). No transfer. Recovery in 3 seconds. 80% of calls stay at base.
+              Starts at $0.005. Frustration detected → hot-swap to empathetic AI ($0.018). No transfer. Recovery in 3 seconds. 80% of calls stay at base.
             </div>
             <div className="p-2.5 rounded-lg text-[9px] mb-3" style={{ background: 'var(--s2, #111d30)' }}>
-              <div className="flex justify-between mb-1"><span style={{ color: 'var(--tx3)' }}>Normal call</span><span className="font-bold" style={{ color: '#00c9b1' }}>$0.006</span></div>
+              <div className="flex justify-between mb-1"><span style={{ color: 'var(--tx3)' }}>Normal call</span><span className="font-bold" style={{ color: '#00c9b1' }}>$0.005</span></div>
               <div className="flex justify-between mb-1"><span style={{ color: 'var(--tx3)' }}>Escalated call</span><span className="font-bold" style={{ color: '#f03060' }}>$0.018</span></div>
               <div className="flex justify-between"><span style={{ color: 'var(--tx3)' }}>Blended avg</span><span className="font-bold" style={{ color: '#f5a623' }}>~$0.008</span></div>
             </div>
@@ -103,7 +103,7 @@ export default function PricingPage() {
               <span className="text-[12px] font-bold">Route by Value</span>
             </div>
             <div className="text-[20px] sm:text-[24px] font-extrabold mb-0.5" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-              <span style={{ color: '#cd7f32' }}>$0.006</span>
+              <span style={{ color: '#cd7f32' }}>$0.005</span>
               <span className="text-[14px]" style={{ color: 'var(--tx3)' }}> – </span>
               <span style={{ color: '#f5a623' }}>$0.018</span>
             </div>
@@ -114,7 +114,7 @@ export default function PricingPage() {
             <div className="p-2.5 rounded-lg text-[9px] mb-3" style={{ background: 'var(--s2, #111d30)' }}>
               <div className="flex justify-between mb-1"><span style={{ color: '#f5a623' }}>🥇 Gold (HNI)</span><span className="font-bold" style={{ color: '#f5a623' }}>$0.018</span></div>
               <div className="flex justify-between mb-1"><span style={{ color: '#c0c0c0' }}>🥈 Silver (Mid)</span><span className="font-bold" style={{ color: 'var(--tx2)' }}>$0.013</span></div>
-              <div className="flex justify-between"><span style={{ color: '#cd7f32' }}>🥉 Bronze (Routine)</span><span className="font-bold" style={{ color: 'var(--tx2)' }}>$0.006</span></div>
+              <div className="flex justify-between"><span style={{ color: '#cd7f32' }}>🥉 Bronze (Routine)</span><span className="font-bold" style={{ color: 'var(--tx2)' }}>$0.005</span></div>
             </div>
             <button onClick={() => goJourney(3)} className="w-full py-2.5 rounded-lg text-[11px] font-bold cursor-pointer border-none"
               style={{ background: '#f5a623', color: '#000' }}>▶ Try Value Routing Demo</button>
@@ -151,7 +151,7 @@ export default function PricingPage() {
         <p className="text-center text-[13px] sm:text-[14px] mb-8 mx-auto" style={{ color: 'var(--tx2)', maxWidth: 560 }}>Four scenarios. Only one costs you anything.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { scenario: 'Customer asks "check my balance"', time: '~5 seconds', cost: '$0.006', color: '#00c9b1', free: false },
+            { scenario: 'Customer asks "check my balance"', time: '~5 seconds', cost: '$0.005', color: '#00c9b1', free: false },
             { scenario: 'Customer disconnects after 10s', time: '10 seconds', cost: '$0.00', color: '#00de7a', free: true },
             { scenario: 'Customer on hold waiting', time: '3 minutes', cost: '$0.00', color: '#f5a623', free: true },
             { scenario: 'AI can\'t resolve, transfers to agent', time: '45 seconds', cost: '$0.00', color: '#3370E8', free: true },
@@ -180,7 +180,7 @@ export default function PricingPage() {
           </div>
           <div className="p-5 rounded-xl border" style={{ background: 'var(--s1)', borderColor: 'rgba(0,201,177,.2)' }}>
             <div className="text-[14px] font-bold mb-3" style={{ color: '#00c9b1' }}>AiIVRs</div>
-            {['Bills per intent ($0.006–$0.018)', 'Hold time is free', 'Disconnects are free', 'Silence is free', 'Unresolved intents are free', '80%+ containment rate', 'CSAT: 4.0–4.5', 'Setup: 17 minutes'].map((item, i) => (
+            {['Bills per intent ($0.005–$0.018)', 'Hold time is free', 'Disconnects are free', 'Silence is free', 'Unresolved intents are free', '80%+ containment rate', 'CSAT: 4.0–4.5', 'Setup: 17 minutes'].map((item, i) => (
               <div key={i} className="text-[11px] py-1.5 border-b flex items-center gap-2" style={{ color: 'var(--tx2)', borderColor: 'rgba(28,45,69,.3)' }}>
                 <span style={{ color: '#00c9b1' }}>✓</span> {item}
               </div>
@@ -207,9 +207,9 @@ export default function PricingPage() {
       {/* JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         '@context': 'https://schema.org', '@type': 'Product', name: 'AiIVRs AI IVR Platform',
-        description: 'Per-intent AI IVR pricing. 4 journey models from $0.006/intent.',
+        description: 'Per-intent AI IVR pricing. 4 journey models from $0.005/intent.',
         brand: { '@type': 'Brand', name: 'AiIVRs' },
-        offers: { '@type': 'AggregateOffer', priceCurrency: 'USD', lowPrice: '0.006', highPrice: '0.018', offerCount: 4 },
+        offers: { '@type': 'AggregateOffer', priceCurrency: 'USD', lowPrice: '0.005', highPrice: '0.018', offerCount: 4 },
       })}} />
     </StaticPageShell>
   )

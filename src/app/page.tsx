@@ -36,6 +36,7 @@ function HomeInner() {
   const qTenant = searchParams.get("tenant_key")
   const qIvr = searchParams.get("ivr_key")
   const currency    = useStore(s => s.currency)
+  useEffect(() => { if (qIvr && qIvr !== selectedIvrRef.current) updateSelectedIvr(qIvr) }, [qIvr])
   const setCurrency = useStore(s => s.setCurrency)
   const baseExp     = useStore(s => s.baseExp)
   const setBaseExp  = useStore(s => s.setBaseExp)
@@ -113,6 +114,9 @@ function HomeInner() {
     preferred_language: string; country_code: string; country_name: string;
   } | null>(null)
   const [demoProfileLoading, setDemoProfileLoading] = useState(false)
+
+  // ── R157: Value Tier selection (Journey 4 — Route by Value) ────────────────
+  const [valueTier, setValueTier] = useState<'gold' | 'silver' | 'bronze'>('silver')
   const [callerCountry, setCallerCountry] = useState('India')
 
   useEffect(() => {
@@ -292,16 +296,20 @@ function HomeInner() {
     return () => clearTimeout(t)
   }, [demoStep]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Fetch CRM demo profile when entering sales journey ─────────────────────
+  // ── Fetch CRM demo profile when entering sales or value-routing journey ───
   useEffect(() => {
-    if (!scenario || scenario.mode !== 'sales') {
+    if (!scenario || (scenario.mode !== 'sales' && demoStep !== 3)) {
       setDemoProfile(null)
       return
     }
     let cancelled = false
     setDemoProfileLoading(true)
     const industry = (selectedIvrRef.current || 'global_banking').replace('global_', '')
-    fetch(`${SERVICE_B_URL.replace(':9000', ':9700')}/crm/demo-profile?country=${encodeURIComponent(callerCountry)}&industry=${industry}`)
+    // R157: For value routing (demoStep 3), fetch profile matching the selected value tier
+    const classificationFilter = demoStep === 3
+      ? `&classification=${valueTier === 'silver' ? 'AT_RISK' : valueTier === 'bronze' ? 'STANDARD' : 'HIGH_VALUE'}`
+      : ''
+    fetch(`${SERVICE_B_URL.replace(':9000', ':9700')}/crm/demo-profile?country=${encodeURIComponent(callerCountry)}&industry=${industry}${classificationFilter}`)
       .then(r => r.json())
       .then(data => {
         if (!cancelled && data?.mobile) setDemoProfile(data)
@@ -309,7 +317,7 @@ function HomeInner() {
       .catch(() => {})
       .finally(() => { if (!cancelled) setDemoProfileLoading(false) })
     return () => { cancelled = true }
-  }, [demoStep, scenario, selectedIvr, callerCountry])
+  }, [demoStep, scenario, selectedIvr, callerCountry, valueTier])
 
   // ── Start call ────────────────────────────────────────────────────────────
   const handleStart = useCallback(() => {
@@ -328,7 +336,8 @@ function HomeInner() {
     liveCall.connect(qTenant || (currentUser?.tenant_key ?? TENANT_KEY), qIvr || (currentUser?.ivr_keys?.[0] ?? selectedIvrRef.current), SERVICE_B_URL, {
       routingMode: scenario?.mode,
       ...(scenario?.experienceLevel ? { experienceLevel: scenario.experienceLevel } : {}),
-      ...(scenario?.mode === 'sales' ? { callerMobile: demoProfile?.mobile || '+919876543210' } : {}),
+      ...((scenario?.mode === 'sales' || demoStep === 3) ? { callerMobile: demoProfile?.mobile || '+919876543210' } : {}),
+      ...(demoStep === 3 ? { crmTier: valueTier } : {}),
     })
 
     if (!revealed.has('cards')) {
@@ -416,7 +425,7 @@ function HomeInner() {
         user={currentUser}
         onSignIn={() => router.push('/login')}
         onSignOut={handleSignOut}
-        onLogoClick={() => setEverStarted(false)}
+        onLogoClick={() => { window.location.href = '/' }}
         onGetStarted={handleHomepageStart}
         onMigrateClick={() => handleMigrate('header_nav_migrate')}
         currency={currency}
@@ -565,8 +574,33 @@ function HomeInner() {
                     </div>
                   )}
 
-                  {/* ── CRM Demo Profile Card (sales journey only) ── */}
-                  {scenario?.mode === 'sales' && demoProfile && (
+                  {/* ── R157: Value Tier Selector (Route by Value journey only) ── */}
+                  {demoStep === 3 && (
+                    <div className="flex gap-3 justify-center mb-5">
+                      {([
+                        { tier: 'gold' as const, label: '🥇 Gold', color: '#f5a623', desc: 'Coming Soon', disabled: true },
+                        { tier: 'silver' as const, label: '🥈 Silver', color: '#c0c0c0', desc: 'Gemini S2S · Exp 3', disabled: false },
+                        { tier: 'bronze' as const, label: '🥉 Bronze', color: '#cd7f32', desc: 'Pipeline · Exp 4/5', disabled: false },
+                      ]).map(t => (
+                        <button key={t.tier}
+                          onClick={() => !t.disabled && setValueTier(t.tier)}
+                          className="px-5 py-3 rounded-xl border text-center min-w-[120px] transition-all"
+                          style={{
+                            background: valueTier === t.tier ? `${t.color}15` : 'var(--card)',
+                            borderColor: valueTier === t.tier ? t.color : 'var(--b1)',
+                            opacity: t.disabled ? 0.4 : 1,
+                            cursor: t.disabled ? 'not-allowed' : 'pointer',
+                            transform: valueTier === t.tier ? 'scale(1.05)' : 'scale(1)',
+                          }}>
+                          <div className="text-[14px] font-bold mb-0.5" style={{ color: t.color }}>{t.label}</div>
+                          <div className="text-[9px]" style={{ color: t.disabled ? 'var(--dim)' : 'var(--text)' }}>{t.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* ── CRM Demo Profile Card (sales + value routing journeys) ── */}
+                  {(scenario?.mode === 'sales' || demoStep === 3) && demoProfile && (
                     <div className="mx-auto mb-5 px-5 py-4 rounded-xl border text-left"
                       style={{ maxWidth: 440, background: 'rgba(51,112,232,.06)', borderColor: 'rgba(51,112,232,.18)' }}>
                       <div className="text-[9px] uppercase tracking-wide font-bold mb-2" style={{ color: '#3370E8' }}>
@@ -611,7 +645,10 @@ function HomeInner() {
                         onClick={() => {
                           setDemoProfileLoading(true)
                           const ind = (selectedIvrRef.current || 'global_banking').replace('global_', '')
-                          fetch(`${SERVICE_B_URL.replace(':9000', ':9700')}/crm/demo-profile?country=${encodeURIComponent(callerCountry)}&industry=${ind}`)
+                          const classFilter = demoStep === 3
+                            ? `&classification=${valueTier === 'silver' ? 'AT_RISK' : valueTier === 'bronze' ? 'STANDARD' : 'HIGH_VALUE'}`
+                            : ''
+                          fetch(`${SERVICE_B_URL.replace(':9000', ':9700')}/crm/demo-profile?country=${encodeURIComponent(callerCountry)}&industry=${ind}${classFilter}`)
                             .then(r => r.json())
                             .then(data => { if (data?.mobile) setDemoProfile(data) })
                             .catch(() => {})
@@ -621,20 +658,22 @@ function HomeInner() {
                       </div>
                     </div>
                   )}
-                  {scenario?.mode === 'sales' && !demoProfile && demoProfileLoading && (
+                  {(scenario?.mode === 'sales' || demoStep === 3) && !demoProfile && demoProfileLoading && (
                     <div className="mx-auto mb-5 text-[11px]" style={{ color: 'var(--dim)' }}>
                       Loading customer profile…
                     </div>
                   )}
 
                   <button onClick={handleStart}
+                    disabled={demoStep === 3 && valueTier === 'gold'}
                     className="inline-flex items-center gap-2 px-12 py-4 rounded-xl text-[17px] font-bold cursor-pointer transition-all hover:-translate-y-0.5 mb-1 border-none"
                     style={{
-                      background: jConfig?.color,
-                      color: jConfig?.color === '#f03060' ? '#fff' : '#000',
+                      background: (demoStep === 3 && valueTier === 'gold') ? 'var(--b1)' : jConfig?.color,
+                      color: (demoStep === 3 && valueTier === 'gold') ? 'var(--dim)' : (jConfig?.color === '#f03060' ? '#fff' : '#000'),
                       boxShadow: '0 4px 20px rgba(0,0,0,.3)',
+                      cursor: (demoStep === 3 && valueTier === 'gold') ? 'not-allowed' : 'pointer',
                     }}>
-                    ▶ {demoStep === 0 ? 'Try routine intent demo' : demoStep === 1 ? 'Try revenue discovery demo' : demoStep === 2 ? 'Try frustration escalation demo' : 'Try value-based routing demo'}
+                    ▶ {demoStep === 0 ? 'Try routine intent demo' : demoStep === 1 ? 'Try revenue discovery demo' : demoStep === 2 ? 'Try frustration escalation demo' : (demoStep === 3 && valueTier === 'gold') ? '🥇 Gold — Coming Soon' : `Try ${valueTier || 'value-based'} routing demo`}
                   </button>
                   <div className="text-[9px] mb-2" style={{ color: 'var(--dim)' }}>Zero integration · Zero cost · In 17 minutes</div>
 

@@ -299,7 +299,7 @@ export default function MigratePage() {
                 {completedIvrs.length > 1 && (
                   <div className="f1" style={{display:'flex',alignItems:'center',gap:10,marginBottom:14,padding:'10px 14px',background:colors.s1,border:`1px solid ${colors.b1}`,borderRadius:9}}>
                     <span style={{fontSize:10,fontWeight:700,color:colors.tx3,textTransform:'uppercase',letterSpacing:0.5,flexShrink:0}}>IVR</span>
-                    <select value={selectedIvrTenant} onChange={e=>setSelectedIvrTenant(e.target.value)} style={{flex:1,padding:'6px 10px',borderRadius:6,background:colors.s2,border:`1px solid ${colors.b1}`,color:colors.tx,fontSize:12,fontWeight:600,fontFamily:"'Inter',sans-serif",outline:'none',cursor:'pointer',appearance:'auto' as any}}>
+                    <select value={selectedIvrTenant} onChange={e=>setSelectedIvrTenant(e.target.value)} style={{flex:1,padding:'6px 10px',borderRadius:6,background:colors.s2,border:`1px solid ${colors.b1}`,color:colors.tx,fontSize:12,fontWeight:600,fontFamily:"'DM Sans','Inter',sans-serif",outline:'none',cursor:'pointer',appearance:'auto' as any}}>
                       {completedIvrs.map(ivr=>(<option key={ivr.tenant_key} value={ivr.tenant_key}>{ivr.ivr_name}</option>))}
                     </select>
                     <button onClick={()=>{setView('cards');setSelectedFiles([]);setIvrName('');setError('');}} style={{padding:'6px 14px',borderRadius:6,border:`1px solid ${colors.b1}`,background:'transparent',color:colors.purple,fontSize:10,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap'}}>+ Add IVR</button>
@@ -394,7 +394,7 @@ export default function MigratePage() {
                         <div>
                           <label style={{fontSize:10,fontWeight:600,color:colors.tx3,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:0.5}}>Full Name</label>
                           <input type="text" placeholder="Your name" value={contactName} onChange={e=>setContactName(e.target.value)}
-                            style={{width:'100%',padding:'10px 14px',borderRadius:8,background:colors.s2,border:`1px solid ${colors.b1}`,color:colors.tx,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none'}} />
+                            style={{width:'100%',padding:'10px 14px',borderRadius:8,background:colors.s2,border:`1px solid ${colors.b1}`,color:colors.tx,fontSize:13,fontFamily:"'DM Sans','Inter',sans-serif",outline:'none'}} />
                         </div>
                         <div>
                           <label style={{fontSize:10,fontWeight:600,color:colors.tx3,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:0.5}}>Phone Number</label>
@@ -404,7 +404,7 @@ export default function MigratePage() {
                         <div>
                           <label style={{fontSize:10,fontWeight:600,color:colors.tx3,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:0.5}}>Email</label>
                           <input type="email" placeholder="you@company.com" value={contactEmail} onChange={e=>setContactEmail(e.target.value)}
-                            style={{width:'100%',padding:'10px 14px',borderRadius:8,background:colors.s2,border:`1px solid ${colors.b1}`,color:colors.tx,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none'}} />
+                            style={{width:'100%',padding:'10px 14px',borderRadius:8,background:colors.s2,border:`1px solid ${colors.b1}`,color:colors.tx,fontSize:13,fontFamily:"'DM Sans','Inter',sans-serif",outline:'none'}} />
                         </div>
                       </div>
 
@@ -518,7 +518,7 @@ export default function MigratePage() {
                     )}
                   </div>
                   {selectedFiles.length===0 && (<div style={{display:'flex',gap:3,flexWrap:'wrap',marginBottom:10}}>{ALLOWED_EXTENSIONS.map(ext=>(<span key={ext} style={{padding:'2px 6px',borderRadius:3,fontSize:9,fontWeight:600,background:'rgba(139,92,246,.1)',color:colors.purple,fontFamily:"'JetBrains Mono',monospace"}}>{ext}</span>))}</div>)}
-                  <input type="text" placeholder="IVR name (e.g. Retail Banking)" value={ivrName} onChange={e=>setIvrName(e.target.value)} style={{width:'100%',padding:'8px 12px',borderRadius:7,background:colors.s2,border:`1px solid ${ivrName.trim()?'rgba(0,201,177,.3)':colors.b1}`,color:colors.tx,fontSize:11,marginBottom:10,fontFamily:"'Inter',sans-serif",outline:'none'}} />
+                  <input type="text" placeholder="IVR name (e.g. Retail Banking)" value={ivrName} onChange={e=>setIvrName(e.target.value)} style={{width:'100%',padding:'8px 12px',borderRadius:7,background:colors.s2,border:`1px solid ${ivrName.trim()?'rgba(0,201,177,.3)':colors.b1}`,color:colors.tx,fontSize:11,marginBottom:10,fontFamily:"'DM Sans','Inter',sans-serif",outline:'none'}} />
                   <input type="tel" placeholder="IVR number (optional)" value={optionalPhone} onChange={e=>setOptionalPhone(e.target.value)} style={{width:'100%',padding:'8px 12px',borderRadius:7,background:colors.s2,border:`1px solid ${colors.b1}`,color:colors.tx,fontSize:11,marginBottom:10,fontFamily:"'JetBrains Mono',monospace",outline:'none'}} />
                   {selectedFiles.length>0 && (<button onClick={handleFileUpload} disabled={uploading} style={{width:'100%',padding:'10px 0',borderRadius:9,border:'none',background:uploading?colors.b2:colors.purple,color:'#fff',fontSize:13,fontWeight:700,cursor:uploading?'default':'pointer',marginBottom:10,transition:'all .2s'}}>{uploading?'Uploading...':`Upload ${selectedFiles.length} file${selectedFiles.length>1?'s':''}`}</button>)}
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>

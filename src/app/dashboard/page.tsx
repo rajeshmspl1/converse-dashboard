@@ -1410,7 +1410,7 @@ export default function DashboardPage(){
   if(!user)return null
 
   return(
-    <div className="flex flex-col h-screen overflow-hidden" style={{background:T.bg,color:T.tx,fontFamily:'Inter,sans-serif',fontSize:'13px'}}>
+    <div className="flex flex-col h-screen overflow-hidden" style={{background:T.bg,color:T.tx,fontFamily:"'DM Sans','Inter',sans-serif",fontSize:'13px'}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
         *{box-sizing:border-box}

@@ -16,7 +16,7 @@ export default function InsurancePage() {
       { label: 'CSAT', before: '2.5', after: '4.3' },
       { label: 'Containment', before: '25%', after: '78%' },
       { label: 'Avg resolution', before: '3 min', after: '8 sec' },
-      { label: 'Cost per call', before: '$0.05', after: '$0.006' },
+      { label: 'Cost per call', before: '$0.05', after: '$0.005' },
     ]}
     challenges={[
       { problem: 'Claim status is the #1 call reason — agents spend 40% of time on it', solution: 'AI resolves claim status in 6 seconds. Frees agents for complex cases.' },

@@ -139,11 +139,11 @@ export default function UnifiedHeader({
 
       {/* ── CENTER: Nav links (homepage) or Tabs (dashboard/session) ── */}
       {(isHomepage || isJourney) && (
-        <div className="hidden md:flex items-center gap-7 absolute left-1/2 -translate-x-1/2">
+        <div className="hidden md:flex items-center gap-4 lg:gap-7 absolute left-1/2 -translate-x-1/2">
           {['Product', 'Pricing', 'Industries', 'Docs', 'Dashboard'].map(link => (
             <a
               key={link}
-              className="text-[13px] cursor-pointer transition-colors hover:text-white"
+              className="text-[12px] lg:text-[13px] cursor-pointer transition-colors hover:text-white whitespace-nowrap"
               style={{ color: 'rgba(255,255,255,.45)', textDecoration: 'none' }}
               onClick={() => {
                 if (link === 'Dashboard') {
@@ -174,7 +174,46 @@ export default function UnifiedHeader({
             </a>
           ))}
           <a
-            className="text-[13px] cursor-pointer transition-colors font-semibold"
+            className="text-[12px] lg:text-[13px] cursor-pointer transition-colors hover:text-white whitespace-nowrap font-semibold flex flex-col items-center leading-[1.15]"
+            style={{ color: BRAND.teal, textDecoration: 'none' }}
+            onClick={() => {
+              const el = document.getElementById('integrations')
+              if (el) {
+                // Walk up to find the overflow-y-auto scroll container
+                let sp: HTMLElement | null = el.parentElement
+                while (sp) {
+                  const ov = window.getComputedStyle(sp).overflowY
+                  if (ov === 'auto' || ov === 'scroll') break
+                  sp = sp.parentElement
+                }
+                if (sp) {
+                  // Calculate offset relative to scroll container
+                  let offset = 0
+                  let node: HTMLElement | null = el
+                  while (node && node !== sp) { offset += node.offsetTop; node = node.offsetParent as HTMLElement }
+                  sp.scrollTo({ top: Math.max(0, offset - 60), behavior: 'smooth' })
+                } else {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }
+              } else {
+                router.push('/')
+                setTimeout(() => {
+                  const e = document.getElementById('integrations')
+                  if (e) {
+                    let sp2: HTMLElement | null = e.parentElement
+                    while (sp2) { const ov = window.getComputedStyle(sp2).overflowY; if (ov === 'auto' || ov === 'scroll') break; sp2 = sp2.parentElement }
+                    if (sp2) { let off = 0; let nd: HTMLElement | null = e; while (nd && nd !== sp2) { off += nd.offsetTop; nd = nd.offsetParent as HTMLElement }; sp2.scrollTo({ top: Math.max(0, off - 60), behavior: 'smooth' }) }
+                    else e.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }
+                }, 600)
+              }
+            }}
+          >
+            <span style={{ fontSize: 10, lineHeight: 1.2 }}>Zero Integration</span>
+            <span style={{ fontSize: 10, lineHeight: 1.2, opacity: 0.7 }}>Ecosystem</span>
+          </a>
+          <a
+            className="text-[12px] lg:text-[13px] cursor-pointer transition-colors font-semibold whitespace-nowrap"
             style={{ color: BRAND.teal, textDecoration: 'none' }}
             onClick={() => {
               if (onMigrateClick) onMigrateClick()
@@ -395,6 +434,16 @@ export default function UnifiedHeader({
                   )}
 
                   {/* Migrate Your IVR */}
+                  <button
+                    onClick={() => { setUserMenu(false); const el = document.getElementById('integrations'); if (el) { let sp: HTMLElement | null = el.parentElement; while (sp) { const ov = window.getComputedStyle(sp).overflowY; if (ov === 'auto' || ov === 'scroll') break; sp = sp.parentElement } if (sp) { let off = 0; let nd: HTMLElement | null = el; while (nd && nd !== sp) { off += nd.offsetTop; nd = nd.offsetParent as HTMLElement }; sp.scrollTo({ top: Math.max(0, off - 60), behavior: 'smooth' }) } else { el.scrollIntoView({ behavior: 'smooth' }) } } }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
+                    style={{ color: T.tx2, background: 'transparent' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = T.s2; e.currentTarget.style.color = T.tx }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.tx2 }}
+                  >
+                    <span className="text-[13px] w-5 text-center">🔌</span>
+                    <span className="text-[12px] font-medium">Ecosystem</span>
+                  </button>
                   <button
                     onClick={() => { setUserMenu(false); router.push('/migrate') }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"

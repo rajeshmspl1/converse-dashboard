@@ -16,10 +16,10 @@ export default function TelecomPage() {
       { label: 'CSAT', before: '2.4', after: '4.2' },
       { label: 'Containment', before: '30%', after: '85%' },
       { label: 'Avg resolution', before: '2 min', after: '6 sec' },
-      { label: 'Cost per call', before: '$0.04', after: '$0.006' },
+      { label: 'Cost per call', before: '$0.04', after: '$0.005' },
     ]}
     challenges={[
-      { problem: 'Millions of monthly calls — most are routine balance/usage checks', solution: 'AI handles routine intents at $0.006 each. Agents focus on complex issues only.' },
+      { problem: 'Millions of monthly calls — most are routine balance/usage checks', solution: 'AI handles routine intents at $0.005 each. Agents focus on complex issues only.' },
       { problem: 'Churn prevention requires proactive offers — IVR can\'t do this', solution: 'Sales Discovery detects churn signals mid-call, surfaces retention offers from CRM.' },
       { problem: 'Regional language support requires separate IVR trees', solution: 'One AI, 59 languages. Auto-detected. No separate trees. No extra cost.' },
       { problem: 'Peak hours (bill due dates) overwhelm agent capacity', solution: 'AI scales infinitely. No queue. Bill payment resolved in 8 seconds at any volume.' },

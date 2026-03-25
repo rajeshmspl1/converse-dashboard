@@ -16,7 +16,7 @@ export default function HospitalityPage() {
       { label: 'Guest satisfaction', before: '3.0', after: '4.7' },
       { label: 'Containment', before: '20%', after: '76%' },
       { label: 'Response time', before: '2 min', after: '5 sec' },
-      { label: 'Cost per call', before: '$0.06', after: '$0.006' },
+      { label: 'Cost per call', before: '$0.06', after: '$0.005' },
     ]}
     challenges={[
       { problem: 'Front desk overwhelmed during peak check-in/check-out hours', solution: 'AI handles phone inquiries. Front desk focuses on in-person guests.' },

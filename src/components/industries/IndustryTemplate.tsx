@@ -14,8 +14,22 @@ interface IndustryProps {
   compliance: string[]
 }
 
+const NAME_TO_IVR: Record<string, string> = {
+  'Banking & Finance': 'global_banking',
+  'Insurance': 'global_insurance',
+  'Healthcare': 'global_healthcare',
+  'Telecom': 'global_telecom',
+  'E-Commerce': 'global_ecommerce',
+  'Hospitality': 'global_hospitality',
+}
+
 export default function IndustryTemplate({ emoji, name, headline, subheadline, color, intents, stats, challenges, compliance }: IndustryProps) {
   const router = useRouter()
+  const ivrKey = NAME_TO_IVR[name] || 'global_banking'
+
+  const goDemo = () => {
+    router.push(`/?journey=0&ivr_key=${ivrKey}`)
+  }
 
   return (
     <StaticPageShell>
@@ -26,7 +40,7 @@ export default function IndustryTemplate({ emoji, name, headline, subheadline, c
         <h1 className="text-[28px] sm:text-[40px] font-black tracking-tight mb-3" style={{ letterSpacing: '-1px' }}>{headline}</h1>
         <p className="text-[14px] sm:text-[16px] mx-auto leading-relaxed" style={{ color: 'var(--tx2)', maxWidth: 580 }}>{subheadline}</p>
         <div className="flex justify-center gap-3 mt-5">
-          <button onClick={() => router.push('/')} className="px-6 py-2.5 rounded-[10px] text-[13px] font-bold border-none cursor-pointer" style={{ background: color, color: '#000' }}>
+          <button onClick={goDemo} className="px-6 py-2.5 rounded-[10px] text-[13px] font-bold border-none cursor-pointer" style={{ background: color, color: '#000' }}>
             ▶ Try {name} Demo
           </button>
           <button onClick={() => router.push('/contact-sales')} className="px-6 py-2.5 rounded-[10px] text-[13px] font-semibold cursor-pointer" style={{ background: 'transparent', color: 'var(--tx2)', border: '1px solid var(--b1)' }}>
@@ -38,7 +52,7 @@ export default function IndustryTemplate({ emoji, name, headline, subheadline, c
       {/* Intents */}
       <section className="max-w-[1000px] mx-auto px-4 sm:px-6 py-10" style={{ borderTop: '1px solid var(--b1)' }}>
         <h2 className="text-center text-[22px] sm:text-[28px] font-bold mb-2">Intents AI resolves for {name.toLowerCase()}</h2>
-        <p className="text-center text-[13px] mb-8" style={{ color: 'var(--tx3)' }}>Each intent resolved in seconds. Per-intent pricing from $0.006.</p>
+        <p className="text-center text-[13px] mb-8" style={{ color: 'var(--tx3)' }}>Each intent resolved in seconds. Per-intent pricing from $0.005.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {intents.map((intent, i) => (
             <div key={i} className="p-4 rounded-xl border" style={{ background: 'var(--s1)', borderColor: 'var(--b1)' }}>
@@ -99,8 +113,8 @@ export default function IndustryTemplate({ emoji, name, headline, subheadline, c
         <div className="text-center p-8 sm:p-10 rounded-2xl border" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,.06), rgba(6,182,212,.04))', borderColor: 'rgba(59,130,246,.1)' }}>
           <h2 className="text-[18px] sm:text-[22px] font-bold mb-2">Try AI IVR for {name.toLowerCase()} — live.</h2>
           <p className="text-[12px] sm:text-[13px] mb-5" style={{ color: 'var(--tx3)' }}>Hear AI resolve your sector&apos;s real intents. 17 minutes to production. No IT.</p>
-          <button onClick={() => router.push('/')} className="px-8 py-3 rounded-[10px] text-[14px] font-bold border-none cursor-pointer" style={{ background: '#00c9b1', color: '#000' }}>
-            ▶ Try Live Demo →
+          <button onClick={goDemo} className="px-8 py-3 rounded-[10px] text-[14px] font-bold border-none cursor-pointer" style={{ background: '#00c9b1', color: '#000' }}>
+            ▶ Try {name} Demo →
           </button>
         </div>
       </section>

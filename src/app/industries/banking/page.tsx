@@ -16,7 +16,7 @@ export default function BankingPage() {
       { label: 'CSAT', before: '2.8', after: '4.5' },
       { label: 'Containment', before: '28%', after: '82%' },
       { label: 'Avg resolution', before: '2.5 min', after: '5 sec' },
-      { label: 'Cost per call', before: '$0.04', after: '$0.006' },
+      { label: 'Cost per call', before: '$0.04', after: '$0.005' },
     ]}
     challenges={[
       { problem: 'Customers wait 3+ minutes navigating IVR menus for a simple balance check', solution: 'AI resolves balance in 5 seconds. No menu tree. Customer speaks, AI answers.' },

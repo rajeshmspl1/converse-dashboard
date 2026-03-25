@@ -15,7 +15,7 @@ export default function Logo({ size = 32, showWordmark = false, showTagline = fa
       <div className={`flex items-center ${className}`}>
         <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="2" y="4" width="28" height="24" rx="8" stroke="#00C9B1" strokeWidth="1.8" fill="none" />
-          <text x="16" y="20" textAnchor="middle" fontFamily="Inter, system-ui, sans-serif" fontWeight="700" fontSize="14" fill="#00C9B1">Ai</text>
+          <text x="16" y="20" textAnchor="middle" fontFamily="DM Sans, Inter, system-ui, sans-serif" fontWeight="700" fontSize="14" fill="#00C9B1">Ai</text>
         </svg>
       </div>
     )
@@ -27,7 +27,7 @@ export default function Logo({ size = 32, showWordmark = false, showTagline = fa
         <div className="flex items-center gap-0.5">
           <svg width={Math.round(30 * scale)} height={Math.round(18 * scale)} viewBox="0 0 30 18" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="1" y="1" width="28" height="16" rx="5" stroke="#00C9B1" strokeWidth="1.2" fill="none" />
-            <text x="15" y="13" textAnchor="middle" fontFamily="Inter, system-ui, sans-serif" fontWeight="700" fontSize="11.5" fill="#00C9B1">Ai</text>
+            <text x="15" y="13" textAnchor="middle" fontFamily="DM Sans, Inter, system-ui, sans-serif" fontWeight="700" fontSize="11.5" fill="#00C9B1">Ai</text>
           </svg>
           <span
             className="font-black tracking-tight leading-none"

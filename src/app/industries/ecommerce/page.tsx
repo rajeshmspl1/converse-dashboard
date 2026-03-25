@@ -3,7 +3,7 @@ export default function EcommercePage() {
   return <IndustryTemplate
     emoji="🛒" name="E-Commerce" color="#00de7a"
     headline="Order tracking, returns, refunds — resolved before the customer finishes asking."
-    subheadline="E-commerce call volumes spike during sales. AI handles 80% of calls at $0.006/intent. Scale infinitely. No hiring."
+    subheadline="E-commerce call volumes spike during sales. AI handles 80% of calls at $0.005/intent. Scale infinitely. No hiring."
     intents={[
       { name: 'Order tracking', desc: '"Where is my order?" — AI pulls order ID, carrier, tracking status, expected delivery.', time: '~5 seconds' },
       { name: 'Return request', desc: '"I want to return this item" — AI checks return eligibility, initiates return, sends shipping label.', time: '~12 seconds' },
@@ -16,10 +16,10 @@ export default function EcommercePage() {
       { label: 'CSAT', before: '2.7', after: '4.4' },
       { label: 'Containment', before: '26%', after: '80%' },
       { label: 'Avg resolution', before: '3 min', after: '7 sec' },
-      { label: 'Cost per call', before: '$0.05', after: '$0.006' },
+      { label: 'Cost per call', before: '$0.05', after: '$0.005' },
     ]}
     challenges={[
-      { problem: 'Sale days generate 10x call volume — agents can\'t scale', solution: 'AI scales infinitely. Same $0.006/intent whether it\'s 1,000 or 1,000,000 calls.' },
+      { problem: 'Sale days generate 10x call volume — agents can\'t scale', solution: 'AI scales infinitely. Same $0.005/intent whether it\'s 1,000 or 1,000,000 calls.' },
       { problem: '"Where is my order?" is 60% of all calls — agents do copy-paste from tracking', solution: 'AI resolves WISMO in 5 seconds. Agents freed for complex issues only.' },
       { problem: 'Return/refund calls create negative experience — customers already frustrated', solution: 'Frustration detection triggers empathetic AI. Returns processed conversationally, not through menus.' },
       { problem: 'Upsell opportunity lost — support calls end without any offer', solution: 'Sales Discovery: after resolving support, AI surfaces one relevant product recommendation.' },
