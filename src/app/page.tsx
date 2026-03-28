@@ -44,9 +44,12 @@ function HomeInner() {
     if (qRoutingModeRaw) sessionStorage.setItem('cx_routing_mode', qRoutingModeRaw)
   }, [qTenantRaw, qIvrRaw, qRoutingModeRaw])
 
-  const qTenant = qTenantRaw || (typeof window !== 'undefined' ? sessionStorage.getItem('cx_tenant_key') : null)
-  const qIvr = qIvrRaw || (typeof window !== 'undefined' ? sessionStorage.getItem('cx_ivr_key') : null)
-  const qRoutingMode = qRoutingModeRaw || (typeof window !== 'undefined' ? sessionStorage.getItem('cx_routing_mode') : null)
+  // R174 fix: only restore tenant from sessionStorage when autostart=true (i.e. redirected from /migrate)
+  // Plain homepage should always default to experience_shop, not sticky SIB
+  const isAutostart = searchParams.get("autostart") === "true"
+  const qTenant = qTenantRaw || (isAutostart && typeof window !== 'undefined' ? sessionStorage.getItem('cx_tenant_key') : null)
+  const qIvr = qIvrRaw || (isAutostart && typeof window !== 'undefined' ? sessionStorage.getItem('cx_ivr_key') : null)
+  const qRoutingMode = qRoutingModeRaw || (isAutostart && typeof window !== 'undefined' ? sessionStorage.getItem('cx_routing_mode') : null)
   const currency    = useStore(s => s.currency)
   useEffect(() => { if (qIvr && qIvr !== selectedIvrRef.current) updateSelectedIvr(qIvr) }, [qIvr])
   const setCurrency = useStore(s => s.setCurrency)
