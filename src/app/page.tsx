@@ -200,6 +200,8 @@ function HomeInner() {
   // ── Autostart from /migrate redirect ──────────────────────────────────────
   useEffect(() => {
     if (searchParams.get("autostart") === "true" && !everStarted) {
+      const j = searchParams.get("journey")
+      if (j !== null) { const step = parseInt(j, 10); if (!isNaN(step) && step >= 0 && step <= 3) setDemoStep(step) }
       setEverStarted(true)
     }
   }, [searchParams, everStarted])
