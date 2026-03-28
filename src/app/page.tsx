@@ -762,6 +762,8 @@ function HomeInner() {
                     demoStep={demoStep}
                     callActive={callActive}
                     intentDetected={hasIntents}
+                    callerCountry={callerCountry}
+                    initialIndustry={(selectedIvr || "").replace("global_", "") as any}
                   />
                 </div>
 

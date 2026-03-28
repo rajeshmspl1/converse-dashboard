@@ -63,10 +63,10 @@ const MODES = [
   { key:'hybrid', label:'Hybrid', color:colors.red, price:'₹2.80', unit:'/ intent avg', desc:'Best tier per call, auto.' },
 ];
 const JOURNEYS = [
-  {label:'Balance', mode:'premium', desc:'Per-intent pricing — A fires, D speaks result'},
-  {label:'Cards', mode:'sales', desc:'CRM-driven sales — A stays, speaks result + nudge'},
-  {label:'Loans', mode:'complexity', desc:'Frustration recovery — AI detects anger, upgrades'},
-  {label:'Complaints', mode:'premium', desc:'Value routing — routes by customer tier'},
+  {label:'J1 Per-Intent', routing_mode:'', desc:'Standard voice call — pay per resolved intent'},
+  {label:'J2 Value Routing', routing_mode:'premium', desc:'CRM tier drives experience — Gold/Silver/Bronze'},
+  {label:'J3 Escalation', routing_mode:'complexity', desc:'Frustrated caller? AI upgrades experience mid-call'},
+  {label:'J4 Sales', routing_mode:'sales', desc:'AI detects upsell moments — commission per conversion'},
 ];
 
 
@@ -98,7 +98,10 @@ export default function MigratePage() {
   const [selectedIvrTenant, setSelectedIvrTenant] = useState<string>('');
 
   // Journey selection (maps to homepage DEMO_SCENARIOS)
-  const [selectedJourney, setSelectedJourney] = useState(0); // 0=Balance/premium, 1=Cards/sales, 2=Loans/complexity, 3=Complaints/premium
+  const [selectedJourney, setSelectedJourney] = useState(0);
+
+  // IVR source toggle: 'my' = uploaded tenant, 'shop' = experience_shop
+  const [ivrSource, setIvrSource] = useState<'my'|'shop'>('my');
 
   // v3 sidebar state
   const [expandedStages, setExpandedStages] = useState<Set<number>>(new Set([1]));
@@ -296,7 +299,18 @@ export default function MigratePage() {
                   <div><h2 style={{fontSize:17,fontWeight:800,letterSpacing:-0.3}}>Try — Test with your IVR</h2><p style={{fontSize:11,color:colors.tx2,marginTop:1}}>Pre-UAT · Pre-firewall mode · Your flow is compiled and live.</p></div>
                 </div>
 
-                {completedIvrs.length > 1 && (
+                {/* ── My IVR / Experience Shop toggle ── */}
+                <div className="f1" style={{display:'flex',alignItems:'center',gap:0,marginBottom:14,borderRadius:9,overflow:'hidden',border:`1px solid ${colors.b1}`}}>
+                  <button onClick={()=>setIvrSource('my')} style={{flex:1,padding:'10px 16px',fontSize:12,fontWeight:700,cursor:'pointer',border:'none',transition:'all .15s',background:ivrSource==='my'?'rgba(0,201,177,.12)':colors.s1,color:ivrSource==='my'?colors.teal:colors.tx3,borderRight:`1px solid ${colors.b1}`}}>
+                    My IVR {selectedIvrTenant && ivrSource==='my' ? `· ${selectedIvrTenant.replace(/_/g,' ')}` : ''}
+                  </button>
+                  <button onClick={()=>setIvrSource('shop')} style={{flex:1,padding:'10px 16px',fontSize:12,fontWeight:700,cursor:'pointer',border:'none',transition:'all .15s',background:ivrSource==='shop'?'rgba(51,112,232,.12)':colors.s1,color:ivrSource==='shop'?colors.blue:colors.tx3}}>
+                    Experience shop
+                  </button>
+                </div>
+
+                {/* ── IVR picker (only when My IVR + multiple uploads) ── */}
+                {ivrSource==='my' && completedIvrs.length > 1 && (
                   <div className="f1" style={{display:'flex',alignItems:'center',gap:10,marginBottom:14,padding:'10px 14px',background:colors.s1,border:`1px solid ${colors.b1}`,borderRadius:9}}>
                     <span style={{fontSize:10,fontWeight:700,color:colors.tx3,textTransform:'uppercase',letterSpacing:0.5,flexShrink:0}}>IVR</span>
                     <select value={selectedIvrTenant} onChange={e=>setSelectedIvrTenant(e.target.value)} style={{flex:1,padding:'6px 10px',borderRadius:6,background:colors.s2,border:`1px solid ${colors.b1}`,color:colors.tx,fontSize:12,fontWeight:600,fontFamily:"'DM Sans','Inter',sans-serif",outline:'none',cursor:'pointer',appearance:'auto' as any}}>
@@ -305,13 +319,13 @@ export default function MigratePage() {
                     <button onClick={()=>{setView('cards');setSelectedFiles([]);setIvrName('');setError('');}} style={{padding:'6px 14px',borderRadius:6,border:`1px solid ${colors.b1}`,background:'transparent',color:colors.purple,fontSize:10,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap'}}>+ Add IVR</button>
                   </div>
                 )}
-                {completedIvrs.length === 1 && (
+                {ivrSource==='my' && completedIvrs.length === 1 && (
                   <div className="f1" style={{display:'flex',justifyContent:'flex-end',marginBottom:10}}>
                     <button onClick={()=>{setView('cards');setSelectedFiles([]);setIvrName('');setError('');}} style={{padding:'6px 14px',borderRadius:6,border:`1px solid ${colors.b1}`,background:'transparent',color:colors.purple,fontSize:10,fontWeight:700,cursor:'pointer'}}>+ Add Another IVR</button>
                   </div>
                 )}
 
-                <div className="f1" style={{fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:0.8,color:colors.tx3,marginBottom:8}}>Test Journeys</div>
+                <div className="f1" style={{fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:0.8,color:colors.tx3,marginBottom:8}}>Journeys</div>
                 <div className="f2" style={{display:'flex',alignItems:'center',padding:'10px 14px',marginBottom:14,background:colors.s1,border:`1px solid ${colors.b1}`,borderRadius:9}}>
                   {JOURNEYS.map((j,i)=>(<React.Fragment key={i}>
                     <div onClick={()=>setSelectedJourney(i)} style={{display:'flex',alignItems:'center',gap:6,flex:1,cursor:'pointer',padding:'4px 6px',borderRadius:6,transition:'all .15s',background:selectedJourney===i?'rgba(0,201,177,.08)':'transparent'}}>
@@ -328,9 +342,14 @@ export default function MigratePage() {
                     <div style={{width:46,height:46,borderRadius:'50%',background:'linear-gradient(135deg,rgba(0,201,177,.18),rgba(51,112,232,.12))',border:'1.5px solid rgba(0,201,177,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,animation:'mic-pulse 2.5s ease-in-out infinite'}}>🎙</div>
                   </div>
                   <div style={{flex:1,position:'relative',zIndex:1}}>
-                    <h3 style={{fontSize:16,fontWeight:800,marginBottom:3,letterSpacing:-0.3}}>Start a call. <span style={{color:colors.teal}}>Hear your AI IVR.</span></h3>
-                    <p style={{fontSize:11,color:colors.tx2,lineHeight:1.5,marginBottom:10}}>Your uploaded flow is running — <strong style={{color:colors.teal}}>{JOURNEYS[selectedJourney].label}</strong> journey ({JOURNEYS[selectedJourney].desc}).</p>
-                    <button onClick={()=>{window.location.href=`/?autostart=true&tenant_key=${selectedIvrTenant || migrationStatus?.tenant_key || 'experience_shop'}&ivr_key=retail&journey=${selectedJourney}`;}} style={{display:'inline-flex',alignItems:'center',gap:7,padding:'10px 24px',borderRadius:9,border:'none',background:colors.teal,color:'#000',fontSize:13,fontWeight:800,fontFamily:"'DM Sans','Inter',sans-serif",cursor:'pointer',transition:'all .2s',boxShadow:'0 4px 16px rgba(0,201,177,.2)'}}>📞 Start {JOURNEYS[selectedJourney].label} Call</button>
+                    <h3 style={{fontSize:16,fontWeight:800,marginBottom:3,letterSpacing:-0.3}}>Start a call. <span style={{color:ivrSource==='my'?colors.teal:colors.blue}}>{ivrSource==='my'?'Hear your AI IVR.':'Experience shop demo.'}</span></h3>
+                    <p style={{fontSize:11,color:colors.tx2,lineHeight:1.5,marginBottom:10}}>{ivrSource==='my'?'Your uploaded flow is running':'Demo with 6 industries'} — <strong style={{color:colors.teal}}>{JOURNEYS[selectedJourney].label}</strong> ({JOURNEYS[selectedJourney].desc}).</p>
+                    <button onClick={()=>{
+                      const tk = ivrSource==='my' ? (selectedIvrTenant || migrationStatus?.tenant_key || 'experience_shop') : 'experience_shop';
+                      const ik = ivrSource==='my' ? 'retail' : 'global_banking';
+                      const rm = JOURNEYS[selectedJourney].routing_mode;
+                      window.location.href=`/?autostart=true&tenant_key=${tk}&ivr_key=${ik}${rm?'&routing_mode='+rm:''}`;
+                    }} style={{display:'inline-flex',alignItems:'center',gap:7,padding:'10px 24px',borderRadius:9,border:'none',background:ivrSource==='my'?colors.teal:colors.blue,color:'#000',fontSize:13,fontWeight:800,fontFamily:"'DM Sans','Inter',sans-serif",cursor:'pointer',transition:'all .2s',boxShadow:ivrSource==='my'?'0 4px 16px rgba(0,201,177,.2)':'0 4px 16px rgba(51,112,232,.2)'}}>📞 Start {JOURNEYS[selectedJourney].label} Call</button>
                     <div style={{display:'flex',gap:12,marginTop:7}}>
                       {['136 intents','3-level DTMF','Pre-firewall'].map((m,i)=>(<span key={i} style={{fontSize:9,color:colors.tx3,display:'flex',alignItems:'center',gap:4}}><span style={{width:4,height:4,borderRadius:'50%',background:colors.teal}} />{m}</span>))}
                     </div>

@@ -6,13 +6,15 @@ import type { IndustryKey } from '@/lib/journeyData'
 interface Props {
   demoStep: number
   callActive: boolean
-  intentDetected: boolean // true once first intent fires
+  intentDetected: boolean
+  callerCountry?: string | null
+  initialIndustry?: IndustryKey | null
   onIndustryChange?: (industry: IndustryKey | null) => void
 }
 
-type NudgePhase = 'connecting' | 'live' | 'resolved'
+type NudgePhase = 'connecting' | 'live'
 
-export default function NudgeSystem({ demoStep, callActive, intentDetected, onIndustryChange }: Props) {
+export default function NudgeSystem({ demoStep, callActive, intentDetected, callerCountry, initialIndustry, onIndustryChange }: Props) {
   const [phase, setPhase] = useState<NudgePhase>('connecting')
   const [connectText, setConnectText] = useState('Connecting you...')
   const [connectColor, setConnectColor] = useState('#f5a623')
@@ -21,14 +23,11 @@ export default function NudgeSystem({ demoStep, callActive, intentDetected, onIn
   const [sentenceIsOr, setSentenceIsOr] = useState(false)
   const [industry, setIndustry] = useState<IndustryKey | null>(null)
   const [suggestionsVisible, setSuggestionsVisible] = useState(false)
-  const [suggestionsOpacity, setSuggestionsOpacity] = useState(1)
 
   const nudgeIdxRef = useRef(0)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const mountedRef = useRef(true)
   const jConfig = JOURNEY_CONFIGS[demoStep]
-  const jNum = demoStep + 1
-  const isDirect = SENTENCES[jNum] === 'direct'
 
   // Cleanup on unmount
   useEffect(() => {
@@ -46,8 +45,7 @@ export default function NudgeSystem({ demoStep, callActive, intentDetected, onIn
     setConnectText('Connecting you...')
     setConnectColor('#f5a623')
     setSuggestionsVisible(false)
-    setSuggestionsOpacity(1)
-    setIndustry(null)
+    setIndustry(initialIndustry || null)
     nudgeIdxRef.current = 0
 
     // Step 1: After 3s, switch to "Connected"
@@ -57,43 +55,27 @@ export default function NudgeSystem({ demoStep, callActive, intentDetected, onIn
       setConnectColor('#00de7a')
     }, 3000)
 
-    // Step 2: After 3.8s, show suggestions + transcription
+    // Step 2: After 3.8s, show suggestions (ALL journeys now)
     const t2 = setTimeout(() => {
       if (!mountedRef.current) return
-      if (isDirect) {
-        // J4 Sales: skip straight to resolved
-        setPhase('live')
-      } else {
-        setPhase('live')
-        setSuggestionsVisible(true)
-      }
+      setPhase('live')
+      setSuggestionsVisible(true)
     }, 3800)
 
     return () => { clearTimeout(t1); clearTimeout(t2) }
-  }, [callActive, isDirect])
+  }, [callActive])
 
-  // When intent detected, fade out suggestions
-  useEffect(() => {
-    if (intentDetected && phase === 'live' && !isDirect) {
-      setSuggestionsOpacity(0)
-      const t = setTimeout(() => {
-        if (!mountedRef.current) return
-        setSuggestionsVisible(false)
-        setPhase('resolved')
-      }, 500)
-      return () => clearTimeout(t)
-    }
-  }, [intentDetected, phase, isDirect])
+  // NO collapse on intent detection — suggestions persist throughout the call
+  // Removed the useEffect that faded out on intentDetected
 
-  // Sentence rotation loop
+  // Sentence rotation loop — now country-aware
   const loopSentence = useCallback(() => {
     if (!mountedRef.current) return
-    const sentences = getSentences(demoStep, industry)
+    const sentences = getSentences(demoStep, industry, callerCountry)
     if (!sentences.length) return
 
     const text = sentences[nudgeIdxRef.current % sentences.length]
 
-    // Fade in sentence
     setSentenceIsOr(false)
     setSentenceOpacity(0)
     const t1 = setTimeout(() => {
@@ -102,13 +84,11 @@ export default function NudgeSystem({ demoStep, callActive, intentDetected, onIn
       setSentenceOpacity(1)
     }, 400)
 
-    // Hold 3s, then fade out
     const t2 = setTimeout(() => {
       if (!mountedRef.current) return
       setSentenceOpacity(0)
       nudgeIdxRef.current++
 
-      // Show "or" briefly
       const t3 = setTimeout(() => {
         if (!mountedRef.current) return
         setSentenceIsOr(true)
@@ -116,7 +96,6 @@ export default function NudgeSystem({ demoStep, callActive, intentDetected, onIn
         setSentenceOpacity(1)
       }, 400)
 
-      // Fade out "or" and loop
       const t4 = setTimeout(() => {
         if (!mountedRef.current) return
         setSentenceOpacity(0)
@@ -125,22 +104,21 @@ export default function NudgeSystem({ demoStep, callActive, intentDetected, onIn
       }, 1600)
 
       timerRef.current = t3
-      // Store cleanup refs
       setTimeout(() => { timerRef.current = t4 }, 400)
     }, 3400)
 
     timerRef.current = t2
     return () => { clearTimeout(t1); clearTimeout(t2) }
-  }, [demoStep, industry])
+  }, [demoStep, industry, callerCountry])
 
   // Start/restart sentence loop when suggestions become visible
   useEffect(() => {
-    if (suggestionsVisible && phase === 'live' && !isDirect) {
+    if (suggestionsVisible && phase === 'live') {
       if (timerRef.current) clearTimeout(timerRef.current)
       loopSentence()
     }
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
-  }, [suggestionsVisible, phase, isDirect, loopSentence])
+  }, [suggestionsVisible, phase, loopSentence])
 
   // Industry chip click
   const handleIndustrySwitch = (ind: IndustryKey) => {
@@ -148,7 +126,6 @@ export default function NudgeSystem({ demoStep, callActive, intentDetected, onIn
     nudgeIdxRef.current = 0
     if (timerRef.current) clearTimeout(timerRef.current)
     onIndustryChange?.(ind)
-    // Restart loop
     setTimeout(() => loopSentence(), 100)
   }
 
@@ -166,13 +143,13 @@ export default function NudgeSystem({ demoStep, callActive, intentDetected, onIn
         </div>
       )}
 
-      {/* ═══ SUGGESTIONS LAYER (persistent, fades on intent) ═══ */}
-      {suggestionsVisible && !isDirect && (
-        <div className="mb-1.5 transition-opacity duration-500" style={{ opacity: suggestionsOpacity }}>
-          {/* Header */}
+      {/* ═══ SUGGESTIONS — persistent throughout call ═══ */}
+      {suggestionsVisible && (
+        <div className="mb-1.5">
+          {/* Header — changes based on whether intent has been detected */}
           <div className="text-center mb-1">
             <div className="text-[13px] font-semibold" style={{ color: 'var(--bright, #d8ecff)' }}>
-              Ask anything — just like you would with your IVR
+              {intentDetected ? 'Ask another question:' : 'Ask anything — just like you would with your IVR'}
             </div>
           </div>
 
@@ -212,6 +189,15 @@ export default function NudgeSystem({ demoStep, callActive, intentDetected, onIn
               </button>
             ))}
           </div>
+
+          {/* Country indicator — shows which country's prompts are active */}
+          {callerCountry && callerCountry !== 'India' && (
+            <div className="text-center mt-2">
+              <span className="text-[8px] px-2 py-0.5 rounded" style={{ background: 'rgba(51,112,232,.08)', color: 'var(--dim)' }}>
+                🌐 Showing {callerCountry} intents
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>

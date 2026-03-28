@@ -104,7 +104,6 @@ function BYOGrid() {
             style={{
               background: expanded === cat.key ? 'rgba(139,92,246,.1)' : 'rgba(139,92,246,.04)',
               border: '1px solid rgba(139,92,246,.1)',
-              ringColor: '#8b5cf6',
             }}>
             <div className="text-[24px] mb-1">{cat.icon}</div>
             <div className="text-[9px] font-bold" style={{ color: '#8b5cf6' }}>{cat.name}</div>
