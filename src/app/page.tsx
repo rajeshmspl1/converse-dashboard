@@ -33,8 +33,20 @@ const DEFAULT_IVR_KEY = 'global_banking'
 
 function HomeInner() {
   const searchParams = useSearchParams()
-  const qTenant = searchParams.get("tenant_key")
-  const qIvr = searchParams.get("ivr_key")
+  const qTenantRaw = searchParams.get("tenant_key")
+  const qIvrRaw = searchParams.get("ivr_key")
+  const qRoutingModeRaw = searchParams.get("routing_mode")
+
+  // Persist tenant context from URL → sessionStorage so it survives navigation
+  useEffect(() => {
+    if (qTenantRaw) sessionStorage.setItem('cx_tenant_key', qTenantRaw)
+    if (qIvrRaw) sessionStorage.setItem('cx_ivr_key', qIvrRaw)
+    if (qRoutingModeRaw) sessionStorage.setItem('cx_routing_mode', qRoutingModeRaw)
+  }, [qTenantRaw, qIvrRaw, qRoutingModeRaw])
+
+  const qTenant = qTenantRaw || (typeof window !== 'undefined' ? sessionStorage.getItem('cx_tenant_key') : null)
+  const qIvr = qIvrRaw || (typeof window !== 'undefined' ? sessionStorage.getItem('cx_ivr_key') : null)
+  const qRoutingMode = qRoutingModeRaw || (typeof window !== 'undefined' ? sessionStorage.getItem('cx_routing_mode') : null)
   const currency    = useStore(s => s.currency)
   useEffect(() => { if (qIvr && qIvr !== selectedIvrRef.current) updateSelectedIvr(qIvr) }, [qIvr])
   const setCurrency = useStore(s => s.setCurrency)
@@ -334,7 +346,7 @@ function HomeInner() {
     if (!demoStartTime) setDemoStartTime(Date.now())
     addTx({ who: 'sys', text: 'Connecting to AiIVRs…' })
     liveCall.connect(qTenant || (currentUser?.tenant_key ?? TENANT_KEY), qIvr || (currentUser?.ivr_keys?.[0] ?? selectedIvrRef.current), SERVICE_B_URL, {
-      routingMode: scenario?.mode,
+      routingMode: qRoutingMode || scenario?.mode,
       ...(scenario?.experienceLevel ? { experienceLevel: scenario.experienceLevel } : {}),
       ...((scenario?.mode === 'sales' || demoStep === 3) ? { callerMobile: demoProfile?.mobile || '+919876543210' } : {}),
       ...(demoStep === 3 ? { crmTier: valueTier } : {}),
