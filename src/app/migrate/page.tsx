@@ -348,7 +348,7 @@ export default function MigratePage() {
                       const tk = ivrSource==='my' ? (selectedIvrTenant || migrationStatus?.tenant_key || 'experience_shop') : 'experience_shop';
                       const ik = ivrSource==='my' ? 'retail' : 'global_banking';
                       const rm = JOURNEYS[selectedJourney].routing_mode;
-                      window.location.href=`/?autostart=true&tenant_key=${tk}&ivr_key=${ik}${rm?'&routing_mode='+rm:''}`;
+                      window.location.href=`/?autostart=true&tenant_key=${tk}&ivr_key=${ik}${rm?'&routing_mode='+rm:''}&journey=${selectedJourney}`;
                     }} style={{display:'inline-flex',alignItems:'center',gap:7,padding:'10px 24px',borderRadius:9,border:'none',background:ivrSource==='my'?colors.teal:colors.blue,color:'#000',fontSize:13,fontWeight:800,fontFamily:"'DM Sans','Inter',sans-serif",cursor:'pointer',transition:'all .2s',boxShadow:ivrSource==='my'?'0 4px 16px rgba(0,201,177,.2)':'0 4px 16px rgba(51,112,232,.2)'}}>📞 Start {JOURNEYS[selectedJourney].label} Call</button>
                     <div style={{display:'flex',gap:12,marginTop:7}}>
                       {['136 intents','3-level DTMF','Pre-firewall'].map((m,i)=>(<span key={i} style={{fontSize:9,color:colors.tx3,display:'flex',alignItems:'center',gap:4}}><span style={{width:4,height:4,borderRadius:'50%',background:colors.teal}} />{m}</span>))}
