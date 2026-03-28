@@ -702,27 +702,36 @@ function HomeInner() {
                     </div>
                   </div>
 
-                  <div className="flex gap-2 justify-center flex-wrap">
-                    {INDUSTRY_OPTIONS.map(ind => (
-                      <span key={ind.key}
-                        onClick={() => {
-                          if (callActive) return
-                          updateSelectedIvr(ind.key)
-                        }}
-                        className="px-3 py-1.5 rounded-md border text-[10px] transition-all"
-                        style={{
-                          cursor: callActive ? 'not-allowed' : 'pointer',
-                          opacity: callActive && selectedIvr !== ind.key ? 0.35 : 1,
-                          background: selectedIvr === ind.key ? 'rgba(0,201,177,.12)' : 'var(--card2)',
-                          borderColor: selectedIvr === ind.key ? '#00c9b1' : 'var(--b1)',
-                          color: selectedIvr === ind.key ? '#00c9b1' : 'var(--dim)',
-                          boxShadow: selectedIvr === ind.key ? '0 0 0 1px rgba(0,201,177,.2)' : 'none',
-                        }}>
-                        {ind.icon} {ind.label}
-                        {callActive && selectedIvr === ind.key && <span className="ml-1 text-[7px]">●</span>}
+                  {qTenant && qTenant !== 'experience_shop' ? (
+                    <div className="flex justify-center">
+                      <span className="px-4 py-2 rounded-md border text-[11px] font-semibold"
+                        style={{ background: 'rgba(0,201,177,.12)', borderColor: '#00c9b1', color: '#00c9b1' }}>
+                        {qTenant.replace(/_/g, ' ')}
                       </span>
-                    ))}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2 justify-center flex-wrap">
+                      {INDUSTRY_OPTIONS.map(ind => (
+                        <span key={ind.key}
+                          onClick={() => {
+                            if (callActive) return
+                            updateSelectedIvr(ind.key)
+                          }}
+                          className="px-3 py-1.5 rounded-md border text-[10px] transition-all"
+                          style={{
+                            cursor: callActive ? 'not-allowed' : 'pointer',
+                            opacity: callActive && selectedIvr !== ind.key ? 0.35 : 1,
+                            background: selectedIvr === ind.key ? 'rgba(0,201,177,.12)' : 'var(--card2)',
+                            borderColor: selectedIvr === ind.key ? '#00c9b1' : 'var(--b1)',
+                            color: selectedIvr === ind.key ? '#00c9b1' : 'var(--dim)',
+                            boxShadow: selectedIvr === ind.key ? '0 0 0 1px rgba(0,201,177,.2)' : 'none',
+                          }}>
+                          {ind.icon} {ind.label}
+                          {callActive && selectedIvr === ind.key && <span className="ml-1 text-[7px]">●</span>}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -755,7 +764,7 @@ function HomeInner() {
                   <div className="w-[7px] h-[7px] rounded-full"
                     style={{ background: '#00c9b1', animation: 'blink 1.2s infinite' }} />
                   <span className="text-[11px]" style={{ color: 'var(--text)' }}>
-                    {elapsed < 3 ? 'Connecting you...' : `Live · ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.icon || '🏦'} ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.label || 'Banking'} · ${jConfig?.exp}`}
+                    {elapsed < 3 ? 'Connecting you...' : qTenant && qTenant !== 'experience_shop' ? `Live · ${qTenant.replace(/_/g, ' ')} · ${jConfig?.exp}` : `Live · ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.icon || '🏦'} ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.label || 'Banking'} · ${jConfig?.exp}`}
                   </span>
                   <span className="ml-auto">
                     <span className="px-2 py-0.5 rounded text-[8px] font-bold"
@@ -776,6 +785,8 @@ function HomeInner() {
                     intentDetected={hasIntents}
                     callerCountry={callerCountry}
                     initialIndustry={(selectedIvr || "").replace("global_", "") as any}
+                    isUploadedTenant={!!qTenant && qTenant !== 'experience_shop'}
+                    tenantDisplayName={qTenant ? qTenant.replace(/_/g, ' ') : undefined}
                   />
                 </div>
 

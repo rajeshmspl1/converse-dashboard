@@ -10,11 +10,13 @@ interface Props {
   callerCountry?: string | null
   initialIndustry?: IndustryKey | null
   onIndustryChange?: (industry: IndustryKey | null) => void
+  isUploadedTenant?: boolean
+  tenantDisplayName?: string
 }
 
 type NudgePhase = 'connecting' | 'live'
 
-export default function NudgeSystem({ demoStep, callActive, intentDetected, callerCountry, initialIndustry, onIndustryChange }: Props) {
+export default function NudgeSystem({ demoStep, callActive, intentDetected, callerCountry, initialIndustry, onIndustryChange, isUploadedTenant, tenantDisplayName }: Props) {
   const [phase, setPhase] = useState<NudgePhase>('connecting')
   const [connectText, setConnectText] = useState('Connecting you...')
   const [connectColor, setConnectColor] = useState('#f5a623')
@@ -149,7 +151,7 @@ export default function NudgeSystem({ demoStep, callActive, intentDetected, call
           {/* Header — changes based on whether intent has been detected */}
           <div className="text-center mb-1">
             <div className="text-[13px] font-semibold" style={{ color: 'var(--bright, #d8ecff)' }}>
-              {intentDetected ? 'Ask another question:' : 'Ask anything — just like you would with your IVR'}
+              {intentDetected ? 'Ask another question:' : isUploadedTenant ? `Ask anything — ${tenantDisplayName || 'your IVR'}` : 'Ask anything — just like you would with your IVR'}
             </div>
           </div>
 
@@ -167,28 +169,31 @@ export default function NudgeSystem({ demoStep, callActive, intentDetected, call
             </div>
           </div>
 
-          {/* Industry prompt */}
-          <div className="text-center mt-1.5 mb-1.5">
-            <div className="text-[14px] font-semibold" style={{ color: 'var(--bright, #d8ecff)' }}>
-              Pick an industry for specific IVR intents:
-            </div>
-          </div>
+          {/* Industry prompt + chips — hidden for uploaded tenants */}
+          {!isUploadedTenant && (
+            <>
+              <div className="text-center mt-1.5 mb-1.5">
+                <div className="text-[14px] font-semibold" style={{ color: 'var(--bright, #d8ecff)' }}>
+                  Pick an industry for specific IVR intents:
+                </div>
+              </div>
 
-          {/* Industry chips */}
-          <div className="flex gap-1.5 justify-center flex-wrap">
-            {CHIP_DATA.map(([key, label]) => (
-              <button key={key}
-                onClick={() => handleIndustrySwitch(key)}
-                className="px-3 py-1.5 rounded-md text-[10px] cursor-pointer transition-all border"
-                style={{
-                  background: industry === key ? 'rgba(0,201,177,.1)' : 'var(--card2, #121e2d)',
-                  borderColor: industry === key ? '#00c9b1' : 'var(--b1, #1a2b40)',
-                  color: industry === key ? '#00c9b1' : 'var(--dim, #3d5570)',
-                }}>
-                {label}
-              </button>
-            ))}
-          </div>
+              <div className="flex gap-1.5 justify-center flex-wrap">
+                {CHIP_DATA.map(([key, label]) => (
+                  <button key={key}
+                    onClick={() => handleIndustrySwitch(key)}
+                    className="px-3 py-1.5 rounded-md text-[10px] cursor-pointer transition-all border"
+                    style={{
+                      background: industry === key ? 'rgba(0,201,177,.1)' : 'var(--card2, #121e2d)',
+                      borderColor: industry === key ? '#00c9b1' : 'var(--b1, #1a2b40)',
+                      color: industry === key ? '#00c9b1' : 'var(--dim, #3d5570)',
+                    }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           {/* Country indicator — shows which country's prompts are active */}
           {callerCountry && callerCountry !== 'India' && (
