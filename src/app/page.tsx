@@ -350,7 +350,7 @@ function HomeInner() {
     setCallStartTime(Date.now())
     if (!demoStartTime) setDemoStartTime(Date.now())
     addTx({ who: 'sys', text: 'Connecting to AiIVRs…' })
-    liveCall.connect(qTenant || (currentUser?.tenant_key ?? TENANT_KEY), qIvr || (currentUser?.ivr_keys?.[0] ?? selectedIvrRef.current), SERVICE_B_URL, {
+    liveCall.connect(qTenant || TENANT_KEY, qIvr || selectedIvrRef.current, SERVICE_B_URL, {
       routingMode: qRoutingMode || scenario?.mode,
       ...(scenario?.experienceLevel ? { experienceLevel: scenario.experienceLevel } : {}),
       ...((scenario?.mode === 'sales' || demoStep === 3) ? { callerMobile: demoProfile?.mobile || '+919876543210' } : {}),

@@ -64,9 +64,9 @@ const MODES = [
 ];
 const JOURNEYS = [
   {label:'J1 Per-Intent', routing_mode:'', desc:'Standard voice call — pay per resolved intent'},
-  {label:'J2 Value Routing', routing_mode:'premium', desc:'CRM tier drives experience — Gold/Silver/Bronze'},
-  {label:'J3 Escalation', routing_mode:'complexity', desc:'Frustrated caller? AI upgrades experience mid-call'},
-  {label:'J4 Sales', routing_mode:'sales', desc:'AI detects upsell moments — commission per conversion'},
+  {label:'J2 Service > Revenue', routing_mode:'sales', desc:'AI detects upsell moments — turn service calls into revenue'},
+  {label:'J3 Recover Frustrated', routing_mode:'complexity', desc:'Frustrated caller? AI upgrades to empathetic AI mid-call'},
+  {label:'J4 Route by Value', routing_mode:'premium', desc:'CRM tier drives experience — Gold/Silver/Bronze'},
 ];
 
 
