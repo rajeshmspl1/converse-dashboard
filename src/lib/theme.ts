@@ -70,11 +70,11 @@ export const GRADIENTS = {
 
 // ── Header Spec ──────────────────────────────────────────────────
 export const HEADER = {
-  height:  44,           // px — h-11 in tailwind
+  height:  56,           // px — comfortable breathing room
   bg:      'rgba(7,13,26,0.96)',
   blur:    'blur(12px)',
-  logoSize: 22,          // px — w-[22px] h-[22px]
-  logoRadius: 7,         // px — rounded-[7px]
+  logoSize: 28,          // px — more visible
+  logoRadius: 8,         // px — rounded-[8px]
   zIndex:  50,
 } as const
 

@@ -182,19 +182,19 @@ export default function HomepageSections({ onStartCall, onToggleIVRBar, onSignUp
         <div className="relative z-[1]">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-[11px] font-semibold uppercase tracking-wider" style={{ background: 'rgba(0,222,122,.08)', border: '1px solid rgba(0,222,122,.15)', color: '#00de7a' }}>
             <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#00de7a', animation: 'pulse2 2s infinite' }} />
-            Zero Integration · Per-Intent · Self-Funding
+            Zero Integration · Per-Intent Resolved · Convert IVR to Revenue Engine
           </div>
           <h1 style={{ fontFamily: SERIF, fontSize: 'clamp(34px, 5.5vw, 64px)', fontWeight: 400, lineHeight: 1.1, letterSpacing: '-1.5px', marginBottom: 16 }}>
             Transform your IVR to AI IVR.<br />
             <span style={{ background: 'linear-gradient(135deg, #3370E8, #00C9B1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>In 17 minutes. No IT.</span>
           </h1>
           <p className="text-[15px] sm:text-[17px] mb-8 mx-auto leading-relaxed" style={{ color: 'var(--dim)', maxWidth: 580 }}>
-            No IT team. No approval. No integration. <strong style={{ color: 'var(--text)' }}>Free migration &amp; 3-month production pilot</strong> in your environment.
+            Your CX Voice/IVR Lab. 3-month <strong style={{ color: 'var(--text)' }}>free production pilot</strong> in your environment.
           </p>
           <button onClick={onStartCall} className="px-10 py-3.5 rounded-xl text-[16px] font-bold border-none cursor-pointer transition-all hover:-translate-y-0.5" style={{ background: '#3b82f6', color: '#fff', animation: 'ctaGlow 2.5s ease-in-out infinite' }}>
             ▶ Try Live Demo
           </button>
-          <div className="text-[10px] mt-3" style={{ color: 'var(--dim)' }}>Zero integration · Zero cost · No IT ticket</div>
+          <div className="text-[10px] mt-3" style={{ color: 'var(--dim)' }}>Zero integration · Pay per intent resolved only</div>
         </div>
       </section>
 
@@ -206,25 +206,25 @@ export default function HomepageSections({ onStartCall, onToggleIVRBar, onSignUp
             <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-[15px] font-medium" style={{ fontFamily: MONO, background: '#00C9B1', color: '#080D18' }}>01</div>
             <div>
               <div style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 400, lineHeight: 1.3 }}>Four Industry-First Ways to Experience &amp; Deploy AI on Your IVR</div>
-              <div className="text-[11px] mt-1" style={{ color: 'var(--dim)' }}>And <span className="font-bold px-2 py-0.5 rounded" style={{ background: 'rgba(0,222,122,.12)', color: '#00de7a' }}>pay per intent only</span></div>
+              <div className="text-[11px] mt-1" style={{ color: 'var(--dim)' }}>And <span className="font-bold px-2 py-0.5 rounded" style={{ background: 'rgba(0,222,122,.12)', color: '#00de7a' }}>pay per intent resolved only</span></div>
             </div>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { icon: '⚡', label: 'J1', name: 'Lowest Cost to Serve /Intent', tag: '$0.005 /intent', tagColor: '#00c9b1', desc: "Pay per resolution. Not per minute. Industry's lowest cost to serve per intent.", bg: 'rgba(0,201,177,.06)', ibg: 'rgba(0,201,177,.12)', j: 0, phone: true },
-              { icon: '💰', label: 'J2', name: 'Service IVR + Revenue IVR', tag: 'CCaaS + CRM', tagColor: '#00de7a', desc: 'Same price + free leads. We earn only when leads convert.', bg: 'rgba(0,222,122,.06)', ibg: 'rgba(0,222,122,.12)', j: 1, phone: false },
-              { icon: '🔥', label: 'J3', name: 'Improve IVR CSAT', tag: '3.5 → 4.5 · CCaaS + CRM', tagColor: '#F03060', desc: 'Detect frustration. Recover in 3 seconds. Upgrade AI mid-call.', bg: 'rgba(245,166,35,.06)', ibg: 'rgba(245,166,35,.12)', j: 2, phone: false },
-              { icon: '🎯', label: 'J4', name: 'Route by Customer Value', tag: 'CCaaS + CRM', tagColor: '#3370E8', desc: 'Premium AI for premium customers. Auto-route by customer value.', bg: 'rgba(51,112,232,.06)', ibg: 'rgba(51,112,232,.12)', j: 3, phone: false },
+              { icon: '⚡', label: 'J1', name: 'Lowest Cost to Serve /Intent Resolved', tag: '$0.005 /intent resolved', tagColor: '#00c9b1', desc: "Pay per resolution only. Not per minute. Industry's lowest cost to serve per intent resolved.", bg: 'rgba(0,201,177,.06)', ibg: 'rgba(0,201,177,.12)', j: 0, phone: true },
+              { icon: '💰', label: 'J2', name: 'Service IVR + Revenue IVR', tag: '', tagColor: '#00de7a', desc: 'Same price + free leads. We earn only when leads convert.', bg: 'rgba(0,222,122,.06)', ibg: 'rgba(0,222,122,.12)', j: 1, phone: false },
+              { icon: '🔥', label: 'J3', name: 'Improve IVR CSAT', tag: '3.5 → 4.5', tagColor: '#F03060', desc: 'Detect frustration. Recover in 3 seconds. Upgrade AI mid-call.', bg: 'rgba(245,166,35,.06)', ibg: 'rgba(245,166,35,.12)', j: 2, phone: false },
+              { icon: '🎯', label: 'J4', name: 'Route by Customer Value', tag: '', tagColor: '#3370E8', desc: 'Premium AI for premium customers. Auto-route by customer value.', bg: 'rgba(51,112,232,.06)', ibg: 'rgba(51,112,232,.12)', j: 3, phone: false },
             ].map((c, i) => (
               <div key={i} onClick={() => startJourney(c.j)} className="p-4 sm:p-5 rounded-[14px] text-center border cursor-pointer transition-all hover:-translate-y-1" style={{ background: `linear-gradient(145deg, ${c.bg}, var(--card2))`, borderColor: 'var(--b1)' }}>
                 <div className="w-[52px] h-[52px] rounded-[14px] flex items-center justify-center mx-auto mb-3 text-[24px]" style={{ background: c.ibg }}>{c.icon}</div>
-                <div className="text-[11px] font-medium mb-1 tracking-wider" style={{ fontFamily: MONO, color: c.tagColor }}>{c.label}</div>
-                <div className="text-[13px] sm:text-[14px] font-bold mb-1 leading-tight">{c.name}</div>
-                <div className="text-[10px] font-medium mb-1" style={{ fontFamily: MONO, color: c.tagColor }}>{c.tag}</div>
-                <div className="text-[9px] leading-relaxed mb-2" style={{ color: 'var(--dim)' }}>{c.desc}</div>
-                <div className="text-[9px] font-bold opacity-60 hover:opacity-100 transition-opacity" style={{ color: c.tagColor }}>Try demo →</div>
+                <div className="text-[12px] font-medium mb-1 tracking-wider" style={{ fontFamily: MONO, color: c.tagColor }}>{c.label}</div>
+                <div className="text-[14px] sm:text-[15px] font-bold mb-1 leading-tight">{c.name}</div>
+                {c.tag && <div className="text-[11px] sm:text-[12px] font-medium mb-1" style={{ fontFamily: MONO, color: c.tagColor }}>{c.tag}</div>}
+                <div className="text-[11px] sm:text-[12px] leading-relaxed mb-2" style={{ color: 'var(--dim)' }}>{c.desc}</div>
+                <div className="text-[11px] font-bold opacity-60 hover:opacity-100 transition-opacity" style={{ color: c.tagColor }}>Try demo →</div>
                 {c.phone && (
-                  <div className="mt-1.5 text-[8px]" style={{ color: 'var(--dim)' }}>
+                  <div className="mt-1.5 text-[10px]" style={{ color: 'var(--dim)' }}>
                     or call <a href={`tel:${PHONE.replace(/-/g,'')}`} className="font-semibold" style={{ color: '#00c9b1', textDecoration: 'none' }}>{PHONE}</a>
                   </div>
                 )}
@@ -234,10 +234,10 @@ export default function HomepageSections({ onStartCall, onToggleIVRBar, onSignUp
         </div>
 
         {/* ═══ TIMELINE ═══ */}
-        <div className="fi text-center py-8">
-          <div className="text-[10px] font-bold uppercase tracking-widest mb-4" style={{ color: 'var(--dim)' }}>From IVR number to production</div>
+        <div className="fi text-center py-14 sm:py-16">
+          <div className="text-[14px] sm:text-[16px] font-bold uppercase tracking-widest mb-8" style={{ color: 'var(--dim)' }}>From IVR number to production</div>
           <div className="flex items-start justify-center gap-0 relative px-6">
-            <div className="absolute top-[18px] left-[15%] right-[15%] h-[2px]" style={{ background: 'var(--b1)' }} />
+            <div className="absolute top-[28px] left-[15%] right-[15%] h-[3px]" style={{ background: 'var(--b1)' }} />
             {[
               { icon: '📱', title: 'Share IVR #', time: '2 min', color: 'var(--b1)' },
               { icon: '🤖', title: 'Hear your AI', time: '5 min', color: '#00c9b1' },
@@ -246,9 +246,9 @@ export default function HomepageSections({ onStartCall, onToggleIVRBar, onSignUp
               { icon: '🚀', title: 'Go Live', time: '5 min', color: '#8b5cf6' },
             ].map((s, i) => (
               <div key={i} className="flex-1 text-center relative z-[1]">
-                <div className="w-9 h-9 rounded-full flex items-center justify-center text-[16px] mx-auto mb-2" style={{ border: `2px solid ${s.color}`, background: 'var(--card)' }}>{s.icon}</div>
-                <div className="text-[10px] font-bold">{s.title}</div>
-                <div className="text-[8px]" style={{ color: 'var(--dim)' }}>{s.time}</div>
+                <div className="w-14 h-14 rounded-full flex items-center justify-center text-[24px] mx-auto mb-3" style={{ border: `2.5px solid ${s.color}`, background: 'var(--card)' }}>{s.icon}</div>
+                <div className="text-[13px] sm:text-[14px] font-bold">{s.title}</div>
+                <div className="text-[11px] mt-0.5" style={{ color: 'var(--dim)' }}>{s.time}</div>
               </div>
             ))}
           </div>
@@ -259,8 +259,8 @@ export default function HomepageSections({ onStartCall, onToggleIVRBar, onSignUp
           <div className="flex items-start gap-3 mb-5">
             <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-[15px] font-medium" style={{ fontFamily: MONO, background: '#00DE7A', color: '#080D18' }}>02</div>
             <div>
-              <div style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 400, lineHeight: 1.3 }}>How CX Leaders Can Migrate in 17 Minutes Using Our Platform</div>
-              <div className="text-[11px] mt-1" style={{ color: 'var(--dim)' }}>Zero IT · Zero integration · Zero budget</div>
+              <div style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 400, lineHeight: 1.3 }}>How CX Leaders Can Migrate in 17 Minutes</div>
+              <div className="text-[11px] mt-1" style={{ color: 'var(--dim)' }}>CX Voice/IVR Lab</div>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-[1fr_40px_1fr] items-stretch gap-0">
@@ -268,8 +268,8 @@ export default function HomepageSections({ onStartCall, onToggleIVRBar, onSignUp
             <div onClick={onStartCall}
               className="p-6 sm:p-7 rounded-[14px] border cursor-pointer transition-all hover:-translate-y-1 hover:border-[#f5a623]"
               style={{ background: 'linear-gradient(160deg,rgba(245,166,35,.04),var(--card2))', borderColor: 'var(--b1)' }}>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide mb-3" style={{ background: 'rgba(245,166,35,.1)', color: '#f5a623' }}>🛍️ Experience Shop</div>
-              <h4 className="text-[17px] sm:text-[18px] font-bold mb-3">Try Before You Buy</h4>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded text-[11px] sm:text-[12px] font-bold uppercase tracking-wide mb-3" style={{ background: 'rgba(245,166,35,.1)', color: '#f5a623' }}>🛍️ Experience Shop</div>
+              <h4 className="text-[20px] sm:text-[22px] font-bold mb-3">Try Before You Buy</h4>
               <div className="flex flex-col gap-2.5">
                 {[
                   { icon: '⚡', bg: 'rgba(0,201,177,.1)', t: 'All 4 journeys — J1, J2, J3, J4' },
@@ -293,8 +293,8 @@ export default function HomepageSections({ onStartCall, onToggleIVRBar, onSignUp
             <div onClick={() => onSignUp?.()}
               className="p-6 sm:p-7 rounded-[14px] border cursor-pointer transition-all hover:-translate-y-1 hover:border-[#00de7a]"
               style={{ background: 'linear-gradient(160deg,rgba(0,222,122,.04),var(--card2))', borderColor: 'var(--b1)' }}>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide mb-3" style={{ background: 'rgba(0,222,122,.1)', color: '#00de7a' }}>🔬 CX Leader Lab</div>
-              <h4 className="text-[17px] sm:text-[18px] font-bold mb-3">Build &amp; Go Live</h4>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded text-[11px] sm:text-[12px] font-bold uppercase tracking-wide mb-3" style={{ background: 'rgba(0,222,122,.1)', color: '#00de7a' }}>🔬 CX Voice/IVR Lab</div>
+              <h4 className="text-[20px] sm:text-[22px] font-bold mb-3">Go Build &amp; Go Live in 17 mts</h4>
               <div className="flex flex-col gap-2.5">
                 {[
                   { icon: '📤', bg: 'rgba(0,222,122,.1)', t: 'Upload your own IVR tree' },
@@ -320,7 +320,7 @@ export default function HomepageSections({ onStartCall, onToggleIVRBar, onSignUp
             <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-[15px] font-medium" style={{ fontFamily: MONO, background: '#3370E8', color: '#fff' }}>03</div>
             <div>
               <div style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 400, lineHeight: 1.3 }}>CX Leaders Can Democratize AI Spend Across Customer Journeys</div>
-              <div className="text-[11px] mt-1" style={{ color: 'var(--dim)' }}>Right AI, right customer, right cost. Billed per intent (~45s avg).</div>
+              <div className="text-[11px] mt-1" style={{ color: 'var(--dim)' }}>Right AI, right customer, right cost. Billed per intent resolved (~45s avg).</div>
             </div>
           </div>
           <div className="flex items-end justify-center gap-3 py-4 overflow-x-auto">
@@ -413,7 +413,7 @@ export default function HomepageSections({ onStartCall, onToggleIVRBar, onSignUp
             <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-[15px] font-medium" style={{ fontFamily: MONO, background: '#F03060', color: '#fff' }}>05</div>
             <div>
               <div style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 400, lineHeight: 1.3 }}>CX Leaders Cost Comparison With Your Current Model</div>
-              <div className="text-[11px] mt-1" style={{ color: 'var(--dim)' }}>Two engines: customer support (lowest cost /intent) + sales (lowest cost /lead)</div>
+              <div className="text-[11px] mt-1" style={{ color: 'var(--dim)' }}>Two engines: customer support (lowest cost /intent resolved) + sales (lowest cost /lead)</div>
             </div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
@@ -421,7 +421,7 @@ export default function HomepageSections({ onStartCall, onToggleIVRBar, onSignUp
             <div className="rounded-[14px] border overflow-hidden" style={{ background: 'var(--card2)', borderColor: 'var(--b1)' }}>
               <div className="flex items-center gap-3 px-4 py-3" style={{ background: 'rgba(0,222,122,.04)' }}>
                 <div className="w-[34px] h-[34px] rounded-[9px] flex items-center justify-center text-[16px]" style={{ background: 'rgba(0,222,122,.1)' }}>⚡</div>
-                <div><div className="text-[12px] font-bold" style={{ color: '#00de7a' }}>Customer Support</div><div className="text-[8px]" style={{ color: 'var(--dim)' }}>Lowest cost /intent</div></div>
+                <div><div className="text-[12px] font-bold" style={{ color: '#00de7a' }}>Customer Support</div><div className="text-[8px]" style={{ color: 'var(--dim)' }}>Lowest cost /intent resolved</div></div>
               </div>
               <table className="w-full" style={{ borderCollapse: 'collapse' }}>
                 <thead><tr>{['Channel','Cost','CSAT','Wait'].map((h,hi) => <th key={hi} className={`px-3 py-2 text-[8px] font-bold uppercase tracking-wider ${hi>0?'text-right':'text-left'}`} style={{ color:'var(--dim)', borderBottom:'1px solid var(--b1)' }}>{h}</th>)}</tr></thead>
@@ -430,7 +430,7 @@ export default function HomepageSections({ onStartCall, onToggleIVRBar, onSignUp
                     { icon:'🧑',n:'Human Agent',v1:'$5-8/call',c1:'#F03060',v2:'3.8',c2:'',v3:'1.5-3 min',c3:'#F03060',w:false },
                     { icon:'📟',n:'Traditional IVR',v1:'$0.02-0.05/min',c1:'',v2:'2.5-3.0',c2:'#F03060',v3:'2-5 min',c3:'',w:false },
                     { icon:'🤖',n:'Per-Minute AI',v1:'$0.07-0.33/min',c1:'',v2:'3.5',c2:'',v3:'30-60s',c3:'',w:false },
-                    { icon:'💎',n:'AI IVRs',v1:'$0.005/intent',c1:'',v2:'Up to 4.5',c2:'',v3:'<30s',c3:'',w:true },
+                    { icon:'💎',n:'AI IVRs',v1:'$0.005/intent resolved',c1:'',v2:'Up to 4.5',c2:'',v3:'<30s',c3:'',w:true },
                   ].map((r,ri)=>(
                     <tr key={ri} style={{ background:r.w?'rgba(0,222,122,.04)':'transparent' }}>
                       <td className="px-3 py-2.5 text-[10px]" style={{ borderBottom:'1px solid var(--b1)',color:r.w?'#00de7a':'var(--dim)' }}><div className="flex items-center gap-2"><span>{r.icon}</span>{r.n}</div></td>
@@ -470,7 +470,7 @@ export default function HomepageSections({ onStartCall, onToggleIVRBar, onSignUp
           </div>
           <div className="grid grid-cols-3 gap-2 mt-4">
             {[
-              { label:'Cost /Intent',from:'$5–8',to:'$0.005',fromL:'Human',toL:'AI IVRs' },
+              { label:'Cost /Intent Resolved',from:'$5–8',to:'$0.005',fromL:'Human',toL:'AI IVRs' },
               { label:'CSAT Score',from:'2.5–3.0',to:'4.5',fromL:'Trad. IVR',toL:'AI IVRs' },
               { label:'Wait Time',from:'1.5–3m',to:'<30s',fromL:'Human',toL:'AI IVRs' },
             ].map((m,i)=>(
@@ -497,7 +497,7 @@ export default function HomepageSections({ onStartCall, onToggleIVRBar, onSignUp
             </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-            {[{icon:'🔌',val:'0',l:'Integration'},{icon:'🖥️',val:'0',l:'IT Dependency'},{icon:'💸',val:'0',l:'Cost to Migrate'},{icon:'🎯',val:'0',l:'Cost /Intent*'},{icon:'🔓',val:'0',l:'Vendor Lock-In'}].map((z,i)=>(
+            {[{icon:'🔌',val:'0',l:'Integration'},{icon:'🖥️',val:'0',l:'IT Dependency'},{icon:'💸',val:'0',l:'Cost to Migrate'},{icon:'🎯',val:'0',l:'Cost /Intent Resolved*'},{icon:'🔓',val:'0',l:'Vendor Lock-In'}].map((z,i)=>(
               <div key={i} className="p-4 rounded-xl text-center transition-all hover:scale-[1.03]" style={{ background:'var(--card2)',border:'1px solid var(--b1)' }}>
                 <div className="w-10 h-10 rounded-[9px] flex items-center justify-center mx-auto mb-2 text-[20px]" style={{ background:'rgba(0,222,122,.08)' }}>{z.icon}</div>
                 <div className="text-[24px] font-medium" style={{ fontFamily:MONO,color:'#00de7a' }}>{z.val}</div>
@@ -526,7 +526,7 @@ export default function HomepageSections({ onStartCall, onToggleIVRBar, onSignUp
             {[
               {q:'Does my existing IVR keep working?',a:'Yes. We sit alongside — zero downtime. Your IVR stays live throughout.'},
               {q:'What do I need from IT?',a:'Nothing. Your IVR number and 17 minutes. No API keys, no SIP trunks.'},
-              {q:'How does per-intent pricing work?',a:'Pay when AI resolves (~45s avg). Not per minute. No resolution = no charge.'},
+              {q:'How does per-intent-resolved pricing work?',a:'Pay only when the AI resolves the intent (~45s avg). Not per minute. No resolution = no charge.'},
               {q:'Can I bring my own LLM / cloud / CRM?',a:'Yes. BYO everything — 40+ pre-built connectors. Zero vendor lock-in.'},
             ].map((f,i)=>(
               <div key={i} className="p-4 rounded-xl" style={{ background:'var(--card)',border:'1px solid var(--b1)' }}>
