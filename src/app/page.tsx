@@ -139,7 +139,8 @@ function HomeInner() {
       .then(r => r.ok ? r.json() : null)
       .then(geo => {
         if (geo?.country_name) setCallerCountry(geo.country_name)
-        if (geo?.currency === 'INR') setCurrency('INR' as Currency)
+        const geoCurrency = (geo?.currency || '').toLowerCase()
+        if (['inr','usd','eur','gbp','aed','sgd','jpy','aud'].includes(geoCurrency)) setCurrency(geoCurrency as Currency)
       })
       .catch(() => {})
   }, [])

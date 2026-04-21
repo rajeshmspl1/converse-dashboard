@@ -1,8 +1,10 @@
 import type { ExpLevel, RoutingMode, Currency, IntentKey } from '@/types'
-import { INTENTS, MODE_RATES, USD_RATE } from './data'
+import { INTENTS, MODE_RATES, CURRENCY_CONFIG } from './data'
 
-export function formatCost(val: number, currency: Currency): string {
-  return currency === 'inr' ? `₹${val.toFixed(2)}` : `$${(val * USD_RATE).toFixed(4)}`
+export function formatCost(val: number, currency: Currency, decimals?: number): string {
+  const cc = CURRENCY_CONFIG[currency] ?? CURRENCY_CONFIG[currency.toLowerCase() as Currency] ?? CURRENCY_CONFIG['inr']
+  const d = decimals ?? (currency === 'jpy' ? 0 : 2)
+  return `${cc.symbol}${(val * cc.rate).toFixed(d)}`
 }
 
 export function formatDuration(sec: number): string {

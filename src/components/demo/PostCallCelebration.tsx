@@ -34,7 +34,7 @@ export default function PostCallCelebration({ demoStep, intents, totalCost, curr
   const scenario = DEMO_SCENARIOS[demoStep]
   if (!scenario) return null
 
-  const cc = CURRENCY_CONFIG[currency]
+  const cc = CURRENCY_CONFIG[currency] ?? CURRENCY_CONFIG[currency.toLowerCase() as Currency] ?? CURRENCY_CONFIG["inr"]
   const fmt = (inr: number) => `${cc.symbol}${(inr * cc.rate).toFixed(2)}`
   const isLast = demoStep >= DEMO_SCENARIOS.length - 1
   const infraCfg = INFRA_CONFIG[scenario.infra]
