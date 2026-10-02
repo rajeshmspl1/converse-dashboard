@@ -139,7 +139,7 @@ export default function LoginPage() {
       <UnifiedHeader
         variant="homepage"
         onSignIn={() => {}}
-        onGetStarted={() => router.push('/')}
+        onGetStarted={() => router.push('/experience')}
         onMigrateClick={() => setShowSignUp(true)}
       />
 
@@ -239,7 +239,7 @@ export default function LoginPage() {
 
             <div className="text-center text-[11px] mt-5 pt-4" style={{ color: 'var(--dim)', borderTop: '1px solid var(--b1)' }}>
               Don't have an account?{' '}
-              <a href="/" className="font-semibold" style={{ color: '#00c9b1', textDecoration: 'none' }}>Try a free demo →</a>
+              <a href="/experience" className="font-semibold" style={{ color: '#00c9b1', textDecoration: 'none' }}>Try a free demo →</a>
             </div>
           </div>
           <div className="text-center text-[10px] mt-4" style={{ color: 'var(--dim)' }}>AiIVRs · CX Manager Portal</div>

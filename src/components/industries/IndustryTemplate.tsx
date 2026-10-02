@@ -28,7 +28,7 @@ export default function IndustryTemplate({ emoji, name, headline, subheadline, c
   const ivrKey = NAME_TO_IVR[name] || 'global_banking'
 
   const goDemo = () => {
-    router.push(`/?journey=0&ivr_key=${ivrKey}`)
+    router.push(`/experience?journey=0&ivr_key=${ivrKey}`)
   }
 
   return (

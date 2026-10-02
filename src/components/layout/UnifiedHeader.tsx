@@ -196,7 +196,7 @@ export default function UnifiedHeader({
                   el.scrollIntoView({ behavior: 'smooth', block: 'start' })
                 }
               } else {
-                router.push('/')
+                router.push('/experience#integrations')
                 setTimeout(() => {
                   const e = document.getElementById('integrations')
                   if (e) {

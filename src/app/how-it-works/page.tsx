@@ -105,7 +105,7 @@ export default function HowItWorksPage() {
           style={{ background: 'linear-gradient(135deg, rgba(59,130,246,.06), rgba(6,182,212,.04))', borderColor: 'rgba(59,130,246,.1)' }}>
           <h2 className="text-[18px] sm:text-[22px] font-bold mb-2">See it happen — live, on a real call.</h2>
           <p className="text-[12px] sm:text-[13px] mb-5" style={{ color: 'var(--tx3)' }}>Try the demo. Watch AI resolve intents in real-time. 17 minutes from now, you could be live.</p>
-          <button onClick={() => router.push('/')} className="px-8 py-3 rounded-[10px] text-[14px] font-bold border-none cursor-pointer" style={{ background: '#00c9b1', color: '#000' }}>
+          <button onClick={() => router.push('/experience')} className="px-8 py-3 rounded-[10px] text-[14px] font-bold border-none cursor-pointer" style={{ background: '#00c9b1', color: '#000' }}>
             ▶ Try Live Demo →
           </button>
         </div>

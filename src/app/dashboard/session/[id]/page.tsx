@@ -142,7 +142,7 @@ export default function SessionDashboard() {
         <div className="text-[48px] mb-4">🔍</div>
         <h1 className="text-[24px] font-bold mb-2">Session Not Found</h1>
         <p className="text-[14px] mb-6" style={{color:T.tx2}}>This session may have expired or the link is invalid.</p>
-        <button onClick={()=>router.push('/')} className="px-6 py-2.5 rounded-lg text-[13px] font-bold border-none cursor-pointer" style={{background:T.teal,color:'#000'}}>📞 Try a Demo Call</button>
+        <button onClick={()=>router.push('/experience')} className="px-6 py-2.5 rounded-lg text-[13px] font-bold border-none cursor-pointer" style={{background:T.teal,color:'#000'}}>📞 Try a Demo Call</button>
       </div>
     </div>
   )

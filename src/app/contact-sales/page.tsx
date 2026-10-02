@@ -47,7 +47,7 @@ export default function ContactSalesPage() {
             <div className="p-4 rounded-xl" style={{ background: 'var(--s1)', border: '1px solid var(--b1)' }}>
               <div className="text-[11px] font-bold mb-2" style={{ color: '#00c9b1' }}>Or try the demo yourself — right now</div>
               <div className="text-[10px] mb-2" style={{ color: 'var(--tx3)' }}>No form, no wait. Click below, make a call, hear AI resolve intents live.</div>
-              <a href="/" className="inline-block px-5 py-2 rounded-lg text-[11px] font-bold no-underline" style={{ background: '#00c9b1', color: '#000' }}>
+              <a href="/experience" className="inline-block px-5 py-2 rounded-lg text-[11px] font-bold no-underline" style={{ background: '#00c9b1', color: '#000' }}>
                 ▶ Try Live Demo
               </a>
             </div>
@@ -60,7 +60,7 @@ export default function ContactSalesPage() {
                 <div className="text-[32px] mb-3">✅</div>
                 <div className="text-[18px] font-bold mb-2">We&apos;ll be in touch within 24 hours.</div>
                 <div className="text-[12px]" style={{ color: 'var(--tx3)' }}>Check your email for a calendar link. Or try the live demo now.</div>
-                <a href="/" className="inline-block mt-4 px-6 py-2.5 rounded-lg text-[12px] font-bold no-underline" style={{ background: '#00c9b1', color: '#000' }}>
+                <a href="/experience" className="inline-block mt-4 px-6 py-2.5 rounded-lg text-[12px] font-bold no-underline" style={{ background: '#00c9b1', color: '#000' }}>
                   ▶ Try Live Demo
                 </a>
               </div>

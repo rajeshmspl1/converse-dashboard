@@ -24,7 +24,7 @@ function TryJourneyBar({ router }: { router: ReturnType<typeof useRouter> }) {
         { label: '🔥 Frustration Recovery', journey: 2, color: '#f03060' },
         { label: '🎯 Value Routing', journey: 3, color: '#f5a623' },
       ].map((j) => (
-        <button key={j.journey} onClick={() => router.push(`/?journey=${j.journey}`)}
+        <button key={j.journey} onClick={() => router.push(`/experience?journey=${j.journey}`)}
           className="px-3 py-1.5 rounded-lg text-[10px] font-semibold cursor-pointer border-none transition-all hover:opacity-80"
           style={{ background: `${j.color}18`, color: j.color, border: `1px solid ${j.color}30` }}>
           {j.label} →
@@ -44,7 +44,7 @@ export default function CompareTemplate({ competitor, logo, tagline, headline, s
         <div className="text-[11px] font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--tx3)' }}>Honest comparison</div>
         <h1 className="text-[26px] sm:text-[38px] font-black tracking-tight mb-3" style={{ letterSpacing: '-1px' }}>{headline}</h1>
         <p className="text-[14px] sm:text-[16px] mx-auto leading-relaxed" style={{ color: 'var(--tx2)', maxWidth: 600 }}>{subheadline}</p>
-        <button onClick={() => router.push('/')}
+        <button onClick={() => router.push('/experience')}
           className="mt-5 px-6 py-2.5 rounded-[10px] text-[13px] font-bold border-none cursor-pointer"
           style={{ background: '#00c9b1', color: '#000' }}>
           ▶ Try Live Demo — see the difference
@@ -91,7 +91,7 @@ export default function CompareTemplate({ competitor, logo, tagline, headline, s
                 <span className="font-bold" style={{ color: '#00c9b1' }}>{p.aiivrs}</span>
               </div>
             ))}
-            <button onClick={() => router.push('/')}
+            <button onClick={() => router.push('/experience')}
               className="w-full mt-4 py-2.5 rounded-lg text-[11px] font-bold cursor-pointer border-none"
               style={{ background: '#00c9b1', color: '#000' }}>
               ▶ Try Live Demo
@@ -137,7 +137,7 @@ export default function CompareTemplate({ competitor, logo, tagline, headline, s
         <div className="p-5 sm:p-6 rounded-xl" style={{ background: 'var(--s1)', border: '1px solid rgba(0,201,177,.2)' }}>
           <h2 className="text-[16px] font-bold mb-2" style={{ color: '#00c9b1' }}>Bottom line</h2>
           <p className="text-[12px] sm:text-[13px] leading-relaxed mb-4" style={{ color: 'var(--tx2)' }}>{verdict}</p>
-          <button onClick={() => router.push('/')}
+          <button onClick={() => router.push('/experience')}
             className="px-6 py-2.5 rounded-[10px] text-[12px] font-bold border-none cursor-pointer"
             style={{ background: '#00c9b1', color: '#000' }}>
             ▶ See it live — Try the Demo

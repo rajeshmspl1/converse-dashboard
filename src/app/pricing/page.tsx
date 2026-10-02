@@ -6,7 +6,7 @@ export default function PricingPage() {
   const router = useRouter()
 
   const goJourney = (step: number) => {
-    router.push(`/?journey=${step}`)
+    router.push(`/experience?journey=${step}`)
   }
 
   return (
@@ -195,7 +195,7 @@ export default function PricingPage() {
           style={{ background: 'linear-gradient(135deg, rgba(59,130,246,.06), rgba(6,182,212,.04))', borderColor: 'rgba(59,130,246,.1)' }}>
           <h2 className="text-[18px] sm:text-[22px] font-bold mb-2">See the pricing live — on a real call.</h2>
           <p className="text-[12px] sm:text-[13px] mb-5" style={{ color: 'var(--tx3)' }}>Try each journey. Watch the per-intent cost calculate in real-time. Free, no credit card.</p>
-          <button onClick={() => router.push('/')} className="px-8 py-3 rounded-[10px] text-[14px] font-bold border-none cursor-pointer" style={{ background: '#00c9b1', color: '#000' }}>
+          <button onClick={() => router.push('/experience')} className="px-8 py-3 rounded-[10px] text-[14px] font-bold border-none cursor-pointer" style={{ background: '#00c9b1', color: '#000' }}>
             ▶ Try Live Demo →
           </button>
           <div className="flex gap-3 sm:gap-4 justify-center mt-3.5 flex-wrap text-[10px] sm:text-[11px]" style={{ color: 'var(--tx3)' }}>

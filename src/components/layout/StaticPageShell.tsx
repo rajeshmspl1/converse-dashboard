@@ -5,7 +5,7 @@ import Logo from '@/components/ui/Logo'
 
 const FOOTER_LINKS = {
   Product: [
-    { label: 'Experience Shop', href: '/?journey=0' },
+    { label: 'Experience Shop', href: '/experience?journey=0' },
     { label: 'Pricing', href: '/pricing' },
     { label: 'How It Works', href: '/how-it-works' },
     { label: 'FAQ', href: '/faq' },
@@ -36,7 +36,7 @@ export default function StaticPageShell({ children }: { children: React.ReactNod
         variant="homepage"
         onSignIn={() => router.push('/login')}
         onLogoClick={() => router.push('/')}
-        onGetStarted={() => router.push('/')}
+        onGetStarted={() => router.push('/experience')}
         onMigrateClick={() => router.push('/migrate')}
         currency="usd"
         onCurrencyChange={() => {}}
