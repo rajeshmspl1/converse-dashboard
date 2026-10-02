@@ -45,16 +45,20 @@ h1{font-size:clamp(38px,5.4vw,64px);line-height:1.02;letter-spacing:-.035em;font
 .callh{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--soft);padding-bottom:14px;border-bottom:1px solid var(--rule);margin-bottom:16px}
 .callh b{color:var(--ink);font-weight:600;display:flex;align-items:center;gap:8px}
 .callh b:before{content:'';width:8px;height:8px;border-radius:50%;background:#E5484D;animation:pulse 1.4s infinite}
-@keyframes pulse{50%{opacity:.25}}
-.msg{max-width:84%;padding:10px 14px;border-radius:14px;font-size:15.5px;margin:0 0 10px;opacity:0;transform:translateY(6px);animation:in .4s ease forwards}
+.langs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.langs button{font:inherit;font-size:13px;padding:4px 10px;border-radius:999px;border:1px solid var(--rule);background:var(--paper);color:var(--soft);cursor:pointer}
+.langs button[aria-pressed="true"]{border-color:var(--teal);background:var(--tealbg);color:var(--teal);font-weight:600}
+.thread{min-height:352px}
+.msg{max-width:84%;padding:10px 14px;border-radius:14px;font-size:15.5px;margin:0 0 10px;opacity:0;transform:translateY(6px);transition:opacity .35s ease,transform .35s ease}
+.msg.show{opacity:1;transform:none}
 .msg small{display:block;color:var(--soft);font-size:13px;margin-top:2px}
 .msg.c{background:var(--mist);border-bottom-left-radius:4px}
 .msg.a{background:var(--tealbg);margin-left:auto;border-bottom-right-radius:4px}
-.msg:nth-of-type(1){animation-delay:.3s}.msg:nth-of-type(2){animation-delay:1.1s}.msg:nth-of-type(3){animation-delay:1.9s}.msg:nth-of-type(4){animation-delay:2.7s}
-.done{margin-top:14px;padding-top:14px;border-top:1px solid var(--rule);font-size:14.5px;opacity:0;animation:in .4s ease 3.5s forwards}
+.done{margin-top:14px;padding-top:14px;border-top:1px solid var(--rule);font-size:14.5px;opacity:0;transition:opacity .35s ease}
+.done.show{opacity:1}
 .done b{color:var(--teal)}
-@keyframes in{to{opacity:1;transform:none}}
-@media(prefers-reduced-motion:reduce){.msg,.done{animation:none;opacity:1;transform:none}.callh b:before{animation:none}}
+@keyframes pulse{50%{opacity:.25}}
+@media(prefers-reduced-motion:reduce){.msg,.done{transition:none}.callh b:before{animation:none}}
 
 /* sections */
 section{padding:88px 0}
@@ -164,13 +168,11 @@ footer{border-top:1px solid var(--rule);padding:28px 0 40px;font-size:14px;color
   <div class="acts"><a class="btn" href="#cta">Start a free proof of concept</a><a class="btn o" href="/" target="_blank">Call the live demo</a></div>
   <p class="fine">Nothing is connected to your core systems.</p>
  </div>
- <div class="call" aria-label="Example call">
-  <div class="callh"><b>Live call</b><span>0:38</span></div>
-  <p class="msg c">Enikku oru chequebook venam.<small>I need a chequebook.</small></p>
-  <p class="msg a">Sure. 25 leaves or 50?</p>
-  <p class="msg c">50. And what is my balance?</p>
-  <p class="msg a">Done, it reaches you in 3 days. Your balance is ₹48,210.</p>
-  <p class="done"><b>Resolved in 38 seconds.</b> Two requests, one call, no agent.</p>
+ <div class="call" aria-label="Example call, rotating through languages">
+  <div class="callh"><b id="callLang">Live call in Malayalam</b><span>0:38</span></div>
+  <div class="langs" role="group" aria-label="Choose a language"></div>
+  <div class="thread" id="thread" aria-live="polite"></div>
+  <p class="done" id="done"><b>Resolved in 38 seconds.</b> Two requests, one call, no agent.</p>
  </div>
 </header>
 
@@ -273,4 +275,35 @@ footer{border-top:1px solid var(--rule);padding:28px 0 40px;font-size:14px;color
  <p class="fine">No signed pilot by day 30? It switches off, and there is no invoice.</p>
 </div>
 <footer><span>AiIVRs, Converse AI. Bangalore, India.</span><span>Data stays in Azure India or your own data centre.</span></footer></div>
+<script>
+(function(){
+ var T=["I need a chequebook.","Sure. 25 leaves or 50?","50. And what is my balance?","Done, it reaches you in 3 days. Your balance is \u20b948,210."];
+ var C=[
+  {n:"Malayalam",l:["\u0d0e\u0d28\u0d3f\u0d15\u0d4d\u0d15\u0d4d \u0d12\u0d30\u0d41 \u0d1a\u0d46\u0d15\u0d4d\u0d15\u0d4d \u0d2c\u0d41\u0d15\u0d4d\u0d15\u0d4d \u0d35\u0d47\u0d23\u0d02.","\u0d36\u0d30\u0d3f. 25 \u0d32\u0d40\u0d2b\u0d4d \u0d35\u0d47\u0d23\u0d4b, 50 \u0d35\u0d47\u0d23\u0d4b?","50. \u0d0e\u0d28\u0d4d\u0d31\u0d46 \u0d2c\u0d3e\u0d32\u0d7b\u0d38\u0d4d \u0d0e\u0d24\u0d4d\u0d30\u0d2f\u0d3e\u0d23\u0d4d?","\u0d1a\u0d46\u0d2f\u0d4d\u0d24\u0d41, 3 \u0d26\u0d3f\u0d35\u0d38\u0d24\u0d4d\u0d24\u0d3f\u0d28\u0d41\u0d33\u0d4d\u0d33\u0d3f\u0d7d \u0d0e\u0d24\u0d4d\u0d24\u0d41\u0d02. \u0d28\u0d3f\u0d19\u0d4d\u0d19\u0d33\u0d41\u0d1f\u0d46 \u0d2c\u0d3e\u0d32\u0d7b\u0d38\u0d4d \u20b948,210."]},
+  {n:"Tamil",l:["\u0b8e\u0ba9\u0b95\u0bcd\u0b95\u0bc1 \u0b92\u0bb0\u0bc1 \u0b9a\u0bc6\u0b95\u0bcd \u0baa\u0bc1\u0b95\u0bcd \u0bb5\u0bc7\u0ba3\u0bc1\u0bae\u0bcd.","\u0b9a\u0bb0\u0bbf. 25 \u0bb2\u0bc0\u0b83\u0baa\u0bcd \u0bb5\u0bc7\u0ba3\u0bc1\u0bae\u0bbe, 50 \u0bb5\u0bc7\u0ba3\u0bc1\u0bae\u0bbe?","50. \u0b8e\u0ba9\u0bcd \u0baa\u0bc7\u0bb2\u0ba9\u0bcd\u0bb8\u0bcd \u0b8e\u0bb5\u0bcd\u0bb5\u0bb3\u0bb5\u0bc1?","\u0bae\u0bc1\u0b9f\u0bbf\u0ba8\u0bcd\u0ba4\u0ba4\u0bc1, 3 \u0ba8\u0bbe\u0bb3\u0bbf\u0bb2\u0bcd \u0bb5\u0ba8\u0bcd\u0ba4\u0bc1\u0bb5\u0bbf\u0b9f\u0bc1\u0bae\u0bcd. \u0b89\u0b99\u0bcd\u0b95\u0bb3\u0bcd \u0baa\u0bc7\u0bb2\u0ba9\u0bcd\u0bb8\u0bcd \u20b948,210."]},
+  {n:"Hindi",l:["\u092e\u0941\u091d\u0947 \u090f\u0915 \u091a\u0947\u0915\u092c\u0941\u0915 \u091a\u093e\u0939\u093f\u090f\u0964","\u091c\u093c\u0930\u0942\u0930\u0964 25 \u092a\u0928\u094d\u0928\u094b\u0902 \u0935\u093e\u0932\u0940 \u092f\u093e 50?","50\u0964 \u0914\u0930 \u092e\u0947\u0930\u093e \u092c\u0948\u0932\u0947\u0902\u0938 \u0915\u093f\u0924\u0928\u093e \u0939\u0948?","\u0939\u094b \u0917\u092f\u093e, 3 \u0926\u093f\u0928 \u092e\u0947\u0902 \u092a\u0939\u0941\u0901\u091a \u091c\u093e\u090f\u0917\u0940\u0964 \u0906\u092a\u0915\u093e \u092c\u0948\u0932\u0947\u0902\u0938 \u20b948,210 \u0939\u0948\u0964"]},
+  {n:"English",l:T,en:1},
+  {n:"Spanish",l:["Necesito una chequera.","Claro. \u00bfDe 25 hojas o de 50?","De 50. \u00bfY cu\u00e1l es mi saldo?","Listo, le llega en 3 d\u00edas. Su saldo es \u20b948,210."]}
+ ];
+ var th=document.getElementById('thread'),dn=document.getElementById('done'),lab=document.getElementById('callLang'),grp=document.querySelector('.langs');
+ var rm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+ var i=0,timers=[],auto=true;
+ C.forEach(function(c,k){var b=document.createElement('button');b.type='button';b.textContent=c.n;b.onclick=function(){auto=false;play(k)};grp.appendChild(b)});
+ function clear(){timers.forEach(clearTimeout);timers=[]}
+ function play(k){
+  clear();i=k;var c=C[k];lab.textContent='Live call in '+c.n;
+  [].forEach.call(grp.children,function(b,j){b.setAttribute('aria-pressed',j===k?'true':'false')});
+  th.innerHTML='';dn.classList.remove('show');
+  c.l.forEach(function(t,j){
+   var p=document.createElement('p');p.className='msg '+(j%2?'a':'c');p.lang={Malayalam:'ml',Tamil:'ta',Hindi:'hi',English:'en',Spanish:'es'}[c.n];
+   p.textContent=t;if(!c.en){var s=document.createElement('small');s.lang='en';s.textContent=T[j];p.appendChild(s)}
+   th.appendChild(p);
+   timers.push(setTimeout(function(){p.classList.add('show')},rm?0:300+j*800));
+  });
+  timers.push(setTimeout(function(){dn.classList.add('show')},rm?0:3500));
+  if(auto)timers.push(setTimeout(function(){play((i+1)%C.length)},rm?7000:7000));
+ }
+ play(0);
+})();
+</script>
 </body></html>
