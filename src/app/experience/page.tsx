@@ -94,7 +94,20 @@ function HomeInner() {
   }, [])
 
   // ── Demo journey ─────────────────────────────────────────────────────────
-  const [demoStep, setDemoStep]                 = useState(0)
+  // Fix: when autostart=true, the journey param must select the scenario from the
+  // first render. everStarted is also URL-initialized (true on autostart), which
+  // makes the journey->demoStep effects' `!everStarted` guard skip them — so
+  // demoStep stayed 0 (scenario 'premium') for every journey and sales/value-tier
+  // gating never sent caller_mobile/crm_tier. Initialize demoStep from the URL here.
+  const [demoStep, setDemoStep]                 = useState(() => {
+    if (typeof window === 'undefined') return 0
+    const p = new URLSearchParams(window.location.search)
+    if (p.get('autostart') === 'true') {
+      const j = parseInt(p.get('journey') || '', 10)
+      if (!isNaN(j) && j >= 0 && j <= 3) return j
+    }
+    return 0
+  })
   const [scenarioTimes, setScenarioTimes]       = useState<(number|null)[]>(Array(6).fill(null))
   const [demoStartTime, setDemoStartTime]       = useState<number|null>(null)
   const [totalDemoElapsed, setTotalDemoElapsed] = useState(0)
@@ -364,7 +377,10 @@ function HomeInner() {
       setTimeout(() => reveal('security'),   REVEAL_TIMINGS.security)
       setTimeout(() => reveal('deployment'), REVEAL_TIMINGS.deployment)
     }
-  }, [startCall, addTx, reveal, liveCall, demoStartTime, revealed, isInfraDemo, currentUser])
+    // Include demoStep/scenario/demoProfile/valueTier so the connect payload uses the
+    // current scenario (sales caller_mobile, value-tier crm_tier), not stale initials.
+  }, [startCall, addTx, reveal, liveCall, demoStartTime, revealed, isInfraDemo, currentUser,
+      demoStep, scenario, demoProfile, valueTier])
 
   // ── End call ────────────────────────────────────────────────────────────
   const handleEndCall = useCallback(() => {
