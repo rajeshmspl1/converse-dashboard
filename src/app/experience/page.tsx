@@ -611,7 +611,7 @@ function HomeInner() {
                   {demoStep === 3 && (
                     <div className="flex gap-3 justify-center mb-5">
                       {([
-                        { tier: 'gold' as const, label: '🥇 Gold', color: '#f5a623', desc: 'Coming Soon', disabled: true },
+                        { tier: 'gold' as const, label: '🥇 Gold', color: '#f5a623', desc: 'GPT-4o Realtime · Exp 2', disabled: false },
                         { tier: 'silver' as const, label: '🥈 Silver', color: '#c0c0c0', desc: 'Gemini S2S · Exp 3', disabled: false },
                         { tier: 'bronze' as const, label: '🥉 Bronze', color: '#cd7f32', desc: 'Pipeline · Exp 4/5', disabled: false },
                       ]).map(t => (
@@ -697,16 +697,16 @@ function HomeInner() {
                     </div>
                   )}
 
+                  {/* R157→r5: Gold re-enabled (Azure GA gpt-realtime-mini stable) */}
                   <button onClick={handleStart}
-                    disabled={demoStep === 3 && valueTier === 'gold'}
                     className="inline-flex items-center gap-2 px-12 py-4 rounded-xl text-[17px] font-bold cursor-pointer transition-all hover:-translate-y-0.5 mb-1 border-none"
                     style={{
-                      background: (demoStep === 3 && valueTier === 'gold') ? 'var(--b1)' : jConfig?.color,
-                      color: (demoStep === 3 && valueTier === 'gold') ? 'var(--dim)' : (jConfig?.color === '#f03060' ? '#fff' : '#000'),
+                      background: jConfig?.color,
+                      color: (jConfig?.color === '#f03060' ? '#fff' : '#000'),
                       boxShadow: '0 4px 20px rgba(0,0,0,.3)',
-                      cursor: (demoStep === 3 && valueTier === 'gold') ? 'not-allowed' : 'pointer',
+                      cursor: 'pointer',
                     }}>
-                    ▶ {demoStep === 0 ? 'Try routine intent demo' : demoStep === 1 ? 'Try revenue discovery demo' : demoStep === 2 ? 'Try frustration escalation demo' : (demoStep === 3 && valueTier === 'gold') ? '🥇 Gold — Coming Soon' : `Try ${valueTier || 'value-based'} routing demo`}
+                    ▶ {demoStep === 0 ? 'Try routine intent demo' : demoStep === 1 ? 'Try revenue discovery demo' : demoStep === 2 ? 'Try frustration escalation demo' : `Try ${valueTier || 'value-based'} routing demo`}
                   </button>
                   <div className="text-[9px] mb-2" style={{ color: 'var(--dim)' }}>Zero integration · Zero cost · In 17 minutes</div>
 
