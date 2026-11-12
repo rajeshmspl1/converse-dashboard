@@ -17,7 +17,7 @@ import ConversionCTA from '@/components/demo/ConversionCTA'
 import InfraMigrationDemo from '@/components/demo/InfraMigrationDemo'
 import HomepageSections from '@/components/homepage/HomepageSections'
 import FloatingIVRBar from '@/components/homepage/FloatingIVRBar'
-import { useLiveKitCall } from '@/hooks/useLiveKitCall'
+import { useLiveKitCall, micPreflight, type MicPreflight } from '@/hooks/useLiveKitCall'
 import type { IntentKey, Currency, JourneyStageKey } from '@/types'
 import SignUpModal from '@/components/auth/SignUpModal'
 import UnifiedHeader from '@/components/layout/UnifiedHeader'
@@ -174,6 +174,9 @@ function HomeInner() {
 
   // ── LiveKit ───────────────────────────────────────────────────────────────
   const liveCall = useLiveKitCall()
+  // Mic gate: pre-call preflight failure (policy / permission denied). When set, the
+  // call is NOT started and a blocking overlay explains how to allow the microphone.
+  const [micGate, setMicGate] = useState<MicPreflight | null>(null)
 
   const scenario        = DEMO_SCENARIOS[demoStep]
   const isInfraDemo     = scenario?.isInfraDemo
@@ -185,6 +188,14 @@ function HomeInner() {
   const jConfig         = JOURNEY_CONFIGS[demoStep]
   const jNum            = demoStep + 1
   const hasIntents      = liveCall.liveIntents.length > 0
+  // Experience level Service A actually reports (intent_cost.exp / exp_change);
+  // falls back to the journey's nominal label until the first report arrives.
+  const reportedExp     = liveCall.currentExp as unknown
+  const liveExpLabel    = typeof reportedExp === 'number' && reportedExp > 0
+    ? `Exp ${reportedExp}`
+    : typeof reportedExp === 'string' && reportedExp
+      ? (reportedExp === 'realtime' ? 'Realtime' : reportedExp)
+      : (jConfig?.exp || '')
 
   // ── Timers ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -350,7 +361,7 @@ function HomeInner() {
   }, [demoStep, scenario, selectedIvr, callerCountry, valueTier])
 
   // ── Start call ────────────────────────────────────────────────────────────
-  const handleStart = useCallback(() => {
+  const startCallNow = useCallback(() => {
     if (isInfraDemo) return
     setEverStarted(true)
     setShowCelebration(false)
@@ -381,6 +392,29 @@ function HomeInner() {
     // current scenario (sales caller_mobile, value-tier crm_tier), not stale initials.
   }, [startCall, addTx, reveal, liveCall, demoStartTime, revealed, isInfraDemo, currentUser,
       demoStep, scenario, demoProfile, valueTier])
+
+  // Mic preflight (no prompt, no getUserMedia) before starting — never connect
+  // knowing the mic cannot work; show the mic overlay instead.
+  const handleStart = useCallback(async () => {
+    if (isInfraDemo) return
+    const pf = await micPreflight()
+    if (!pf.ok) { setMicGate(pf); return }
+    setMicGate(null)
+    startCallNow()
+  }, [isInfraDemo, startCallNow])
+
+  const micBlockedInCall = callActive && liveCall.state.status === 'connected' && !!liveCall.state.micError
+  const handleMicRetry = useCallback(async () => {
+    if (micBlockedInCall) {
+      const ok = await liveCall.retryMic()
+      if (!ok) {
+        const pf = await micPreflight()
+        if (!pf.ok) showToast(pf.message || 'Microphone is still blocked.')
+      }
+      return
+    }
+    handleStart()
+  }, [micBlockedInCall, liveCall, handleStart, showToast])
 
   // ── End call ────────────────────────────────────────────────────────────
   const handleEndCall = useCallback(() => {
@@ -785,7 +819,7 @@ function HomeInner() {
                   <div className="w-[7px] h-[7px] rounded-full"
                     style={{ background: '#00c9b1', animation: 'blink 1.2s infinite' }} />
                   <span className="text-[11px]" style={{ color: 'var(--text)' }}>
-                    {elapsed < 3 ? 'Connecting you...' : qTenant && qTenant !== 'experience_shop' ? `Live · ${qTenant.replace(/_/g, ' ')} · ${jConfig?.exp}` : `Live · ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.icon || '🏦'} ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.label || 'Banking'} · ${jConfig?.exp}`}
+                    {elapsed < 3 ? 'Connecting you...' : qTenant && qTenant !== 'experience_shop' ? `Live · ${qTenant.replace(/_/g, ' ')} · ${liveExpLabel}` : `Live · ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.icon || '🏦'} ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.label || 'Banking'} · ${liveExpLabel}`}
                   </span>
                   <span className="ml-auto">
                     <span className="px-2 py-0.5 rounded text-[8px] font-bold"
@@ -805,7 +839,7 @@ function HomeInner() {
                     callActive={callActive}
                     intentDetected={hasIntents}
                     callerCountry={callerCountry}
-                    initialIndustry={(selectedIvr || "").replace("global_", "") as any}
+                    initialIndustry={(qTenant && qTenant !== 'experience_shop' ? 'banking' : (selectedIvr || "").replace("global_", "")) as any}
                     isUploadedTenant={!!qTenant && qTenant !== 'experience_shop'}
                     tenantDisplayName={qTenant ? qTenant.replace(/_/g, ' ') : undefined}
                   />
@@ -987,7 +1021,9 @@ function HomeInner() {
                   {liveCall.state.status === 'connected'
                     ? liveCall.state.micEnabled
                       ? 'Mic active — AI is listening'
-                      : 'Connected — mic off'
+                      : liveCall.state.micError
+                        ? 'Mic blocked — tap to allow'
+                        : 'Connected — enabling mic…'
                     : liveCall.state.status === 'connecting'
                     ? 'Connecting…'
                     : 'Idle'}
@@ -996,6 +1032,38 @@ function HomeInner() {
             </div>
           )}
 
+        </div>
+      )}
+
+      {/* ══ MIC GATE OVERLAY — never leave the caller silently connected with mic off ══ */}
+      {(micGate || micBlockedInCall) && (
+        <div data-testid="mic-gate" className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+          style={{ background: 'rgba(5,10,18,.82)', backdropFilter: 'blur(3px)' }}>
+          <div className="w-full max-w-sm rounded-xl p-5 text-center shadow-2xl"
+            style={{ background: 'var(--card, #0e1826)', border: '1px solid var(--b2, #22364f)' }}>
+            <div className="text-[34px] mb-2">🎙️</div>
+            <div className="text-[15px] font-bold mb-1.5" style={{ color: 'var(--text, #e6eefb)' }}>
+              Microphone needed for this call
+            </div>
+            <div className="text-[11px] leading-relaxed mb-4" style={{ color: 'var(--dim, #7a90b5)' }}>
+              {micGate?.message
+                || (liveCall.state.micError?.startsWith('NotAllowedError')
+                  ? 'Your browser did not allow the microphone. Tap below and choose “Allow”. If no prompt appears, click the lock icon in the address bar → Microphone → Allow.'
+                  : liveCall.state.micError?.startsWith('NotFoundError')
+                    ? 'No microphone was found. Connect a microphone and tap below.'
+                    : 'The AI can’t hear you yet. Tap below to allow the microphone.')}
+            </div>
+            <button data-testid="mic-gate-allow" onClick={handleMicRetry}
+              className="w-full px-5 py-3 rounded-lg text-[14px] font-bold border-none cursor-pointer mb-2"
+              style={{ background: '#00c9b1', color: '#000' }}>
+              {micBlockedInCall ? 'Tap to allow microphone' : 'Try again'}
+            </button>
+            <button onClick={() => { setMicGate(null); if (micBlockedInCall) handleEndCall() }}
+              className="w-full px-5 py-2 rounded-lg text-[11px] border cursor-pointer"
+              style={{ background: 'transparent', borderColor: 'var(--b1, #1a2b40)', color: 'var(--dim, #7a90b5)' }}>
+              {micBlockedInCall ? 'End call' : 'Cancel'}
+            </button>
+          </div>
         </div>
       )}
 

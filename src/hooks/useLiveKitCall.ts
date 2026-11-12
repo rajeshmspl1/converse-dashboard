@@ -35,6 +35,41 @@ export interface LiveCallState {
   error: string | null
   lastDigit: string | null
   micEnabled: boolean
+  micError: string | null   // set when mic could not be enabled (policy/permission/device)
+}
+
+/** Result of a no-prompt microphone preflight (policy + permission state only). */
+export interface MicPreflight {
+  ok: boolean
+  reason?: 'policy_blocked' | 'permission_denied' | 'no_media_devices' | 'insecure_context'
+  message?: string
+}
+
+/**
+ * Check whether this document can use the microphone WITHOUT triggering a prompt
+ * or calling getUserMedia (so harness getUserMedia overrides stay untouched).
+ * - Permissions-Policy microphone=() → policy_blocked (no prompt is possible)
+ * - permission already 'denied' → permission_denied (user must re-allow in site settings)
+ */
+export async function micPreflight(): Promise<MicPreflight> {
+  if (typeof window === 'undefined') return { ok: true }
+  if (!window.isSecureContext) {
+    return { ok: false, reason: 'insecure_context', message: 'Microphone needs a secure (https) page.' }
+  }
+  if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+    return { ok: false, reason: 'no_media_devices', message: 'This browser does not expose a microphone.' }
+  }
+  const fp = (document as unknown as { featurePolicy?: { allowsFeature: (f: string) => boolean } }).featurePolicy
+  if (fp && typeof fp.allowsFeature === 'function' && !fp.allowsFeature('microphone')) {
+    return { ok: false, reason: 'policy_blocked', message: 'Microphone is blocked by this site\'s permissions policy.' }
+  }
+  try {
+    const st = await navigator.permissions.query({ name: 'microphone' as PermissionName })
+    if (st.state === 'denied') {
+      return { ok: false, reason: 'permission_denied', message: 'Microphone access is blocked for this site. Click the lock icon in the address bar → Microphone → Allow, then try again.' }
+    }
+  } catch { /* permissions API unsupported (e.g. Firefox/Safari) — let getUserMedia decide */ }
+  return { ok: true }
 }
 
 /** Optional params for connect — additive, all fields optional */
@@ -49,6 +84,7 @@ export interface UseLiveKitCallReturn {
   state: LiveCallState
   connect: (tenantKey: string, ivrKey: string, serviceBUrl: string, opts?: ConnectOpts) => Promise<void>
   disconnect: () => Promise<void>
+  retryMic: () => Promise<boolean>
   pressDTMF: (digit: string) => void
   /* ── Live data from Service A data channel ── */
   liveTranscript: TxLine[]
@@ -68,6 +104,7 @@ const INITIAL_STATE: LiveCallState = {
   error: null,
   lastDigit: null,
   micEnabled: false,
+  micError: null,
 }
 
 /* ── Hook ─────────────────────────────────────────────────────────────────── */
@@ -125,7 +162,7 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
     setCurrentExp(null)
     setCrmName(null)
 
-    patch({ status: 'connecting', error: null, roomName })
+    patch({ status: 'connecting', error: null, micError: null, roomName })
     addLog(`Connecting: room=${roomName}`)
 
     try {
@@ -305,11 +342,14 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
         addLog('Connected to LiveKit room')
         try {
           await room.localParticipant.setMicrophoneEnabled(true)
-          patch({ status: 'connected', micEnabled: true })
+          patch({ status: 'connected', micEnabled: true, micError: null })
           addLog('Mic enabled — AI can hear you')
-        } catch {
-          patch({ status: 'connected', micEnabled: false })
-          addLog('Mic failed — check browser permissions')
+        } catch (e) {
+          // Surface the error — the page shows a "Tap to allow microphone" overlay
+          // instead of silently staying connected with the mic off.
+          const err = e instanceof Error ? `${e.name}: ${e.message}` : String(e)
+          patch({ status: 'connected', micEnabled: false, micError: err })
+          addLog(`Mic failed — ${err}`)
         }
       })
 
@@ -382,6 +422,9 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
 
         // Always update session total cost
         setLiveCost(sessionTotal)
+
+        // Experience level actually used by Service A for this cycle
+        if (typeof exp === 'number' && exp > 0) setCurrentExp(exp)
 
         // Determine if business intent vs system intent
         const SYSTEM_REASONS = ['feedback', 'rating', 'voice_feedback', 'score', 'idle', 'idle_disconnect', 'greeting', 'farewell', 'disconnect', 'call_end', 'nudge', 'dtmf', 'ivr', 'running_estimate']
@@ -493,6 +536,24 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
     setState(INITIAL_STATE)
   }, [])
 
+  /* ── Retry mic (call from a user gesture, e.g. overlay button) ───────────── */
+
+  const retryMic = useCallback(async (): Promise<boolean> => {
+    const room = roomRef.current
+    if (!room) return false
+    try {
+      await room.localParticipant.setMicrophoneEnabled(true)
+      patch({ micEnabled: true, micError: null })
+      addLog('Mic enabled on retry — AI can hear you')
+      return true
+    } catch (e) {
+      const err = e instanceof Error ? `${e.name}: ${e.message}` : String(e)
+      patch({ micEnabled: false, micError: err })
+      addLog(`Mic retry failed — ${err}`)
+      return false
+    }
+  }, [patch, addLog])
+
   /* ── DTMF ───────────────────────────────────────────────────────────────── */
 
   const pressDTMF = useCallback((digit: string) => {
@@ -509,6 +570,7 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
     state,
     connect,
     disconnect,
+    retryMic,
     pressDTMF,
     liveTranscript,
     liveLog,
