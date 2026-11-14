@@ -27,6 +27,7 @@ interface TxLine { who: 'user' | 'ai' | 'sys'; text: string; meta?: string; ts?:
 
 // ── Config ─────────────────────────────────────────────────────────────────
 import { getEnv } from '@/lib/env'
+import { resolveCrmIndustry, demoProfileUrl } from '@/lib/crmIndustry'
 const SERVICE_B_URL = getEnv().serviceB
 const TENANT_KEY    = 'experience_shop'
 const DEFAULT_IVR_KEY = 'global_banking'
@@ -345,20 +346,26 @@ function HomeInner() {
     }
     let cancelled = false
     setDemoProfileLoading(true)
-    const industry = (selectedIvrRef.current || 'global_banking').replace('global_', '')
     // R157: For value routing (demoStep 3), fetch profile matching the selected value tier
-    const classificationFilter = demoStep === 3
-      ? `&classification=${valueTier === 'silver' ? 'AT_RISK' : valueTier === 'bronze' ? 'STANDARD' : 'HIGH_VALUE'}`
-      : ''
-    fetch(`${SERVICE_B_URL.replace(':9000', ':9700')}/crm/demo-profile?country=${encodeURIComponent(callerCountry)}&industry=${industry}${classificationFilter}`)
-      .then(r => r.json())
-      .then(data => {
-        if (!cancelled && data?.mobile) setDemoProfile(data)
+    const classification = demoStep === 3
+      ? (valueTier === 'silver' ? 'AT_RISK' : valueTier === 'bronze' ? 'STANDARD' : 'HIGH_VALUE')
+      : undefined
+    // jk_j2j4_r1: industry from Service B (not the IVR key); unresolved → no profile, no pitch
+    resolveCrmIndustry(SERVICE_B_URL, qTenant || TENANT_KEY, selectedIvrRef.current || 'global_banking')
+      .then(industry => {
+        if (!industry) {
+          console.info('[CRM] INDUSTRY_UNRESOLVED — no demo profile, no pitch')
+          if (!cancelled) setDemoProfile(null)
+          return null
+        }
+        return fetch(demoProfileUrl(SERVICE_B_URL.replace(':9000', ':9700'), callerCountry, industry, classification))
+          .then(r => r.json())
+          .then(data => { if (!cancelled && data?.mobile) setDemoProfile(data) })
       })
       .catch(() => {})
       .finally(() => { if (!cancelled) setDemoProfileLoading(false) })
     return () => { cancelled = true }
-  }, [demoStep, scenario, selectedIvr, callerCountry, valueTier])
+  }, [demoStep, scenario, selectedIvr, callerCountry, valueTier, qTenant])
 
   // ── Start call ────────────────────────────────────────────────────────────
   const startCallNow = useCallback(() => {
@@ -711,13 +718,16 @@ function HomeInner() {
                       <div className="mt-2 text-[9px]" style={{ color: '#3370E8', cursor: 'pointer' }}
                         onClick={() => {
                           setDemoProfileLoading(true)
-                          const ind = (selectedIvrRef.current || 'global_banking').replace('global_', '')
-                          const classFilter = demoStep === 3
-                            ? `&classification=${valueTier === 'silver' ? 'AT_RISK' : valueTier === 'bronze' ? 'STANDARD' : 'HIGH_VALUE'}`
-                            : ''
-                          fetch(`${SERVICE_B_URL.replace(':9000', ':9700')}/crm/demo-profile?country=${encodeURIComponent(callerCountry)}&industry=${ind}${classFilter}`)
-                            .then(r => r.json())
-                            .then(data => { if (data?.mobile) setDemoProfile(data) })
+                          const cls = demoStep === 3
+                            ? (valueTier === 'silver' ? 'AT_RISK' : valueTier === 'bronze' ? 'STANDARD' : 'HIGH_VALUE')
+                            : undefined
+                          // jk_j2j4_r1: same industry source as the journey fetch
+                          resolveCrmIndustry(SERVICE_B_URL, qTenant || TENANT_KEY, selectedIvrRef.current || 'global_banking')
+                            .then(ind => ind
+                              ? fetch(demoProfileUrl(SERVICE_B_URL.replace(':9000', ':9700'), callerCountry, ind, cls))
+                                  .then(r => r.json())
+                                  .then(data => { if (data?.mobile) setDemoProfile(data) })
+                              : null)
                             .catch(() => {})
                             .finally(() => setDemoProfileLoading(false))
                         }}>
