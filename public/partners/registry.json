@@ -1,0 +1,5 @@
+{
+  "hosts": [
+    { "host": "sparrowcx-staging.aiivrs.com", "id": "sparrowcx", "apiEnv": "staging" }
+  ]
+}

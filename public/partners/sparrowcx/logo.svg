@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="36" viewBox="0 0 120 36" role="img" aria-label="Logo placeholder">
+  <rect width="36" height="36" rx="8" fill="#310627"/>
+  <path d="M9 22c5-9 13-12 19-10-4 1-7 4-8 8 4-2 8-2 11 0-7 1-12 4-14 8-2-3-5-5-8-6z" fill="#F54D1D"/>
+  <text x="44" y="23" font-family="Open Sans, Arial, sans-serif" font-size="12" font-weight="700" fill="#4DBBC2">LOGO</text>
+</svg>
