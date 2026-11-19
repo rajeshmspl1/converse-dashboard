@@ -22,7 +22,8 @@ home page.
 
 ## Add a partner
 
-1. **Config** — `public/partners/<id>/config.json` (`<id>` matches `^[a-z0-9-]+$`):
+1. **Config** — `public/partners/<id>/partner.json` (`<id>` matches `^[a-z0-9-]+$`). Never name it
+   `config.json`: the WAF (OWASP CRS rule 930130, restricted files) blocks any path containing it.
    - `name`, `logo` (must be under `/partners/<id>/`), `font` (Google Fonts family name)
    - `colours`: `primary`, `accent`, `secondary`, `alert` — each `#RRGGBB`
    - `hero_title`, `hero_subtitle`, `cta_label`, `journeys_title`, `contact_title`, `contact_text`, `powered_by`

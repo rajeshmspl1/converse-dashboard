@@ -1,6 +1,7 @@
 // Partner-host runtime config for the app pages (login, /migrate, /experience).
 // On a non-partner host every helper returns today's behaviour (null config / the given fallback).
-// The config file is public/partners/<id>/config.json; only the app-facing fields are read here.
+// The config file is public/partners/<id>/partner.json (never *config.json — the WAF's OWASP CRS
+// rule 930130 blocks it); only the app-facing fields are read here.
 import { useEffect, useState } from 'react'
 import { partnerForHost } from '@/config/partners'
 
@@ -43,7 +44,7 @@ export function loadPartnerConfig(): Promise<PartnerAppConfig | null> {
   const id = currentPartnerId()
   if (!id) return Promise.resolve(null)
   if (!cached) {
-    cached = fetch(`/partners/${id}/config.json`, { cache: 'no-cache' })
+    cached = fetch(`/partners/${id}/partner.json`, { cache: 'no-cache' })
       .then(r => (r.ok ? r.json() : null))
       .then(raw => (raw ? parsePartnerAppConfig(raw) : null))
       .catch(() => null)

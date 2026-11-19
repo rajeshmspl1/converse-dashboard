@@ -77,6 +77,13 @@ t('template page is noindex and has no partner-specific text', () => {
   for (const h of reg.hosts) assert.ok(!html.includes(h.id) && !html.includes(h.host), 'template mentions a partner')
 })
 
+t('partner files avoid WAF-restricted names (CRS 930130 blocks *config.json)', () => {
+  const sources = ['public/partners/template.js', 'src/lib/partner.ts'].map(f => readFileSync(path.join(root, f), 'utf8'))
+  assert.ok(sources.every(src => src.includes('/partner.json') && !/\/[a-z._-]*config[._-][a-z.]*json/.test(src.replace(/\/\/.*$/gm, ''))))
+  for (const h of JSON.parse(readFileSync(path.join(root, 'public/partners/registry.json'), 'utf8')).hosts)
+    readFileSync(path.join(root, `public/partners/${h.id}/partner.json`), 'utf8')  // every registry id has partner.json
+})
+
 // src/config/partners.ts — transpiled with the registry inlined (pure data module).
 const regJson = readFileSync(path.join(root, 'public/partners/registry.json'), 'utf8')
 const psrc = readFileSync(path.join(root, 'src/config/partners.ts'), 'utf8')

@@ -111,7 +111,8 @@ async function main() {
     const reg = await (await fetch('/partners/registry.json', { cache: 'no-cache' })).json()
     const id = resolvePartnerId(reg, window.location.hostname, window.location.search)
     if (!id) return fail()
-    const res = await fetch(`/partners/${id}/config.json`, { cache: 'no-cache' })
+    // partner.json, not config.json: the WAF (OWASP CRS 930130) blocks any path containing config.json
+    const res = await fetch(`/partners/${id}/partner.json`, { cache: 'no-cache' })
     const cfg = res.ok ? validateConfig(id, await res.json()) : null
     return cfg ? render(cfg) : fail()
   } catch {
