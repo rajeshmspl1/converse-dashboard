@@ -2,25 +2,25 @@
 import { getEnv } from '@/lib/env'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { getUser, clearAuth, fetchI, isLoggedIn, type CxUser } from '@/lib/auth'
+import { getUser, clearAuth, fetchI, isLoggedIn, getAccessToken, fetchB as sharedFetchB, ApiError, type CxUser } from '@/lib/auth'
 import UnifiedHeader from '@/components/layout/UnifiedHeader'
 import TelephonyTab from '@/components/dashboard/TelephonyTab'
 
-/** Call Service B provisioning proxy (JWT auth — admin key stays server-side). */
+/**
+ * Call Service B provisioning proxy (JWT auth — admin key stays server-side).
+ * Thin wrapper over the shared fetchB (token refresh): keeps this page's (path, method, body)
+ * signature and its error messages (API "detail", else "HTTP <status>").
+ */
 async function fetchB(path: string, method: string = 'POST', body?: any): Promise<any> {
-  const token = (await import('@/lib/auth')).getAccessToken()
-  if (!token) throw new Error('Not authenticated')
-  const SERVICE_B = typeof window !== "undefined" ? getEnv().serviceB : "http://localhost:9000"
-  const res = await fetch(`${SERVICE_B}${path}`, {
-    method,
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.detail ? (typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail)) : `HTTP ${res.status}`)
+  if (!getAccessToken()) throw new Error('Not authenticated')
+  try {
+    return await sharedFetchB(path, { method, ...(body ? { body: JSON.stringify(body) } : {}) })
+  } catch (e) {
+    if (!(e instanceof ApiError)) throw e
+    let detail: unknown
+    try { detail = JSON.parse(e.body)?.detail } catch { detail = undefined }
+    throw new Error(detail ? (typeof detail === 'string' ? detail : JSON.stringify(detail)) : `HTTP ${e.status}`)
   }
-  return res.json()
 }
 
 const T = {

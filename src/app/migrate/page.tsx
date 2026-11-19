@@ -1,11 +1,10 @@
 'use client'
-import { getEnv } from '@/lib/env';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import MigrationLeads from '@/components/dashboard/MigrationLeads';
 import UnifiedHeader from '@/components/layout/UnifiedHeader';
-import { clearAuth } from '@/lib/auth';
+import { clearAuth, fetchB, getAccessToken, getUser } from '@/lib/auth';
 import { currentPartnerId, tenantLabel, usePartnerConfig } from '@/lib/partner';
 import type { Currency } from '@/types';
 
@@ -22,25 +21,6 @@ import type { Currency } from '@/types';
      5-stage collapsible sidebar + Start Call hero + mode cards
    ──────────────────────────────────────────────────────────── */
 
-const SERVICE_B_URL = typeof window !== "undefined" ? getEnv().serviceB : "http://localhost:9000";
-
-function getAccessToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('cx_access_token');
-}
-function getUser(): any {
-  if (typeof window === 'undefined') return null;
-  try { const raw = localStorage.getItem('cx_user'); if (!raw) return null; return JSON.parse(raw); } catch { return null; }
-}
-async function fetchB(path: string, opts: RequestInit = {}): Promise<any> {
-  const token = getAccessToken();
-  const headers: any = { ...(opts.headers || {}) };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  if (!(opts.body instanceof FormData)) headers['Content-Type'] = 'application/json';
-  const res = await fetch(`${SERVICE_B_URL}${path}`, { ...opts, headers });
-  if (!res.ok) { const text = await res.text(); throw new Error(`${res.status}: ${text}`); }
-  return res.json();
-}
 
 const colors = {
   bg:'#080D18', s1:'#0D1526', s2:'#111D30', s3:'#16243A',

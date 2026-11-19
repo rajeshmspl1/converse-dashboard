@@ -180,6 +180,84 @@ export async function claimDemoSessions(sessionIds: string[]): Promise<{ claimed
 }
 
 // ══════════════════════════════════════════════════════════
+// Token refresh (R172 design). /auth/refresh returns only { access_token, expires_in, token_type }
+// — no refresh token, no user, no rotation — so a refresh MERGES: only the access token is
+// replaced and the stored refresh token + user stay. Never saveAuth() a refresh response.
+// ══════════════════════════════════════════════════════════
+
+let refreshInFlight: Promise<string | null> | null = null
+
+function endSession(): null {
+  clearAuth()
+  window.location.href = '/login'
+  return null
+}
+
+async function requestNewAccessToken(): Promise<string | null> {
+  const refreshToken = getRefreshToken()
+  if (!refreshToken) return endSession()
+  let res: Response
+  try {
+    res = await fetch(`${SERVICE_B_URL}/auth/refresh`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ refresh_token: refreshToken }),
+    })
+  } catch {
+    return null // network error: keep the session; the caller sees its original 401
+  }
+  if (!res.ok) return endSession()
+  const data = await res.json().catch(() => null)
+  if (!data || typeof data.access_token !== 'string' || !data.access_token) return endSession()
+  localStorage.setItem(ACCESS_KEY, data.access_token)
+  return data.access_token
+}
+
+/**
+ * Refresh the access token once for every concurrent caller (shared in-flight promise).
+ * Resolves to the new access token, or null — on a rejected refresh the session is cleared and
+ * the page goes to /login.
+ */
+export function refreshAuth(): Promise<string | null> {
+  if (!refreshInFlight) refreshInFlight = requestNewAccessToken().finally(() => { refreshInFlight = null })
+  return refreshInFlight
+}
+
+function withBearer(init: RequestInit, token: string | null): RequestInit {
+  if (!token) return init
+  return { ...init, headers: { ...((init.headers as Record<string, string>) || {}), Authorization: `Bearer ${token}` } }
+}
+
+/**
+ * fetch() with the stored access token. On a 401 for a request that actually SENT a token it
+ * refreshes once and retries once (no loop). Logged-out requests are never refreshed or redirected.
+ */
+export async function authFetch(url: string, init: RequestInit = {}): Promise<Response> {
+  const token = getAccessToken()
+  const res = await fetch(url, withBearer(init, token))
+  if (res.status !== 401 || !token) return res
+  const fresh = await refreshAuth()
+  return fresh ? fetch(url, withBearer(init, fresh)) : res
+}
+
+/** Non-2xx Service B response; message is "<status>: <body>". */
+export class ApiError extends Error {
+  constructor(public status: number, public body: string) {
+    super(`${status}: ${body}`)
+  }
+}
+
+/** Service B JSON call with token refresh (shared by /migrate and /dashboard). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- callers read varied JSON shapes (same as the local fetchB it replaces)
+export async function fetchB(path: string, opts: RequestInit = {}): Promise<any> {
+  const headers: Record<string, string> = { ...((opts.headers as Record<string, string>) || {}) }
+  if (!(opts.body instanceof FormData)) headers['Content-Type'] = 'application/json'
+  const res = await authFetch(`${SERVICE_B_URL}${path}`, { ...opts, headers })
+  if (!res.ok) throw new ApiError(res.status, await res.text())
+  return res.json()
+}
+
+// ══════════════════════════════════════════════════════════
 
 export async function fetchI(path: string, params?: Record<string, string | number>): Promise<any> {
   const token = getAccessToken()
@@ -190,9 +268,7 @@ export async function fetchI(path: string, params?: Record<string, string | numb
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, String(v)))
   }
 
-  const res = await fetch(url.toString(), {
-    headers: { Authorization: `Bearer ${token}` },
-  })
+  const res = await authFetch(url.toString())
 
   if (res.status === 401) {
     clearAuth()
