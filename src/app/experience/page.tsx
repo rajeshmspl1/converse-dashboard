@@ -28,11 +28,13 @@ interface TxLine { who: 'user' | 'ai' | 'sys'; text: string; meta?: string; ts?:
 // ── Config ─────────────────────────────────────────────────────────────────
 import { getEnv } from '@/lib/env'
 import { resolveCrmIndustry, demoProfileUrl } from '@/lib/crmIndustry'
+import { tenantLabel, usePartnerConfig } from '@/lib/partner'
 const SERVICE_B_URL = getEnv().serviceB
 const TENANT_KEY    = 'experience_shop'
 const DEFAULT_IVR_KEY = 'global_banking'
 
 function HomeInner() {
+  const partnerCfg = usePartnerConfig() // null on non-partner hosts → today's labels
   const searchParams = useSearchParams()
   const qTenantRaw = searchParams.get("tenant_key")
   const qIvrRaw = searchParams.get("ivr_key")
@@ -771,7 +773,7 @@ function HomeInner() {
                     <div className="flex justify-center">
                       <span className="px-4 py-2 rounded-md border text-[11px] font-semibold"
                         style={{ background: 'rgba(0,201,177,.12)', borderColor: '#00c9b1', color: '#00c9b1' }}>
-                        {qTenant.replace(/_/g, ' ')}
+                        {tenantLabel(qTenant, partnerCfg)}
                       </span>
                     </div>
                   ) : (
@@ -829,7 +831,7 @@ function HomeInner() {
                   <div className="w-[7px] h-[7px] rounded-full"
                     style={{ background: '#00c9b1', animation: 'blink 1.2s infinite' }} />
                   <span className="text-[11px]" style={{ color: 'var(--text)' }}>
-                    {elapsed < 3 ? 'Connecting you...' : qTenant && qTenant !== 'experience_shop' ? `Live · ${qTenant.replace(/_/g, ' ')} · ${liveExpLabel}` : `Live · ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.icon || '🏦'} ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.label || 'Banking'} · ${liveExpLabel}`}
+                    {elapsed < 3 ? 'Connecting you...' : qTenant && qTenant !== 'experience_shop' ? `Live · ${tenantLabel(qTenant, partnerCfg)} · ${liveExpLabel}` : `Live · ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.icon || '🏦'} ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.label || 'Banking'} · ${liveExpLabel}`}
                   </span>
                   <span className="ml-auto">
                     <span className="px-2 py-0.5 rounded text-[8px] font-bold"
@@ -851,7 +853,7 @@ function HomeInner() {
                     callerCountry={callerCountry}
                     initialIndustry={(qTenant && qTenant !== 'experience_shop' ? 'banking' : (selectedIvr || "").replace("global_", "")) as any}
                     isUploadedTenant={!!qTenant && qTenant !== 'experience_shop'}
-                    tenantDisplayName={qTenant ? qTenant.replace(/_/g, ' ') : undefined}
+                    tenantDisplayName={qTenant ? tenantLabel(qTenant, partnerCfg) : undefined}
                   />
                 </div>
 

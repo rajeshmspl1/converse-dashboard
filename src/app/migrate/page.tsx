@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import MigrationLeads from '@/components/dashboard/MigrationLeads';
 import UnifiedHeader from '@/components/layout/UnifiedHeader';
 import { clearAuth } from '@/lib/auth';
-import { currentPartnerId } from '@/lib/partner';
+import { currentPartnerId, tenantLabel, usePartnerConfig } from '@/lib/partner';
 import type { Currency } from '@/types';
 
 /* ────────────────────────────────────────────────────────────
@@ -74,6 +74,7 @@ const JOURNEYS = [
 export default function MigratePage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const partnerCfg = usePartnerConfig(); // null on non-partner hosts → today's labels
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currency, setCurrency] = useState<Currency>('inr');
   const handleSignOut = () => { clearAuth(); window.location.href = '/'; };
@@ -304,7 +305,7 @@ export default function MigratePage() {
                 {/* ── My IVR / Experience Shop toggle ── */}
                 <div className="f1" style={{display:'flex',alignItems:'center',gap:0,marginBottom:14,borderRadius:9,overflow:'hidden',border:`1px solid ${colors.b1}`}}>
                   <button onClick={()=>setIvrSource('my')} style={{flex:1,padding:'10px 16px',fontSize:12,fontWeight:700,cursor:'pointer',border:'none',transition:'all .15s',background:ivrSource==='my'?'rgba(0,201,177,.12)':colors.s1,color:ivrSource==='my'?colors.teal:colors.tx3,borderRight:`1px solid ${colors.b1}`}}>
-                    My IVR {selectedIvrTenant && ivrSource==='my' ? `· ${selectedIvrTenant.replace(/_/g,' ')}` : ''}
+                    My IVR {selectedIvrTenant && ivrSource==='my' ? `· ${tenantLabel(selectedIvrTenant, partnerCfg)}` : ''}
                   </button>
                   <button onClick={()=>setIvrSource('shop')} style={{flex:1,padding:'10px 16px',fontSize:12,fontWeight:700,cursor:'pointer',border:'none',transition:'all .15s',background:ivrSource==='shop'?'rgba(51,112,232,.12)':colors.s1,color:ivrSource==='shop'?colors.blue:colors.tx3}}>
                     Experience shop
