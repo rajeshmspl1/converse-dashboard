@@ -75,6 +75,7 @@ export default function MigratePage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const partnerCfg = usePartnerConfig(); // null on non-partner hosts → today's labels
+  const showReset = !partnerCfg?.hideReset; // partner hosts may hide Reset (the API is unchanged)
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currency, setCurrency] = useState<Currency>('inr');
   const handleSignOut = () => { clearAuth(); window.location.href = '/'; };
@@ -273,7 +274,7 @@ export default function MigratePage() {
                 </div>
               ))}
             </div>
-            <button onClick={handleReset} style={{margin:'8px 8px 0',padding:'8px 0',borderRadius:6,border:`1px solid ${colors.b1}`,background:'transparent',color:colors.tx3,fontSize:10,fontWeight:600,cursor:'pointer',transition:'all .15s',width:'calc(100% - 16px)'}}>↩ Reset Migration</button>
+            {showReset && (<button onClick={handleReset} style={{margin:'8px 8px 0',padding:'8px 0',borderRadius:6,border:`1px solid ${colors.b1}`,background:'transparent',color:colors.tx3,fontSize:10,fontWeight:600,cursor:'pointer',transition:'all .15s',width:'calc(100% - 16px)'}}>↩ Reset Migration</button>)}
           </aside>
 
           {/* MAIN */}
@@ -485,7 +486,7 @@ export default function MigratePage() {
           <span style={{display:'inline-flex',padding:'6px 18px',borderRadius:20,fontSize:12,fontWeight:600,background:'rgba(0,222,122,.06)',border:'1px solid rgba(0,222,122,.12)',color:colors.green,fontFamily:"'JetBrains Mono',monospace"}}>Test free for up to 3 months — at any stage or all stages</span>
         </div>
 
-        {error && (<div style={{padding:'12px 16px',borderRadius:10,marginBottom:20,background:'rgba(240,48,96,.08)',border:'1px solid rgba(240,48,96,.15)',color:colors.red,fontSize:13}}>{error}<span style={{float:'right',display:'flex',gap:10,alignItems:'center'}}><button onClick={handleReset} style={{padding:'3px 10px',borderRadius:5,border:`1px solid rgba(240,48,96,.2)`,background:'transparent',color:colors.red,fontSize:11,fontWeight:600,cursor:'pointer'}}>↩ Reset</button><span onClick={()=>setError('')} style={{cursor:'pointer',fontWeight:700}}>✕</span></span></div>)}
+        {error && (<div style={{padding:'12px 16px',borderRadius:10,marginBottom:20,background:'rgba(240,48,96,.08)',border:'1px solid rgba(240,48,96,.15)',color:colors.red,fontSize:13}}>{error}<span style={{float:'right',display:'flex',gap:10,alignItems:'center'}}>{showReset && (<button onClick={handleReset} style={{padding:'3px 10px',borderRadius:5,border:`1px solid rgba(240,48,96,.2)`,background:'transparent',color:colors.red,fontSize:11,fontWeight:600,cursor:'pointer'}}>↩ Reset</button>)}<span onClick={()=>setError('')} style={{cursor:'pointer',fontWeight:700}}>✕</span></span></div>)}
 
         <div style={{position:'relative',paddingLeft:52}}>
           <div style={{position:'absolute',left:19,top:0,bottom:0,width:3,background:colors.b1,borderRadius:2}} />
