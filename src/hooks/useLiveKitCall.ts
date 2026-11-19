@@ -1,6 +1,9 @@
 'use client'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import {
+  HANDOFF_GRACE_MS, createGraceTimer, isHandoffParticipant, ivrModeAfterServiceDLeft, onAgentLeft,
+} from '@/lib/callPresence'
+import {
   Room,
   RoomEvent,
   ConnectionState,
@@ -123,6 +126,8 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
 
   // Ref to track IVR mode — event handler closures can't see useState updates
   const ivrModeRef = useRef(false)
+  // jk_r9_silent_r1 FIX 2b: grace timer after the agent leaves (replaces the 1.5 s hang-up)
+  const graceRef = useRef<ReturnType<typeof createGraceTimer> | null>(null)
 
   const patch = useCallback((p: Partial<LiveCallState>) =>
     setState(s => ({ ...s, ...p })), [])
@@ -275,6 +280,10 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
       // ── Participant events ──
       room.on(RoomEvent.ParticipantConnected, (p) => {
         addLog(`Joined: ${p.identity}`)
+        // FIX 2b: IVR audio or an agent arrived — the call continues
+        if (isHandoffParticipant(p.identity) && graceRef.current?.cancel()) {
+          addLog(`Hand-off grace cancelled — ${p.identity} joined`)
+        }
         if (p.identity.startsWith('agent-')) {
           addTx({ who: 'sys', text: `Agent joined` })
         }
@@ -288,14 +297,15 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
 
         // Service D (IVR) left
         if (p.identity.startsWith('service-d-audio')) {
-          ivrModeRef.current = false
-          patch({ mode: 'ai' })
-
           // R9 guard: if an agent-* participant is already in the room,
           // D left because it handed back to A — do NOT disconnect.
           const hasAgent = Array.from(room.remoteParticipants.values()).some(
             rp => rp.identity.startsWith('agent-')
           )
+          // FIX 2a: on an R9 hand-back keep the IVR flag armed (the returning agent's
+          // hybrid session can hand off again); only an explicit ivr_mode:false resets it.
+          ivrModeRef.current = ivrModeAfterServiceDLeft(ivrModeRef.current, hasAgent)
+          patch({ mode: 'ai' })
           if (hasAgent) {
             addTx({ who: 'sys', text: `IVR ended — back to AI agent` })
             addLog('Service D left but agent present — R9 return, staying connected')
@@ -316,24 +326,32 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
         }
 
         if (p.identity.startsWith('agent-')) {
-          // If IVR mode is active, Service A leaving is EXPECTED — D takes over.
-          // Do NOT disconnect. D is already in the room or about to join.
-          if (ivrModeRef.current) {
+          const remoteIds = Array.from(room.remoteParticipants.values()).map(rp => rp.identity)
+          // If IVR mode is active (or D / another agent is already here), Service A
+          // leaving is EXPECTED — D takes over. Do NOT disconnect.
+          if (onAgentLeft(ivrModeRef.current, remoteIds) === 'stay') {
             addTx({ who: 'sys', text: `AI agent handed off to IVR — stay connected` })
             addLog('Agent left but IVR mode active — staying connected for Service D')
             return
           }
-          // Normal AI mode — agent left means call is over
-          addTx({ who: 'sys', text: `Agent disconnected — call ended` })
-          addLog('Agent left room — auto-disconnecting')
-          // Small delay to let any final data channel messages arrive
-          setTimeout(() => {
-            if (roomRef.current) {
-              roomRef.current.disconnect()
-              roomRef.current = null
-            }
-            setState(prev => ({ ...prev, status: 'disconnected', mode: 'ai', micEnabled: false }))
-          }, 1500)
+          // FIX 2b: no IVR flag — wait up to HANDOFF_GRACE_MS for IVR audio or an agent
+          // to join (cancelled in ParticipantConnected); hang up only on timeout or call_ended.
+          addLog(`Agent left room — waiting ${HANDOFF_GRACE_MS / 1000}s for hand-off before ending`)
+          if (!graceRef.current) {
+            graceRef.current = createGraceTimer(() => {
+              const r = roomRef.current
+              const stillHere = r ? Array.from(r.remoteParticipants.values()).some(rp => isHandoffParticipant(rp.identity)) : false
+              if (stillHere) { addLog('Hand-off grace expired but a participant is present — staying'); return }
+              addTx({ who: 'sys', text: `Agent disconnected — call ended` })
+              addLog('No hand-off within grace window — auto-disconnecting')
+              if (roomRef.current) {
+                roomRef.current.disconnect()
+                roomRef.current = null
+              }
+              setState(prev => ({ ...prev, status: 'disconnected', mode: 'ai', micEnabled: false }))
+            }, HANDOFF_GRACE_MS)
+          }
+          graceRef.current.arm()
         }
       })
 
@@ -354,6 +372,7 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
       })
 
       room.on(RoomEvent.Disconnected, () => {
+        graceRef.current?.cancel()
         patch({ status: 'disconnected', mode: 'ai', micEnabled: false })
         addLog('Disconnected from room')
         document.querySelectorAll('audio').forEach(el => el.remove())
@@ -528,6 +547,7 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
   /* ── Disconnect ─────────────────────────────────────────────────────────── */
 
   const disconnect = useCallback(async () => {
+    graceRef.current?.cancel()
     ivrModeRef.current = false
     if (roomRef.current) {
       await roomRef.current.disconnect()
