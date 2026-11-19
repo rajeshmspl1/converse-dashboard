@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { login, isLoggedIn, resendOtp, verifyOtp } from '@/lib/auth'
+import { postLoginPath } from '@/lib/partner'
 import UnifiedHeader from '@/components/layout/UnifiedHeader'
 import Logo from '@/components/ui/Logo'
 import SignUpModal from '@/components/auth/SignUpModal'
@@ -22,7 +23,8 @@ export default function LoginPage() {
   const [resendCooldown, setResendCooldown] = useState(0)
 
   useEffect(() => {
-    if (isLoggedIn()) window.location.href = '/dashboard'
+    // Partner hosts send logged-in users to their post_login page; other hosts unchanged.
+    if (isLoggedIn()) postLoginPath('/dashboard').then(p => { window.location.href = p })
   }, [router])
 
   useEffect(() => {
@@ -42,7 +44,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await login(email.trim(), password)
-      window.location.href = '/dashboard'
+      window.location.href = await postLoginPath('/dashboard')
     } catch (err: any) {
       const msg = err.message || 'Login failed'
       setError(msg)
@@ -78,7 +80,7 @@ export default function LoginPage() {
     try {
       await verifyOtp(email.trim().toLowerCase(), code)
       // Hard redirect — router.replace can fail silently
-      window.location.href = '/migrate'
+      window.location.href = await postLoginPath('/migrate')
     } catch (err: any) {
       setError(err.message || 'Verification failed')
       setOtp(['', '', '', '', '', ''])

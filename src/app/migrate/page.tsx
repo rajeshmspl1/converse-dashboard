@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import MigrationLeads from '@/components/dashboard/MigrationLeads';
 import UnifiedHeader from '@/components/layout/UnifiedHeader';
 import { clearAuth } from '@/lib/auth';
+import { currentPartnerId } from '@/lib/partner';
 import type { Currency } from '@/types';
 
 /* ────────────────────────────────────────────────────────────
@@ -115,7 +116,8 @@ export default function MigratePage() {
   useEffect(() => {
     const u = getUser();
     if (u && getAccessToken()) { setUser(u); setIsLoggedIn(true); checkStatus(); }
-    else { window.location.href = '/experience?action=migrate'; }
+    // Logged out: partner hosts go to their login page; other hosts unchanged.
+    else { window.location.href = currentPartnerId() ? '/login' : '/experience?action=migrate'; }
   }, []);
 
   const checkStatus = useCallback(async () => {
