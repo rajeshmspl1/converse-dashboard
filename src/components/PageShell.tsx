@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getUser, clearAuth, type CxUser } from '@/lib/auth'
+import { getUser, signOut, type CxUser } from '@/lib/auth'
 import UnifiedHeader from '@/components/layout/UnifiedHeader'
 import SignUpModal from '@/components/auth/SignUpModal'
 
@@ -13,10 +13,7 @@ export default function PageShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => { setUser(getUser()) }, [])
 
-  const handleSignOut = useCallback(() => {
-    clearAuth()
-    setUser(null)
-  }, [])
+  const handleSignOut = useCallback(() => signOut(), [])
 
   return (
     <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg)', overflow: 'auto' }}>

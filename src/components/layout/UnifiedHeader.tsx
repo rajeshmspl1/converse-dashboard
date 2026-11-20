@@ -5,6 +5,7 @@ import { T, BRAND, GRADIENTS, HEADER, FONTS } from '@/lib/theme'
 import { CURRENCY_CONFIG } from '@/lib/data'
 import Logo from '@/components/ui/Logo'
 import type { Currency } from '@/types'
+import { guardBackForwardCache } from '@/lib/auth'
 
 // ═══════════════════════════════════════════════════════════════════
 // UnifiedHeader — One header for all pages (Brand Guide §4.1)
@@ -52,6 +53,9 @@ export default function UnifiedHeader({
     if (onLogoClick) onLogoClick()
     else router.push('/')
   }, [onLogoClick, router])
+
+  // Logged-in pages: after sign-out, the Back button must not restore this page from the bfcache.
+  useEffect(() => (isLoggedIn ? guardBackForwardCache() : undefined), [isLoggedIn])
 
   // Close user menu on click outside
   useEffect(() => {

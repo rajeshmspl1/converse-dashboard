@@ -2,7 +2,7 @@
 import { getEnv } from '@/lib/env'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { getUser, getAccessToken, clearAuth, isLoggedIn, type CxUser } from '@/lib/auth'
+import { getUser, getAccessToken, clearAuth, isLoggedIn, signOut, type CxUser } from '@/lib/auth'
 import UnifiedHeader from '@/components/layout/UnifiedHeader'
 import { T, BRAND, FONTS } from '@/lib/theme'
 
@@ -75,7 +75,7 @@ export default function SettingsTeamPage() {
 
   const fetchTeam = async () => { setLoading(true); setError(''); try { const d = await authFetch('/auth/users'); setMembers(d.users || []) } catch (e: any) { setError(e.message) } finally { setLoading(false) } }
   const fetchAudit = async () => { setAuditLoading(true); try { const d = await authFetch('/auth/audit-log'); setAuditLog(d.entries || []) } catch {} finally { setAuditLoading(false) } }
-  const handleSignOut = useCallback(() => { clearAuth(); router.replace('/login') }, [router])
+  const handleSignOut = useCallback(() => signOut(), [])
 
   const handleInvite = async () => {
     setInvMsg(null)

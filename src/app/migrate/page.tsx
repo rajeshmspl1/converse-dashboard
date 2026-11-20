@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import MigrationLeads from '@/components/dashboard/MigrationLeads';
 import UnifiedHeader from '@/components/layout/UnifiedHeader';
-import { clearAuth, fetchB, getAccessToken, getUser } from '@/lib/auth';
+import { fetchB, getAccessToken, getUser, signOut } from '@/lib/auth';
 import { currentPartnerId, tenantLabel, usePartnerConfig } from '@/lib/partner';
 import type { Currency } from '@/types';
 
@@ -58,7 +58,7 @@ export default function MigratePage() {
   const showReset = !partnerCfg?.hideReset; // partner hosts may hide Reset (the API is unchanged)
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currency, setCurrency] = useState<Currency>('inr');
-  const handleSignOut = () => { clearAuth(); window.location.href = '/'; };
+  const handleSignOut = signOut;
 
   const [migrationStatus, setMigrationStatus] = useState<any>(null);
   const [view, setView] = useState<'cards'|'processing'|'ivr_submitted'|'complete'>('cards');

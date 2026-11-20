@@ -21,7 +21,7 @@ import { useLiveKitCall, micPreflight, type MicPreflight } from '@/hooks/useLive
 import type { IntentKey, Currency, JourneyStageKey } from '@/types'
 import SignUpModal from '@/components/auth/SignUpModal'
 import UnifiedHeader from '@/components/layout/UnifiedHeader'
-import { getUser, clearAuth, type CxUser } from '@/lib/auth'
+import { getUser, signOut, type CxUser } from '@/lib/auth'
 
 interface TxLine { who: 'user' | 'ai' | 'sys'; text: string; meta?: string; ts?: number }
 
@@ -75,10 +75,7 @@ function HomeInner() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<CxUser | null>(null)
   useEffect(() => { setCurrentUser(getUser()) }, [])
-  const handleSignOut = useCallback(() => {
-    clearAuth()
-    setCurrentUser(null)
-  }, [])
+  const handleSignOut = useCallback(() => signOut(), [])
 
   // ── Industry switcher ──────────────────────────────────────────────────
   const INDUSTRY_OPTIONS = [

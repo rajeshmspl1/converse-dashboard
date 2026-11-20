@@ -35,6 +35,40 @@ export function clearAuth(): void {
   localStorage.removeItem(USER_KEY)
 }
 
+// Every key that holds or implies a login: tokens + user, the legacy 'access_token' key the
+// dashboard still reads, and the R174 tenant/IVR/routing keys a logged-in My IVR start leaves
+// in sessionStorage (which would otherwise steer the next /experience call to that tenant).
+const SIGN_OUT_KEYS = [ACCESS_KEY, REFRESH_KEY, USER_KEY, 'access_token', 'cx_tenant_key', 'cx_ivr_key', 'cx_routing_mode']
+/** Fixed sign-out destination. Never read from the URL (no open redirect). */
+export const SIGN_OUT_DESTINATION = '/'
+
+/**
+ * The one user-initiated sign-out: clear every login key from localStorage AND sessionStorage,
+ * then a full page load of "/" so the host rule serves the right home page (partner or default).
+ * 401 handling is separate and unchanged: clearAuth() + /login.
+ */
+export function signOut(): void {
+  clearAuth()
+  for (const store of [localStorage, sessionStorage]) {
+    for (const k of SIGN_OUT_KEYS) {
+      try { store.removeItem(k) } catch { /* storage unavailable: keep going */ }
+    }
+  }
+  window.location.assign(SIGN_OUT_DESTINATION)
+}
+
+/**
+ * Back/forward cache: a logged-in page restored after sign-out still shows its old data.
+ * On a persisted pageshow, re-check the login; if it is gone, go to "/". Returns a cleanup.
+ */
+export function guardBackForwardCache(): () => void {
+  const onShow = (e: PageTransitionEvent) => {
+    if (e.persisted && !isLoggedIn()) window.location.replace(SIGN_OUT_DESTINATION)
+  }
+  window.addEventListener('pageshow', onShow)
+  return () => window.removeEventListener('pageshow', onShow)
+}
+
 export function getAccessToken(): string | null {
   return localStorage.getItem(ACCESS_KEY)
 }

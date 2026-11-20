@@ -2,7 +2,7 @@
 import { getEnv } from '@/lib/env'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { getUser, clearAuth, fetchI, isLoggedIn, getAccessToken, fetchB as sharedFetchB, ApiError, type CxUser } from '@/lib/auth'
+import { getUser, signOut, fetchI, isLoggedIn, getAccessToken, fetchB as sharedFetchB, ApiError, type CxUser } from '@/lib/auth'
 import UnifiedHeader from '@/components/layout/UnifiedHeader'
 import TelephonyTab from '@/components/dashboard/TelephonyTab'
 
@@ -1429,7 +1429,7 @@ export default function DashboardPage(){
         activeTab={tab}
         onTabChange={t => setTab(t)}
         tenantLabel={user.role === 'super_admin' ? 'All Tenants · Platform Admin' : user.tenant_key ? user.tenant_key.toUpperCase() + ' · Retail IVR' : 'Demo Mode'}
-        onSignOut={() => { clearAuth(); router.replace('/login') }}
+        onSignOut={signOut}
       />
       <div className="flex items-center justify-between px-5 py-1.5 flex-shrink-0" style={{background:T.s2,borderBottom:`1px solid ${T.b1}`}}>
         <div className="text-[10px]" style={{color:T.tx3}}>{user.role==='super_admin'?'AiIVRs · All Tenants':`${(user.tenant_key||'').toUpperCase()} · Retail IVR`} · {tab.charAt(0).toUpperCase()+tab.slice(1)}</div>

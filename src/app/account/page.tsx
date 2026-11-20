@@ -2,7 +2,7 @@
 import { getEnv } from '@/lib/env'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { getUser, getAccessToken, clearAuth, isLoggedIn, type CxUser } from '@/lib/auth'
+import { getUser, getAccessToken, clearAuth, isLoggedIn, signOut, type CxUser } from '@/lib/auth'
 import UnifiedHeader from '@/components/layout/UnifiedHeader'
 import { T, BRAND, FONTS } from '@/lib/theme'
 
@@ -76,10 +76,7 @@ export default function AccountPage() {
     }
   }, [router])
 
-  const handleSignOut = useCallback(() => {
-    clearAuth()
-    router.replace('/login')
-  }, [router])
+  const handleSignOut = useCallback(() => signOut(), [])
 
   // ── Save profile ──
   const handleSaveProfile = async () => {
@@ -139,8 +136,7 @@ export default function AccountPage() {
     setDeleteMsg(null)
     try {
       await authFetch('/auth/account', { method: 'DELETE' })
-      clearAuth()
-      router.replace('/')
+      signOut()
     } catch (err: any) {
       setDeleteMsg({ type: 'err', text: err.message })
       setDeleting(false)
