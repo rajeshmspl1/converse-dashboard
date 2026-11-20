@@ -46,6 +46,7 @@ export default function SettingsBrandingPage() {
   const [staged, setStaged] = useState<Staged>({})
   const [removeAsset, setRemoveAsset] = useState<Record<Kind, boolean>>({ logo: false, favicon: false })
   const [assetPreview, setAssetPreview] = useState<Record<Kind, string | null>>({ logo: null, favicon: null })
+  const [inheritedAsset, setInheritedAsset] = useState<Record<Kind, string | null>>({ logo: null, favicon: null })
   const blobs = useRef<string[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -101,14 +102,20 @@ export default function SettingsBrandingPage() {
           if (r.partner_id) {
             const p = await fetchB(`/admin/branding/partner/${encodeURIComponent(r.partner_id)}`).catch(() => null)
             setInherited(p ? valuesFromAdmin(p) : null); setInheritedKnown(Object.fromEntries(Object.keys(f.override).map(k => [k, true])))
-          } else { setInherited(null); setInheritedKnown({}) }
+            setInheritedAsset({ logo: p?.logo?.url ? track(await fetchAssetBlobUrl(p.logo.url)) : null, favicon: p?.favicon?.url ? track(await fetchAssetBlobUrl(p.favicon.url)) : null })
+          } else { setInherited(null); setInheritedKnown({}); setInheritedAsset({ logo: null, favicon: null }) }
         } else {
           // tenant_admin cannot read the partner row: merged /branding/me equals the partner value where the tenant has none
           const me = await fetchB('/branding/me').catch(() => null)
           setInherited(me?.partner_name ? valuesFromMerged(me.branding) : null)
           setInheritedKnown(Object.fromEntries(Object.entries(f.override).map(([k, set]) => [k, !set])))
+          const mine = (u: string | undefined) => !!u && u.includes(`/tenant/${s.id}/`)
+          setInheritedAsset({
+            logo: me?.branding?.logo_url && !mine(me.branding.logo_url) ? track(await fetchAssetBlobUrl(me.branding.logo_url)) : null,
+            favicon: me?.branding?.favicon_url && !mine(me.branding.favicon_url) ? track(await fetchAssetBlobUrl(me.branding.favicon_url)) : null,
+          })
         }
-      } else { setInherited(null); setInheritedKnown({}) }
+      } else { setInherited(null); setInheritedKnown({}); setInheritedAsset({ logo: null, favicon: null }) }
     } catch (e) { setMsg({ type: 'err', text: apiErrorMessage(e) }) }
     finally { setLoading(false) }
   }, [superAdmin])
@@ -210,6 +217,7 @@ export default function SettingsBrandingPage() {
     plate: (isTenant && !form.override.logo_plate ? inherited?.logo_plate : form.logo_plate) || 'auto',
   }
   const plateOn = pv.plate !== 'none'
+  const previewLogo = (assetPreview.logo && !removeAsset.logo) ? assetPreview.logo : (isTenant ? inheritedAsset.logo : null)
   const scopeLabel = scope ? (scope.type === 'partner' ? `Partner · ${scope.id}` : tenants.find(t => t.key === scope.id)?.name || brand.displayName || scope.id) : ''
 
   // ── small UI pieces ──
@@ -256,18 +264,22 @@ export default function SettingsBrandingPage() {
   const assetRow = (kind: Kind) => {
     const lim = IMAGE_LIMITS[kind]
     const has = !!assetPreview[kind] && !removeAsset[kind]
+    const inh = !has && isTenant ? inheritedAsset[kind] : null
     return (
       <div className="mb-3">
         <div className="text-[12px] font-medium mb-1" style={{ color: T.tx }}>{kind === 'logo' ? 'Logo' : 'Favicon'}</div>
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center justify-center rounded" style={{ background: '#FFFFFF', width: kind === 'logo' ? 120 : 40, height: 40, padding: 4 }}>
             {/* eslint-disable-next-line @next/next/no-img-element -- blob: preview */}
-            {has ? <img src={assetPreview[kind] as string} alt={`${kind} preview`} style={{ maxHeight: 32, maxWidth: '100%' }} /> : <span className="text-[10px]" style={{ color: '#6b7280' }}>none</span>}
+            {has ? <img src={assetPreview[kind] as string} alt={`${kind} preview`} style={{ maxHeight: 32, maxWidth: '100%' }} />
+              : inh ? <img src={inh} alt={`inherited ${kind}`} style={{ maxHeight: 32, maxWidth: '100%', opacity: 0.7 }} />
+              : <span className="text-[10px]" style={{ color: '#6b7280' }}>none</span>}
           </div>
           <label className="px-3 py-1.5 rounded text-[11px] font-medium cursor-pointer" style={{ color: T.tx2, background: T.s2, border: `1px solid ${T.b2}` }}>
             Upload<input type="file" accept="image/png,image/jpeg" className="hidden" onChange={e => pick(kind, e.target.files?.[0])} data-testid={`upload-${kind}`} />
           </label>
           {has && <button onClick={() => { setRemoveAsset(r => ({ ...r, [kind]: true })); setStaged(s => ({ ...s, [kind]: undefined })) }} className="text-[11px]" style={{ color: '#f87171' }}>Remove</button>}
+          {inh && <span className="text-[10px]" style={{ color: T.tx3 }}>Inherited from partner — upload to override.</span>}
           <span className="text-[10px]" style={{ color: T.tx3 }}>PNG or JPEG, ≤ {lim.maxBytes / 1024} KB, {lim.minW}–{lim.maxW} × {lim.minH}–{lim.maxH} px{lim.square ? ', roughly square' : ''}{staged[kind] ? ' · new file, saved on Save' : ''}</span>
         </div>
       </div>
@@ -411,8 +423,8 @@ export default function SettingsBrandingPage() {
                   {section('Live preview', <>
                     <div className="rounded-lg overflow-hidden border" style={{ borderColor: T.b1 }} data-testid="preview">
                       <div className="flex items-center gap-2 px-3" style={{ height: 44, background: '#0D1526' }}>
-                        {assetPreview.logo && !removeAsset.logo
-                          ? <span className="flex items-center rounded" style={plateOn ? { background: '#FFFFFF', height: 30, padding: '3px 8px' } : { height: 30 }}><img src={assetPreview.logo} alt={pv.name} style={{ maxHeight: plateOn ? 24 : 30, maxWidth: 110 }} /></span>
+                        {previewLogo
+                          ? <span className="flex items-center rounded" style={plateOn ? { background: '#FFFFFF', height: 30, padding: '3px 8px' } : { height: 30 }}><img src={previewLogo} alt={pv.name} style={{ maxHeight: plateOn ? 24 : 30, maxWidth: 110 }} /></span>
                           : <span className="text-[12px] font-bold" style={{ color: T.tx }}>{pv.name}</span>}
                         <span className="text-[10px] px-2 py-0.5 rounded ml-1" style={{ color: pv.accent, border: `1px solid ${pv.accent}66`, background: `${pv.accent}1F` }}>Overview</span>
                       </div>
