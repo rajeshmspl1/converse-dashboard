@@ -113,6 +113,53 @@ t('template a11y/contrast rules: Log in never wraps, accent CTA is large bold te
   assert.ok(/\.btn\.s\{[^}]*font-size:19px;font-weight:700/.test(html))
   assert.ok(/\.jcard \.jn\{[^}]*color:var\(--ink\)/.test(html))
 })
+const BAD_COLOURS = ['red;background:url(x)', 'linear-gradient(red, blue)', '#fff', 'javascript:alert(1)', '#00000', 'url(x)', null, 7, {}]
+t('optional colours.dark: strict #RRGGBB with white text >= 4.5:1, else ignored (config still valid)', () => {
+  assert.equal(T.validateConfig('p1', GOOD).dark, null)
+  assert.equal(T.validateConfig('p1', { ...GOOD, colours: { ...GOOD.colours, dark: '#000000' } }).dark, '#000000')
+  for (const d of [...BAD_COLOURS, '#F54D1D', '#FFFFFF', '#777777']) {   // last three: valid hex, contrast too low
+    const v = T.validateConfig('p1', { ...GOOD, colours: { ...GOOD.colours, dark: d } })
+    assert.ok(v, String(d)); assert.equal(v.dark, null, JSON.stringify(d))
+  }
+})
+t('optional hero_gradient: both stops strict #RRGGBB and >= 4.5:1, CSS built in code, else ignored', () => {
+  assert.equal(T.validateConfig('p1', GOOD).hero_gradient, null)
+  const g = T.validateConfig('p1', { ...GOOD, hero_gradient: { from: '#634057', to: '#467779' } }).hero_gradient
+  assert.deepEqual(g, { from: '#634057', to: '#467779' })
+  assert.equal(T.gradientCss(g), 'linear-gradient(180deg, #634057, #467779)')
+  const bad = [
+    'linear-gradient(red, blue)', 'red;background:url(x)', 'javascript:alert(1)', ['#634057', '#467779'],
+    ...BAD_COLOURS.map(c => ({ from: c, to: '#467779' })), ...BAD_COLOURS.map(c => ({ from: '#634057', to: c })),
+    { from: '#634057' }, { from: '#634057', to: '#5B8C8F' },   // missing stop; low-contrast stop (3.75:1)
+  ]
+  for (const h of bad) {
+    const v = T.validateConfig('p1', { ...GOOD, hero_gradient: h })
+    assert.ok(v, JSON.stringify(h)); assert.equal(v.hero_gradient, null, JSON.stringify(h))
+  }
+  const src = readFileSync(path.join(root, 'public/partners/template.js'), 'utf8')
+  assert.ok(!/setProperty\('--hero-bg',\s*cfg\.hero_gradient\)/.test(src), 'raw config never reaches CSS')
+})
+t('contrast matches B1 (WCAG 2.x): cxplab stops and dark', () => {
+  const r = (a) => Math.round(T.contrastRatio(a, '#FFFFFF') * 100) / 100
+  assert.equal(T.MIN_CONTRAST_TEXT, 4.5)
+  assert.equal(r('#000000'), 21); assert.equal(r('#FFFFFF'), 1)
+  assert.ok(r('#634057') > 8.5 && r('#634057') < 9); assert.ok(r('#467779') >= 4.5 && r('#467779') < 5.5)
+})
+t('optional body_font: same rules as heading_font, overrides font, bad → ignored', () => {
+  assert.equal(T.validateConfig('p1', GOOD).body_font, null)
+  const v = T.validateConfig('p1', { ...GOOD, font: 'Inter', body_font: 'Open Sans' })
+  assert.equal(v.body_font, 'Open Sans'); assert.equal(v.font, 'Open Sans')
+  const b = T.validateConfig('p1', { ...GOOD, body_font: "x');@import url(evil)" })
+  assert.ok(b); assert.equal(b.body_font, null); assert.equal(b.font, 'Open Sans')
+})
+t('partners without the optional colours keep the default look (CSS only behind body classes)', () => {
+  const html = readFileSync(path.join(root, 'public/partners/template.html'), 'utf8')
+  for (const m of html.matchAll(/var\(--(hero-bg|dark)\)/g)) {
+    const rule = html.slice(html.lastIndexOf('}', m.index) + 1, m.index)
+    assert.ok(/\.has-(hero-bg|dark)\b/.test(rule), rule)
+  }
+  const v = T.validateConfig('p1', GOOD); assert.equal(v.dark, null); assert.equal(v.hero_gradient, null)
+})
 t('J1–J4 URLs: Experience Shop, journey + routing mode, no tenant', () => {
   assert.deepEqual([0, 1, 2, 3].map(T.journeyUrl), [
     '/experience?journey=0', '/experience?journey=1&routing_mode=sales',

@@ -27,6 +27,29 @@ export function resolvePartnerId(registry, hostname, search) {
 
 export function isColour(v) { return typeof v === 'string' && COLOUR_RE.test(v) }
 
+// WCAG 2.x contrast — same formula and thresholds as service-b branding_validation.py (B1).
+export const MIN_CONTRAST_TEXT = 4.5
+function luminance(hex) {
+  const ch = i => { const c = parseInt(hex.slice(i, i + 2), 16) / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4 }
+  return 0.2126 * ch(1) + 0.7152 * ch(3) + 0.0722 * ch(5)
+}
+export function contrastRatio(a, b) {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x)
+  return (hi + 0.05) / (lo + 0.05)
+}
+/** A #RRGGBB colour that white text can sit on (>= 4.5:1), else null. */
+export function whiteTextBackground(v) {
+  return isColour(v) && contrastRatio(v, '#FFFFFF') >= MIN_CONTRAST_TEXT ? v : null
+}
+/** Optional hero gradient {from,to}: both stops strict #RRGGBB and >= 4.5:1 with white text, else null. */
+export function validGradient(g) {
+  if (!g || typeof g !== 'object' || Array.isArray(g)) return null
+  const from = whiteTextBackground(g.from), to = whiteTextBackground(g.to)
+  return from && to ? { from, to } : null
+}
+/** The CSS is built here from validated colours only; config never supplies raw CSS. */
+export function gradientCss(g) { return `linear-gradient(180deg, ${g.from}, ${g.to})` }
+
 /** Logo must live under /partners/<id>/ — no other host, path or traversal. */
 export function safeLogoPath(id, path) {
   const prefix = `/partners/${id}/`
@@ -60,11 +83,16 @@ export function validateConfig(id, cfg) {
   const font = cfg.font && FONT_RE.test(cfg.font) ? cfg.font : null
   // Optional: heading_font (headings only; body keeps `font`) and favicon. Invalid → dropped, not rejected.
   const heading_font = cfg.heading_font && FONT_RE.test(cfg.heading_font) ? cfg.heading_font : null
+  // Optional body_font (same rules as heading_font) overrides `font` for body text.
+  const body_font = cfg.body_font && FONT_RE.test(cfg.body_font) ? cfg.body_font : null
+  // Optional colours.dark (B1 name: colors.dark) → footer; hero_gradient → hero. Invalid or low contrast → ignored.
+  const dark = whiteTextBackground(colours.dark)
+  const hero_gradient = validGradient(cfg.hero_gradient)
   const logo = safeLogoPath(id, cfg.logo)
   const favicon = safeFaviconPath(id, cfg.favicon)
   // Optional show_name: strict boolean, default true. Anything else is ignored (→ true).
   const show_name = cfg.show_name === false ? false : true
-  const out = { id, colours: Object.fromEntries(COLOUR_KEYS.map(k => [k, colours[k]])), font, heading_font, logo, favicon, show_name }
+  const out = { id, colours: Object.fromEntries(COLOUR_KEYS.map(k => [k, colours[k]])), font: body_font || font, body_font, heading_font, logo, favicon, show_name, dark, hero_gradient }
   for (const k of TEXT_KEYS) {
     out[k] = text(cfg[k])
     if (!out[k]) return null
@@ -104,6 +132,8 @@ function render(cfg) {
   }
   const stack = f => `'${f}',system-ui,-apple-system,'Segoe UI',Arial,sans-serif`
   if (cfg.font) root.setProperty('--f', stack(cfg.font))
+  if (cfg.dark) { root.setProperty('--dark', cfg.dark); document.body.classList.add('has-dark') }
+  if (cfg.hero_gradient) { root.setProperty('--hero-bg', gradientCss(cfg.hero_gradient)); document.body.classList.add('has-hero-bg') }
   if (cfg.heading_font) root.setProperty('--fh', stack(cfg.heading_font))
   if (cfg.favicon) {
     const icon = document.createElement('link')

@@ -50,7 +50,15 @@ h2{font-size:clamp(28px,3.6vw,40px);line-height:1.1;letter-spacing:-.025em;font-
 @media(max-width:600px){.cta{padding:40px 24px}}
 .cta h2{color:#fff}
 .cta .lede{color:rgba(255,255,255,.78)}
-footer{border-top:1px solid var(--rule);padding:28px 0 40px;font-size:14px;color:var(--soft)}
+section:has(+ .foot){padding-bottom:0}
+.foot{padding-bottom:80px}
+.fl{border-top:1px solid var(--rule);padding:28px 0 40px;font-size:14px;color:var(--soft)}
+/* Optional partner colours (validated #RRGGBB, white-text contrast >= 4.5:1, set by template.js). */
+.has-hero-bg .hero-band{background:var(--hero-bg)}
+.has-hero-bg .hero h1{color:#fff}
+.has-hero-bg .hero .sub,.has-hero-bg .hero .live{color:#fff}
+.has-dark .foot{background:var(--dark);padding-bottom:0}
+.has-dark .fl{border-top:0;color:#fff}
 </style>
 <script type="module" src="/partners/template.js"></script>
 </head><body hidden>
@@ -58,12 +66,12 @@ footer{border-top:1px solid var(--rule);padding:28px 0 40px;font-size:14px;color
   <a class="logo" href="/"><img data-k="logo" alt="" hidden><span data-k="name"></span></a>
   <a class="btn o" href="/login">Log in</a>
 </div></nav>
-<header class="hero">
+<div class="hero-band"><header class="hero">
   <div class="live">Live demo line</div>
   <h1 data-k="hero_title"></h1>
   <p class="sub" data-k="hero_subtitle"></p>
   <a class="btn s" data-k="cta_label" href="/experience?journey=0"></a>
-</header>
+</header></div>
 <section class="m"><div class="wrap">
   <h2 data-k="journeys_title"></h2>
   <div class="jgrid" data-k="journeys"></div>
@@ -73,6 +81,6 @@ footer{border-top:1px solid var(--rule);padding:28px 0 40px;font-size:14px;color
     <h2 data-k="contact_title"></h2>
     <p class="lede" data-k="contact_text"></p>
   </div>
-  <footer data-k="footer"></footer>
 </div></section>
+<footer class="foot"><div class="wrap"><div class="fl" data-k="footer"></div></div></footer>
 </body></html>

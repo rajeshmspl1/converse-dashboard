@@ -28,7 +28,11 @@ home page.
    - optional: `heading_font` (Google Fonts family for headings; body keeps `font`), `favicon` (browser-tab icon,
      `.png`/`.svg`/`.ico` under `/partners/<id>/`; without it the tab shows the AiIVRs icon),
      `show_name` (strict `true`/`false`, default `true`; `false` hides the text name next to the logo when the
-     logo already contains the wordmark — the logo's alt text is still the name; any other value is ignored)
+     logo already contains the wordmark — the logo's alt text is still the name; any other value is ignored),
+     `body_font` (same rules as `heading_font`; overrides `font` for body text),
+     `colours.dark` (footer background, `#RRGGBB`), `hero_gradient` `{ "from": "#RRGGBB", "to": "#RRGGBB" }`
+     (hero, top to bottom). Strict `#RRGGBB`; white text must reach 4.5:1 on dark and on both stops (same rule as
+     the B1 branding API). Invalid or low-contrast values are ignored; the CSS is built by the template, never from config
    - `colours`: `primary`, `accent`, `secondary`, `alert` — each `#RRGGBB`
    - `hero_title`, `hero_subtitle`, `cta_label`, `journeys_title`, `contact_title`, `contact_text`
    - Footer is built by the platform: `<name> · Powered by AiIVRs` (no footer field)
