@@ -269,7 +269,7 @@ export default function AccountPage() {
                     style={{ background: T.s2, color: T.tx3, border: `1px solid ${T.b1}` }}
                   >
                     {user.email}
-                    <span className="text-[9px] ml-2 opacity-60">(cannot be changed)</span>
+                    <span className="text-[9px] ml-2 opacity-60 brand-hint">(cannot be changed)</span>
                   </div>
                 </div>
 
@@ -287,7 +287,7 @@ export default function AccountPage() {
                       style={{ background: roleInfo.color }}
                     />
                     {roleInfo.label}
-                    <span className="text-[9px] ml-auto opacity-60">Set by your organization admin</span>
+                    <span className="text-[9px] ml-auto opacity-60 brand-hint">Set by your organization admin</span>
                   </div>
                 </div>
 

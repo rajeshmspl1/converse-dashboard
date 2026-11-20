@@ -48,3 +48,4 @@ html { scrollbar-gutter: stable; }
 /* ── B4 tenant theme (variables set by BrandingProvider / the pre-paint script; AiIVRs = none set) ── */
 html.brand-pending body { visibility: hidden; }                    /* logged in, theme not resolved yet (max 1.5 s) */
 html[data-theme="light"] body { background: var(--brand-bg, #F4F5F7); color: var(--brand-tx, #0F172A); }
+html[data-theme="light"] .brand-hint { opacity: 1; }               /* dimmed hints: tertiary text alone already meets 4.5:1 on light */
