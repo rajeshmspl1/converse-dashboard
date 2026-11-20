@@ -29,6 +29,7 @@ interface TxLine { who: 'user' | 'ai' | 'sys'; text: string; meta?: string; ts?:
 import { getEnv } from '@/lib/env'
 import { resolveCrmIndustry, demoProfileUrl } from '@/lib/crmIndustry'
 import { tenantLabel, usePartnerConfig } from '@/lib/partner'
+import { useBranding } from '@/components/branding/BrandingProvider'
 const SERVICE_B_URL = getEnv().serviceB
 const TENANT_KEY    = 'experience_shop'
 const DEFAULT_IVR_KEY = 'global_banking'
@@ -74,6 +75,9 @@ function HomeInner() {
   // ── Auth state ──────────────────────────────────────────────────────────
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<CxUser | null>(null)
+  const orgName = useBranding().displayName
+  // Own tenant: branding display_name → partner demo name → company_name (never the raw key).
+  const ivrLabel = (tk: string) => tk === currentUser?.tenant_key ? (orgName || 'Your IVR') : tenantLabel(tk, partnerCfg)
   useEffect(() => { setCurrentUser(getUser()) }, [])
   const handleSignOut = useCallback(() => signOut(), [])
 
@@ -770,7 +774,7 @@ function HomeInner() {
                     <div className="flex justify-center">
                       <span className="px-4 py-2 rounded-md border text-[11px] font-semibold"
                         style={{ background: 'rgba(0,201,177,.12)', borderColor: '#00c9b1', color: '#00c9b1' }}>
-                        {tenantLabel(qTenant, partnerCfg)}
+                        {ivrLabel(qTenant)}
                       </span>
                     </div>
                   ) : (
@@ -828,7 +832,7 @@ function HomeInner() {
                   <div className="w-[7px] h-[7px] rounded-full"
                     style={{ background: '#00c9b1', animation: 'blink 1.2s infinite' }} />
                   <span className="text-[11px]" style={{ color: 'var(--text)' }}>
-                    {elapsed < 3 ? 'Connecting you...' : qTenant && qTenant !== 'experience_shop' ? `Live · ${tenantLabel(qTenant, partnerCfg)} · ${liveExpLabel}` : `Live · ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.icon || '🏦'} ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.label || 'Banking'} · ${liveExpLabel}`}
+                    {elapsed < 3 ? 'Connecting you...' : qTenant && qTenant !== 'experience_shop' ? `Live · ${ivrLabel(qTenant)} · ${liveExpLabel}` : `Live · ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.icon || '🏦'} ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.label || 'Banking'} · ${liveExpLabel}`}
                   </span>
                   <span className="ml-auto">
                     <span className="px-2 py-0.5 rounded text-[8px] font-bold"
@@ -850,7 +854,7 @@ function HomeInner() {
                     callerCountry={callerCountry}
                     initialIndustry={(qTenant && qTenant !== 'experience_shop' ? 'banking' : (selectedIvr || "").replace("global_", "")) as any}
                     isUploadedTenant={!!qTenant && qTenant !== 'experience_shop'}
-                    tenantDisplayName={qTenant ? tenantLabel(qTenant, partnerCfg) : undefined}
+                    tenantDisplayName={qTenant ? ivrLabel(qTenant) : undefined}
                   />
                 </div>
 

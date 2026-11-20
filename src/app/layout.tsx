@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import BrandingProvider from '@/components/branding/BrandingProvider'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -146,7 +147,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
         />
       </head>
-      <body>{children}</body>
+      <body><BrandingProvider>{children}</BrandingProvider></body>
     </html>
   )
 }

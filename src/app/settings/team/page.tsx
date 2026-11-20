@@ -1,32 +1,21 @@
 'use client'
-import { getEnv } from '@/lib/env'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { getUser, getAccessToken, clearAuth, isLoggedIn, signOut, type CxUser } from '@/lib/auth'
+import { getUser, isLoggedIn, signOut, fetchB, apiErrorMessage, type CxUser } from '@/lib/auth'
+import { canonicalRole, isAdminRole, isSuperAdmin as isSuperRole, roleLabel } from '@/lib/roles'
+import { useBranding } from '@/components/branding/BrandingProvider'
 import UnifiedHeader from '@/components/layout/UnifiedHeader'
 import { T, BRAND, FONTS } from '@/lib/theme'
 
-const SERVICE_B_URL = typeof window !== "undefined" ? getEnv().serviceB : "http://localhost:9000"
-
-async function authFetch(path: string, opts: RequestInit = {}) {
-  const token = getAccessToken()
-  if (!token) throw new Error('Not authenticated')
-  const res = await fetch(`${SERVICE_B_URL}${path}`, {
-    ...opts,
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...(opts.headers || {}) },
-  })
-  if (res.status === 401) { clearAuth(); window.location.href = '/login'; throw new Error('Session expired') }
-  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || `Request failed (${res.status})`) }
-  return res.json()
-}
+// Service B calls go through the shared fetchB (token refresh, one auth client — R172).
+const authFetch = (path: string, opts: RequestInit = {}) => fetchB(path, opts)
 
 const ROLES = [
   { key: 'tenant_admin', label: 'Admin', color: BRAND.teal, desc: 'Full control — invite users, manage roles, configure IVRs, view audit logs' },
   { key: 'analyst', label: 'Tester', color: BRAND.blue, desc: 'Make test calls, leave feedback, rate calls, view own sessions' },
   { key: 'viewer', label: 'Viewer', color: T.tx2, desc: 'View recordings, analytics, sessions (read-only)' },
 ]
-const ROLE_COLOR: Record<string, string> = { super_admin: '#f5a623', tenant_admin: BRAND.teal, customer_admin: BRAND.teal, analyst: BRAND.blue, viewer: T.tx2 }
-const ROLE_LABEL: Record<string, string> = { super_admin: 'Super Admin', tenant_admin: 'Admin', customer_admin: 'Admin', analyst: 'Tester', viewer: 'Viewer' }
+const ROLE_COLOR: Record<string, string> = { super_admin: '#f5a623', tenant_admin: BRAND.teal, analyst: BRAND.blue, tester: BRAND.blue, viewer: T.tx2 }
 
 interface TeamMember { id: number; email: string; full_name: string; role: string; is_active: boolean; region_code: string | null; ivr_keys: string[]; allowed_stages: string[]; last_login_at: string | null; created_at: string }
 interface AuditEntry { id: number; user_email: string; action: string; detail: string; ip_address: string | null; created_at: string }
@@ -41,6 +30,8 @@ export default function SettingsTeamPage() {
   const [sideTab, setSideTab] = useState<SideTab>('members')
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([])
   const [auditLoading, setAuditLoading] = useState(false)
+  const [auditError, setAuditError] = useState('')
+  const orgName = useBranding().displayName
   const [showInvite, setShowInvite] = useState(false)
   const [invEmail, setInvEmail] = useState('')
   const [invName, setInvName] = useState('')
@@ -66,15 +57,15 @@ export default function SettingsTeamPage() {
     if (!isLoggedIn()) { router.replace('/login'); return }
     const u = getUser()
     if (u) {
-      if (u.role !== 'tenant_admin' && u.role !== 'super_admin' && u.role !== 'customer_admin') { router.replace('/dashboard'); return }
+      if (!isAdminRole(u.role)) { router.replace('/dashboard'); return }
       setUser(u); fetchTeam()
     }
   }, [router])
 
   useEffect(() => { if (sideTab === 'activity' && auditLog.length === 0) fetchAudit() }, [sideTab])
 
-  const fetchTeam = async () => { setLoading(true); setError(''); try { const d = await authFetch('/auth/users'); setMembers(d.users || []) } catch (e: any) { setError(e.message) } finally { setLoading(false) } }
-  const fetchAudit = async () => { setAuditLoading(true); try { const d = await authFetch('/auth/audit-log'); setAuditLog(d.entries || []) } catch {} finally { setAuditLoading(false) } }
+  const fetchTeam = async () => { setLoading(true); setError(''); try { const d = await authFetch('/auth/users'); setMembers(d.users || []) } catch (e) { setError(apiErrorMessage(e)) } finally { setLoading(false) } }
+  const fetchAudit = async () => { setAuditLoading(true); setAuditError(''); try { const d = await authFetch('/auth/audit-log'); setAuditLog(d.entries || []) } catch (e) { setAuditError(apiErrorMessage(e)) } finally { setAuditLoading(false) } }
   const handleSignOut = useCallback(() => signOut(), [])
 
   const handleInvite = async () => {
@@ -83,38 +74,38 @@ export default function SettingsTeamPage() {
     if (!invPassword || invPassword.length < 8) { setInvMsg({ type: 'err', text: 'Set a temporary password (min 8 chars)' }); return }
     setInvSaving(true)
     try {
-      await authFetch('/auth/users', { method: 'POST', body: JSON.stringify({ email: invEmail.trim().toLowerCase(), password: invPassword, full_name: invName.trim() || null, role: invRole, region_code: invRegion.trim() || null, ivr_keys: invIvrKeys.trim() ? invIvrKeys.split(',').map(k => k.trim()) : [] }) })
+      await authFetch('/auth/users', { method: 'POST', body: JSON.stringify({ email: invEmail.trim().toLowerCase(), password: invPassword, full_name: invName.trim() || null, role: canonicalRole(invRole), region_code: invRegion.trim() || null, ivr_keys: invIvrKeys.trim() ? invIvrKeys.split(',').map(k => k.trim()) : [] }) })
       setInvMsg({ type: 'ok', text: `Created ${invEmail.trim()} — share the temporary password with them securely` })
       setInvEmail(''); setInvName(''); setInvRole('viewer'); setInvRegion(''); setInvIvrKeys(''); setInvPassword('')
       fetchTeam()
-    } catch (e: any) { setInvMsg({ type: 'err', text: e.message }) } finally { setInvSaving(false) }
+    } catch (e) { setInvMsg({ type: 'err', text: apiErrorMessage(e) }) } finally { setInvSaving(false) }
   }
 
   const handleEditSave = async () => {
     if (!editMember) return; setEditMsg(null); setEditSaving(true)
     try {
-      await authFetch(`/auth/users/${editMember.id}`, { method: 'PATCH', body: JSON.stringify({ role: editRole, region_code: editRegion.trim() || null, ivr_keys: editIvrKeys.trim() ? editIvrKeys.split(',').map(k => k.trim()) : [], allowed_stages: editStages.trim() ? editStages.split(',').map(s => s.trim()) : [] }) })
+      await authFetch(`/auth/users/${editMember.id}/update`, { method: 'POST', body: JSON.stringify({ role: canonicalRole(editRole), region_code: editRegion.trim() || null, ivr_keys: editIvrKeys.trim() ? editIvrKeys.split(',').map(k => k.trim()) : [], allowed_stages: editStages.trim() ? editStages.split(',').map(s => s.trim()) : [] }) })
       setEditMsg({ type: 'ok', text: 'Updated' }); fetchTeam(); setTimeout(() => setEditMember(null), 600)
-    } catch (e: any) { setEditMsg({ type: 'err', text: e.message }) } finally { setEditSaving(false) }
+    } catch (e) { setEditMsg({ type: 'err', text: apiErrorMessage(e) }) } finally { setEditSaving(false) }
   }
 
   const handleRemove = async () => {
     if (!removeMember) return; setRemoving(true)
-    try { await authFetch(`/auth/users/${removeMember.id}`, { method: 'DELETE' }); fetchTeam(); setRemoveMember(null) }
-    catch (e: any) { setError(e.message) } finally { setRemoving(false) }
+    try { await authFetch(`/auth/users/${removeMember.id}/remove`, { method: 'POST' }); fetchTeam(); setRemoveMember(null) }
+    catch (e) { setError(apiErrorMessage(e)); setRemoveMember(null) } finally { setRemoving(false) }
   }
 
-  const openEdit = (m: TeamMember) => { setEditMember(m); setEditRole(m.role); setEditRegion(m.region_code || ''); setEditIvrKeys((m.ivr_keys || []).join(', ')); setEditStages((m.allowed_stages || []).join(', ')); setEditMsg(null) }
+  const openEdit = (m: TeamMember) => { setEditMember(m); setEditRole(canonicalRole(m.role)); setEditRegion(m.region_code || ''); setEditIvrKeys((m.ivr_keys || []).join(', ')); setEditStages((m.allowed_stages || []).join(', ')); setEditMsg(null) }
 
   if (!user) return null
-  const isAdmin = user.role === 'tenant_admin' || user.role === 'super_admin' || user.role === 'customer_admin'
-  const isSuperAdmin = user.role === 'super_admin'
-  const filtered = members.filter(m => { const q = search.toLowerCase(); return (!q || m.email.toLowerCase().includes(q) || (m.full_name || '').toLowerCase().includes(q)) && (roleFilter === 'all' || m.role === roleFilter) })
+  const isAdmin = isAdminRole(user.role)
+  const isSuperAdmin = isSuperRole(user.role)
+  const filtered = members.filter(m => { const q = search.toLowerCase(); return (!q || m.email.toLowerCase().includes(q) || (m.full_name || '').toLowerCase().includes(q)) && (roleFilter === 'all' || roleLabel(m.role) === roleLabel(roleFilter)) })
   const inputStyle = { background: T.s2, color: T.tx, border: `1px solid ${T.b2}`, fontFamily: FONTS.ui }
   const activeCt = members.filter(m => m.is_active).length
-  const adminCt = members.filter(m => m.role === 'tenant_admin' || m.role === 'customer_admin').length
-  const testerCt = members.filter(m => m.role === 'analyst').length
-  const viewerCt = members.filter(m => m.role === 'viewer').length
+  const adminCt = members.filter(m => canonicalRole(m.role) === 'tenant_admin').length
+  const testerCt = members.filter(m => roleLabel(m.role) === 'Tester').length
+  const viewerCt = members.filter(m => canonicalRole(m.role) === 'viewer').length
   const fmt = (d: string | null) => { if (!d) return '\u2014'; const t = new Date(d); return t.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + t.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) }
 
   return (
@@ -127,7 +118,7 @@ export default function SettingsTeamPage() {
         <div className="w-56 flex-shrink-0 border-r flex flex-col" style={{ background: T.s1, borderColor: T.b1 }}>
           <div className="px-4 py-4 border-b" style={{ borderColor: T.b1 }}>
             <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: T.tx3 }}>Organization</div>
-            <div className="text-[16px] font-bold mt-0.5" style={{ color: T.tx }}>{user.tenant_key?.toUpperCase()}</div>
+            <div className="text-[16px] font-bold mt-0.5" style={{ color: T.tx }}>{orgName || 'your organisation'}</div>
           </div>
           <div className="px-4 py-3 border-b grid grid-cols-2 gap-2" style={{ borderColor: T.b1 }}>
             {[{ n: activeCt, l: 'Total', c: T.tx }, { n: adminCt, l: 'Admins', c: BRAND.teal }, { n: testerCt, l: 'Testers', c: BRAND.blue }, { n: viewerCt, l: 'Viewers', c: T.tx2 }].map(s => (
@@ -158,7 +149,7 @@ export default function SettingsTeamPage() {
               <div className="text-[14px] font-bold" style={{ color: T.tx }}>Team Members</div><div className="flex-1" />
               <div className="relative"><input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email\u2026" className="pl-8 pr-3 py-1.5 rounded-lg text-[11px] w-56 transition-all" style={inputStyle} /><span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px]" style={{ color: T.tx3 }}>{'\uD83D\uDD0D'}</span></div>
               <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} className="px-3 py-1.5 rounded-lg text-[11px] appearance-none cursor-pointer" style={inputStyle}>
-                <option value="all">All Roles</option><option value="tenant_admin">Admins</option><option value="customer_tester">Testers</option><option value="customer_viewer">Viewers</option>{isSuperAdmin && <option value="super_admin">Super Admin</option>}
+                <option value="all">All Roles</option><option value="tenant_admin">Admins</option><option value="tester">Testers</option><option value="viewer">Viewers</option>{isSuperAdmin && <option value="super_admin">Super Admin</option>}
               </select>
               <div className="text-[11px]" style={{ color: T.tx3 }}>{filtered.length} of {members.length}</div>
             </div>
@@ -168,7 +159,7 @@ export default function SettingsTeamPage() {
                 <div className="grid gap-2 px-5 py-3 text-[10px] font-semibold uppercase tracking-wider" style={{ gridTemplateColumns: '2fr 0.9fr 0.8fr 1fr 0.8fr 0.8fr 0.7fr', background: T.s1, color: T.tx3, borderBottom: `1px solid ${T.b1}` }}>
                   <div>Member</div><div>Role</div><div>Region</div><div>IVR Access</div><div>Stage Access</div><div>Last Login</div><div className="text-right">Actions</div>
                 </div>
-                {filtered.map(m => { const rc = ROLE_COLOR[m.role] || T.tx3; const rl = ROLE_LABEL[m.role] || m.role.replace(/_/g, ' '); const isMe = m.id === user.id; const isS = m.role === 'super_admin'; return (
+                {filtered.map(m => { const rc = ROLE_COLOR[canonicalRole(m.role)] || T.tx3; const rl = roleLabel(m.role); const isMe = m.id === user.id; const isS = m.role === 'super_admin'; return (
                   <div key={m.id} className="grid gap-2 px-5 py-3 items-center border-b row-hover transition-colors" style={{ gridTemplateColumns: '2fr 0.9fr 0.8fr 1fr 0.8fr 0.8fr 0.7fr', borderColor: T.b1, background: isMe ? `${BRAND.blue}04` : 'transparent' }}>
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="flex items-center justify-center rounded-full text-[10px] font-bold flex-shrink-0" style={{ width: 34, height: 34, background: `linear-gradient(135deg, ${rc}40, ${rc}15)`, color: rc, border: `1px solid ${rc}25` }}>{(m.full_name || m.email)[0].toUpperCase()}</div>
@@ -198,12 +189,12 @@ export default function SettingsTeamPage() {
               <button onClick={fetchAudit} className="px-3 py-1.5 rounded-lg text-[11px] font-medium" style={{ color: T.tx2, background: T.s1, border: `1px solid ${T.b2}` }}>{'\u21BB'} Refresh</button>
             </div>
             <div className="px-6 py-4">
+              {auditError && <div className="mb-3 px-4 py-3 rounded-lg text-[12px]" style={{ background: 'rgba(248,113,113,.08)', color: '#f87171', border: '1px solid rgba(248,113,113,.2)' }}>{auditError}</div>}
               {auditLoading && <div className="text-center py-16"><div className="text-[13px]" style={{ color: T.tx3 }}>Loading\u2026</div></div>}
-              {!auditLoading && auditLog.length === 0 && <div className="rounded-xl border p-8 text-center" style={{ background: T.s1, borderColor: T.b1 }}>
+              {!auditLoading && !auditError && auditLog.length === 0 && <div className="rounded-xl border p-8 text-center" style={{ background: T.s1, borderColor: T.b1 }}>
                 <div className="text-[28px] mb-3">{'\uD83D\uDCCB'}</div>
-                <div className="text-[14px] font-semibold mb-1" style={{ color: T.tx }}>Activity logging is ready</div>
-                <div className="text-[12px] max-w-md mx-auto leading-relaxed" style={{ color: T.tx3 }}>Once the audit log endpoint is built in Service B, all team actions will appear here \u2014 logins, failed attempts, role changes, invites, password changes.</div>
-                <div className="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 rounded-lg text-[10px] font-semibold" style={{ background: `${BRAND.blue}10`, color: BRAND.blue, border: `1px solid ${BRAND.blue}20` }}>{'\uD83D\uDD34'} Pre-HDFC go-live checklist item</div>
+                <div className="text-[14px] font-semibold mb-1" style={{ color: T.tx }}>No activity yet</div>
+                <div className="text-[12px] max-w-md mx-auto leading-relaxed" style={{ color: T.tx3 }}>Invites, role changes, removals, profile and password changes will appear here.</div>
               </div>}
               {!auditLoading && auditLog.length > 0 && <div className="rounded-xl border overflow-hidden" style={{ borderColor: T.b1 }}>
                 <div className="grid gap-2 px-5 py-3 text-[10px] font-semibold uppercase tracking-wider" style={{ gridTemplateColumns: '1fr 1.5fr 2fr 0.8fr', background: T.s1, color: T.tx3, borderBottom: `1px solid ${T.b1}` }}><div>Timestamp</div><div>User</div><div>Action</div><div>IP</div></div>
@@ -279,7 +270,7 @@ export default function SettingsTeamPage() {
       {/* INVITE MODAL */}
       {showInvite && <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: 'rgba(4,8,18,.85)', backdropFilter: 'blur(8px)', animation: 'fadeIn .2s ease-out' }} onClick={e => { if (e.target === e.currentTarget) setShowInvite(false) }}>
         <div className="w-full max-w-lg rounded-2xl border overflow-hidden max-h-[90vh] overflow-y-auto" style={{ background: T.s1, borderColor: T.b2, boxShadow: '0 24px 80px rgba(0,0,0,.6)', animation: 'fadeUp .3s ease-out' }}>
-          <div className="px-6 pt-5 pb-4 border-b sticky top-0" style={{ borderColor: T.b1, background: T.s1 }}><div className="text-[15px] font-bold" style={{ color: T.tx }}>Add Team Member</div><div className="text-[11px] mt-0.5" style={{ color: T.tx3 }}>Create login for {user.tenant_key?.toUpperCase()}</div></div>
+          <div className="px-6 pt-5 pb-4 border-b sticky top-0" style={{ borderColor: T.b1, background: T.s1 }}><div className="text-[15px] font-bold" style={{ color: T.tx }}>Add Team Member</div><div className="text-[11px] mt-0.5" style={{ color: T.tx3 }}>Create login for {orgName || 'your organisation'}</div></div>
           <div className="px-6 py-5 flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-3">
               <div><label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: T.tx3 }}>Email *</label><input type="email" value={invEmail} onChange={e => setInvEmail(e.target.value)} placeholder="colleague@company.com" autoFocus className="w-full px-3 py-2.5 rounded-lg text-[13px]" style={inputStyle} /></div>
@@ -327,7 +318,7 @@ export default function SettingsTeamPage() {
       {/* REMOVE MODAL */}
       {removeMember && <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: 'rgba(4,8,18,.85)', backdropFilter: 'blur(8px)', animation: 'fadeIn .2s ease-out' }} onClick={e => { if (e.target === e.currentTarget) setRemoveMember(null) }}>
         <div className="w-full max-w-sm rounded-2xl border overflow-hidden" style={{ background: T.s1, borderColor: 'rgba(248,113,113,.2)', boxShadow: '0 24px 80px rgba(0,0,0,.6)', animation: 'fadeUp .3s ease-out' }}>
-          <div className="px-6 py-5"><div className="text-[15px] font-bold mb-2" style={{ color: '#f87171' }}>Remove Member</div><div className="text-[12px] leading-relaxed" style={{ color: T.tx2 }}>Remove <strong style={{ color: T.tx }}>{removeMember.full_name || removeMember.email}</strong>? They lose access to all {user.tenant_key?.toUpperCase()} data immediately.</div></div>
+          <div className="px-6 py-5"><div className="text-[15px] font-bold mb-2" style={{ color: '#f87171' }}>Remove Member</div><div className="text-[12px] leading-relaxed" style={{ color: T.tx2 }}>Remove <strong style={{ color: T.tx }}>{removeMember.full_name || removeMember.email}</strong>? They lose access to all {orgName || 'your organisation'} data immediately.</div></div>
           <div className="px-6 py-4 border-t flex items-center justify-end gap-3" style={{ borderColor: T.b1 }}>
             <button onClick={() => setRemoveMember(null)} className="px-4 py-2 rounded-lg text-[12px]" style={{ color: T.tx2, border: `1px solid ${T.b2}` }}>Cancel</button>
             <button onClick={handleRemove} disabled={removing} className="px-5 py-2 rounded-lg text-[12px] font-semibold disabled:opacity-50" style={{ background: '#f87171', color: '#fff' }}>{removing ? 'Removing\u2026' : 'Remove'}</button>

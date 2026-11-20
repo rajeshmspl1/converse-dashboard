@@ -1,45 +1,20 @@
 'use client'
-import { getEnv } from '@/lib/env'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { getUser, getAccessToken, clearAuth, isLoggedIn, signOut, type CxUser } from '@/lib/auth'
+import { getUser, isLoggedIn, signOut, fetchB, apiErrorMessage, type CxUser } from '@/lib/auth'
+import { canonicalRole, roleLabel } from '@/lib/roles'
+import { useBranding } from '@/components/branding/BrandingProvider'
 import UnifiedHeader from '@/components/layout/UnifiedHeader'
 import { T, BRAND, FONTS } from '@/lib/theme'
 
-const SERVICE_B_URL = typeof window !== "undefined" ? getEnv().serviceB : "http://localhost:9000"
-
-// ── Helpers ──
-async function authFetch(path: string, opts: RequestInit = {}) {
-  const token = getAccessToken()
-  if (!token) throw new Error('Not authenticated')
-  const res = await fetch(`${SERVICE_B_URL}${path}`, {
-    ...opts,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      ...(opts.headers || {}),
-    },
-  })
-  if (res.status === 401) {
-    clearAuth()
-    window.location.href = '/login'
-    throw new Error('Session expired')
-  }
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.detail || `Request failed (${res.status})`)
-  }
-  return res.json()
-}
+// Service B calls go through the shared fetchB (token refresh, one auth client — R172).
+const authFetch = (path: string, opts: RequestInit = {}) => fetchB(path, opts)
 
 // ── Role display ──
-const ROLE_LABELS: Record<string, { label: string; color: string }> = {
-  super_admin:    { label: 'Super Admin',    color: '#f5a623' },
-  tenant_admin:   { label: 'Admin',          color: BRAND.teal },
-  customer_admin: { label: 'Admin',          color: BRAND.teal },
-  customer_tester:{ label: 'Tester',         color: BRAND.blue },
-  customer_viewer:{ label: 'Viewer',         color: T.tx2 },
+const ROLE_COLORS: Record<string, string> = {
+  super_admin: '#f5a623', tenant_admin: BRAND.teal, tester: BRAND.blue, analyst: BRAND.blue, viewer: T.tx2,
 }
+const PASSWORD_MIN = 12 // same rule as service-b /auth/change-password
 
 export default function AccountPage() {
   const router = useRouter()
@@ -63,6 +38,8 @@ export default function AccountPage() {
 
   // Delete account
   const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [deletePwd, setDeletePwd] = useState('')
+  const orgName = useBranding().displayName
   const [deleting, setDeleting] = useState(false)
   const [deleteMsg, setDeleteMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
@@ -84,8 +61,8 @@ export default function AccountPage() {
     setProfileSaving(true)
     setProfileMsg(null)
     try {
-      const updated = await authFetch('/auth/me', {
-        method: 'PATCH',
+      await authFetch('/auth/me/update', {
+        method: 'POST',
         body: JSON.stringify({ full_name: fullName.trim(), company_name: companyName.trim() }),
       })
       // Update localStorage
@@ -97,8 +74,8 @@ export default function AccountPage() {
         setUser({ ...u })
       }
       setProfileMsg({ type: 'ok', text: 'Profile updated' })
-    } catch (err: any) {
-      setProfileMsg({ type: 'err', text: err.message })
+    } catch (err) {
+      setProfileMsg({ type: 'err', text: apiErrorMessage(err) })
     } finally {
       setProfileSaving(false)
     }
@@ -108,7 +85,7 @@ export default function AccountPage() {
   const handleChangePassword = async () => {
     setPwdMsg(null)
     if (!currentPwd) { setPwdMsg({ type: 'err', text: 'Enter your current password' }); return }
-    if (newPwd.length < 8) { setPwdMsg({ type: 'err', text: 'New password must be at least 8 characters' }); return }
+    if (newPwd.length < PASSWORD_MIN) { setPwdMsg({ type: 'err', text: `New password must be at least ${PASSWORD_MIN} characters` }); return }
     if (newPwd !== confirmPwd) { setPwdMsg({ type: 'err', text: 'Passwords do not match' }); return }
     if (currentPwd === newPwd) { setPwdMsg({ type: 'err', text: 'New password must be different from current' }); return }
 
@@ -122,8 +99,8 @@ export default function AccountPage() {
       setCurrentPwd('')
       setNewPwd('')
       setConfirmPwd('')
-    } catch (err: any) {
-      setPwdMsg({ type: 'err', text: err.message })
+    } catch (err) {
+      setPwdMsg({ type: 'err', text: apiErrorMessage(err) })
     } finally {
       setPwdSaving(false)
     }
@@ -132,20 +109,21 @@ export default function AccountPage() {
   // ── Delete account ──
   const handleDeleteAccount = async () => {
     if (deleteConfirm !== 'DELETE') { setDeleteMsg({ type: 'err', text: 'Type DELETE to confirm' }); return }
+    if (!deletePwd) { setDeleteMsg({ type: 'err', text: 'Enter your password to confirm' }); return }
     setDeleting(true)
     setDeleteMsg(null)
     try {
-      await authFetch('/auth/account', { method: 'DELETE' })
+      await authFetch('/auth/account/delete', { method: 'POST', body: JSON.stringify({ password: deletePwd }) })
       signOut()
-    } catch (err: any) {
-      setDeleteMsg({ type: 'err', text: err.message })
+    } catch (err) {
+      setDeleteMsg({ type: 'err', text: apiErrorMessage(err) })
       setDeleting(false)
     }
   }
 
   if (!user) return null
 
-  const roleInfo = ROLE_LABELS[user.role] || { label: user.role.replace(/_/g, ' '), color: T.tx2 }
+  const roleInfo = { label: roleLabel(user.role), color: ROLE_COLORS[canonicalRole(user.role)] || T.tx2 }
 
   const tabs = [
     { key: 'profile' as const,  label: 'Profile',         icon: '👤' },
@@ -213,12 +191,12 @@ export default function AccountPage() {
               >
                 {roleInfo.label}
               </span>
-              {user.tenant_key && (
+              {orgName && (
                 <span
-                  className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide"
+                  className="px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide"
                   style={{ background: `${BRAND.teal}12`, color: BRAND.teal, border: `1px solid ${BRAND.teal}20` }}
                 >
-                  {user.tenant_key}
+                  {orgName}
                 </span>
               )}
             </div>
@@ -321,7 +299,7 @@ export default function AccountPage() {
                       className="w-full px-3 py-2.5 rounded-lg text-[13px]"
                       style={{ background: T.s2, color: T.tx3, border: `1px solid ${T.b1}` }}
                     >
-                      {user.tenant_key.toUpperCase()}
+                      {orgName || '—'}
                     </div>
                   </div>
                 )}
@@ -356,7 +334,7 @@ export default function AccountPage() {
             <div className="acct-card rounded-xl border p-6" style={{ background: T.s1, borderColor: T.b1 }}>
               <div className="text-[14px] font-semibold mb-1" style={{ color: T.tx }}>Change Password</div>
               <div className="text-[11px] mb-5" style={{ color: T.tx3 }}>
-                Choose a strong password with at least 8 characters
+                Choose a strong password with at least 12 characters
               </div>
 
               <div className="flex flex-col gap-4 max-w-md">
@@ -395,7 +373,7 @@ export default function AccountPage() {
                       type={showNewPwd ? 'text' : 'password'}
                       value={newPwd}
                       onChange={e => setNewPwd(e.target.value)}
-                      placeholder="Enter new password (min 8 characters)"
+                      placeholder="Enter new password (min 12 characters)"
                       className="w-full px-3 py-2.5 pr-14 rounded-lg text-[13px] transition-all"
                       style={inputStyle}
                     />
@@ -418,16 +396,16 @@ export default function AccountPage() {
                             className="h-1 flex-1 rounded-full"
                             style={{
                               background: newPwd.length >= i * 3
-                                ? (newPwd.length >= 12 ? BRAND.teal : newPwd.length >= 8 ? '#f5a623' : '#f87171')
+                                ? (newPwd.length >= 16 ? BRAND.teal : newPwd.length >= PASSWORD_MIN ? '#f5a623' : '#f87171')
                                 : T.b1,
                             }}
                           />
                         ))}
                       </div>
                       <span className="text-[9px]" style={{
-                        color: newPwd.length >= 12 ? BRAND.teal : newPwd.length >= 8 ? '#f5a623' : '#f87171'
+                        color: newPwd.length >= 16 ? BRAND.teal : newPwd.length >= PASSWORD_MIN ? '#f5a623' : '#f87171'
                       }}>
-                        {newPwd.length >= 12 ? 'Strong' : newPwd.length >= 8 ? 'Fair' : 'Too short'}
+                        {newPwd.length >= 16 ? 'Strong' : newPwd.length >= PASSWORD_MIN ? 'OK' : 'Too short'}
                       </span>
                     </div>
                   )}
@@ -519,17 +497,30 @@ export default function AccountPage() {
                     borderColor: deleteConfirm === 'DELETE' ? 'rgba(248,113,113,.5)' : T.b2,
                   }}
                 />
+                <label className="text-[10px] font-semibold uppercase tracking-wider mt-3 mb-1.5 block" style={{ color: T.tx3 }}>
+                  Your password
+                </label>
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  value={deletePwd}
+                  onChange={e => setDeletePwd(e.target.value)}
+                  placeholder="Enter your password"
+                  data-testid="delete-password"
+                  className="w-full px-3 py-2.5 rounded-lg text-[13px] transition-all"
+                  style={inputStyle}
+                />
               </div>
 
               <div className="mt-5 flex items-center gap-3">
                 <button
                   onClick={handleDeleteAccount}
-                  disabled={deleting || deleteConfirm !== 'DELETE'}
+                  disabled={deleting || !(deleteConfirm === 'DELETE' && !!deletePwd)}
                   className="px-5 py-2.5 rounded-lg text-[13px] font-semibold transition-all disabled:opacity-30"
                   style={{
-                    background: deleteConfirm === 'DELETE' ? '#f87171' : T.s2,
-                    color: deleteConfirm === 'DELETE' ? '#fff' : T.tx3,
-                    cursor: deleteConfirm === 'DELETE' ? 'pointer' : 'not-allowed',
+                    background: deleteConfirm === 'DELETE' && !!deletePwd ? '#f87171' : T.s2,
+                    color: deleteConfirm === 'DELETE' && !!deletePwd ? '#fff' : T.tx3,
+                    cursor: deleteConfirm === 'DELETE' && !!deletePwd ? 'pointer' : 'not-allowed',
                   }}
                 >
                   {deleting ? 'Deleting…' : 'Permanently Delete My Account'}

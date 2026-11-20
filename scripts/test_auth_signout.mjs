@@ -28,6 +28,7 @@ const R174 = { cx_tenant_key: 'tenant_x', cx_ivr_key: 'ivr_x', cx_routing_mode: 
 function env({ local = {}, session = {}, search = '' } = {}) {
   const calls = { assign: [], replace: [], href: [] }
   const listeners = {}
+  const events = []
   const location = {
     search, hostname: 'p1.example.com',
     assign: (u) => calls.assign.push(u), replace: (u) => calls.replace.push(u),
@@ -37,10 +38,11 @@ function env({ local = {}, session = {}, search = '' } = {}) {
     location,
     addEventListener: (t, f) => { (listeners[t] ||= []).push(f) },
     removeEventListener: (t, f) => { listeners[t] = (listeners[t] || []).filter(x => x !== f) },
+    dispatchEvent: (e) => { events.push(e.type); return true },
   }
   globalThis.localStorage = new Store(local)
   globalThis.sessionStorage = new Store(session)
-  return { calls, listeners }
+  return { calls, listeners, events }
 }
 env()
 const A = await import('data:text/javascript;base64,' + Buffer.from(js).toString('base64'))
@@ -77,11 +79,26 @@ await t('signOut still navigates when storage throws', () => {
   A.signOut()
   assert.deepEqual(calls.assign, ['/']); assert.equal(localStorage.getItem('cx_access_token'), null)
 })
-await t('clearAuth is unchanged: removes only the 3 login keys (R174 keys untouched), no navigation', () => {
-  const { calls } = env({ local: { ...LOGIN, ...R174 }, session: R174 })
+const BRANDING = { 'cx_branding:7:tenant_a': '{}', 'cx_branding:8:tenant_b': '{}' }
+await t('clearAuth: removes the 3 login keys + every branding cache entry (R174 keys untouched), no navigation', () => {
+  const { calls, events } = env({ local: { ...LOGIN, ...R174 }, session: { ...R174, ...BRANDING } })
   A.clearAuth()
   assert.deepEqual(localStorage.keys(), Object.keys(R174).sort()); assert.deepEqual(sessionStorage.keys(), Object.keys(R174).sort())
   assert.deepEqual(calls, { assign: [], replace: [], href: [] })
+  assert.deepEqual(events, [A.AUTH_CLEARED_EVENT], 'BrandingProvider is told to drop the brand + revoke the logo blob')
+})
+await t('branding cache cleared on signOut, on the 401 path and on a new login (no previous tenant brand)', async () => {
+  let e = env({ local: LOGIN, session: { ...BRANDING, cvs_session_Y: '{}' } })
+  A.signOut()
+  assert.deepEqual(sessionStorage.keys(), ['cvs_session_Y']); assert.deepEqual(e.calls.assign, ['/'])
+  e = env({ local: LOGIN, session: BRANDING })
+  globalThis.fetch = async () => ({ ok: false, status: 401, json: async () => ({}), text: async () => '' })
+  await A.authFetch('https://b.example/x')
+  assert.deepEqual(sessionStorage.keys(), []); assert.deepEqual(e.calls.href, ['/login'])
+  e = env({ session: BRANDING })
+  A.saveAuth({ access_token: 'n.e.w', refresh_token: 'r.e.f', token_type: 'bearer', expires_in: 1, user: { id: 9 } })
+  assert.deepEqual(sessionStorage.keys(), []); assert.equal(localStorage.getItem('cx_access_token'), 'n.e.w')
+  assert.deepEqual(e.events, [A.AUTH_CLEARED_EVENT])
 })
 await t('401 path unchanged: refresh rejected → clearAuth + /login (not "/")', async () => {
   const { calls } = env({ local: LOGIN })

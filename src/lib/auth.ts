@@ -23,7 +23,27 @@ export interface AuthTokens {
   user:          CxUser
 }
 
+// Tenant branding cache (src/lib/branding.ts): sessionStorage keys `${BRANDING_CACHE_PREFIX}:<user id>:<tenant>`.
+// Cleared on every login, logout and 401 so a new session never shows the previous tenant's brand (R174).
+export const BRANDING_CACHE_PREFIX = 'cx_branding'
+export const AUTH_CLEARED_EVENT = 'cx:auth-cleared'
+
+export function clearBrandingCache(): void {
+  for (const store of [sessionStorage, localStorage]) {
+    try {
+      const keys: string[] = []
+      for (let i = 0; i < store.length; i++) {
+        const k = store.key(i)
+        if (k && k.startsWith(BRANDING_CACHE_PREFIX)) keys.push(k)
+      }
+      keys.forEach(k => store.removeItem(k))
+    } catch { /* storage unavailable */ }
+  }
+  try { window.dispatchEvent(new Event(AUTH_CLEARED_EVENT)) } catch { /* no window (tests) */ }
+}
+
 export function saveAuth(tokens: AuthTokens): void {
+  clearBrandingCache()
   localStorage.setItem(ACCESS_KEY,  tokens.access_token)
   localStorage.setItem(REFRESH_KEY, tokens.refresh_token)
   localStorage.setItem(USER_KEY,    JSON.stringify(tokens.user))
@@ -33,6 +53,7 @@ export function clearAuth(): void {
   localStorage.removeItem(ACCESS_KEY)
   localStorage.removeItem(REFRESH_KEY)
   localStorage.removeItem(USER_KEY)
+  clearBrandingCache()
 }
 
 // Every key that holds or implies a login: tokens + user, the legacy 'access_token' key the
@@ -272,6 +293,27 @@ export async function authFetch(url: string, init: RequestInit = {}): Promise<Re
   if (res.status !== 401 || !token) return res
   const fresh = await refreshAuth()
   return fresh ? fetch(url, withBearer(init, fresh)) : res
+}
+
+/** A short, plain-text message for a failed API call (shown to the user; never HTML). */
+export function apiErrorMessage(err: unknown): string {
+  if (err instanceof ApiError) {
+    let detail: unknown = null
+    try { detail = JSON.parse(err.body)?.detail } catch { /* not JSON */ }
+    const d = typeof detail === 'string' ? detail
+      : detail && typeof detail === 'object' && typeof (detail as { error?: unknown }).error === 'string'
+        ? (detail as { field?: string; error: string }).field
+          ? `${(detail as { field: string }).field}: ${(detail as { error: string }).error}` : (detail as { error: string }).error
+        : ''
+    if (err.status === 429) return d || 'Too many attempts. Please wait and try again.'
+    if (err.status === 401) return 'Your session has expired. Please sign in again.'
+    if (err.status === 403) return d || 'You do not have permission to do this.'
+    if (err.status === 404) return d || 'Not found.'
+    if (err.status >= 500) return 'The server had a problem. Please try again.'
+    return d || `Request failed (${err.status})`
+  }
+  if (err instanceof TypeError) return 'Could not reach the server. Check your connection and try again.'
+  return err instanceof Error && err.message ? err.message : 'Something went wrong.'
 }
 
 /** Non-2xx Service B response; message is "<status>: <body>". */

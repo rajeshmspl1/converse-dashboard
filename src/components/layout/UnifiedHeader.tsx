@@ -6,6 +6,8 @@ import { CURRENCY_CONFIG } from '@/lib/data'
 import Logo from '@/components/ui/Logo'
 import type { Currency } from '@/types'
 import { guardBackForwardCache } from '@/lib/auth'
+import { useBranding } from '@/components/branding/BrandingProvider'
+import { roleLabel } from '@/lib/roles'
 
 // ═══════════════════════════════════════════════════════════════════
 // UnifiedHeader — One header for all pages (Brand Guide §4.1)
@@ -44,6 +46,8 @@ export default function UnifiedHeader({
   const [userMenu, setUserMenu] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
   const isLoggedIn = !!user
+  const brand = useBranding()
+  const showTenantLogo = isLoggedIn && !!brand.logoSrc
   const isHomepage = variant === 'homepage'
   const isJourney = variant === 'journey'
   const showTabs = variant === 'dashboard' || variant === 'session'
@@ -99,7 +103,21 @@ export default function UnifiedHeader({
       {/* ── LEFT: Logo + context ── */}
       <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
         <div className="flex items-center gap-1.5 cursor-pointer" onClick={handleLogoClick}>
-          <Logo size={HEADER.logoSize} showWordmark={true} showTagline={true} />
+          {showTenantLogo ? (
+            // Tenant logo (blob: URL from BrandingProvider). Fits the 44px header: plate max 32px tall.
+            <span
+              className="flex items-center justify-center rounded-md max-w-[92px] sm:max-w-[150px]"
+              style={brand.logoPlate
+                ? { background: '#FFFFFF', height: 30, padding: '3px 8px', boxShadow: '0 0 0 1px rgba(255,255,255,.08)' }
+                : { height: 30 }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element -- blob: URL, not optimisable */}
+              <img src={brand.logoSrc!} alt={brand.displayName || 'Logo'} data-testid="tenant-logo"
+                   style={{ maxHeight: brand.logoPlate ? 24 : 30, maxWidth: '100%', width: 'auto', objectFit: 'contain', display: 'block' }} />
+            </span>
+          ) : (
+            <Logo size={HEADER.logoSize} showWordmark={true} showTagline={true} />
+          )}
         </div>
 
         {showBackHome && (
@@ -120,13 +138,14 @@ export default function UnifiedHeader({
           </React.Fragment>
         )}
 
-        {variant === 'dashboard' && tenantLabel && (
+        {variant === 'dashboard' && (tenantLabel ?? brand.displayName) && (
           <span
-            className="hidden sm:flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded"
+            className="hidden sm:flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded whitespace-nowrap"
             style={{ background: T.s2, border: '1px solid ' + T.b1, color: T.tx2 }}
+            data-testid="tenant-chip"
           >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: BRAND.teal }} />
-            {tenantLabel}
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: brand.accent }} />
+            {tenantLabel ?? brand.displayName}
           </span>
         )}
 
@@ -218,7 +237,7 @@ export default function UnifiedHeader({
           </a>
           <a
             className="text-[12px] lg:text-[13px] cursor-pointer transition-colors font-semibold whitespace-nowrap"
-            style={{ color: BRAND.teal, textDecoration: 'none' }}
+            style={{ color: brand.accentText, textDecoration: 'none' }}
             onClick={() => {
               if (onMigrateClick) onMigrateClick()
               else router.push('/migrate')
@@ -237,10 +256,10 @@ export default function UnifiedHeader({
               onClick={() => onTabChange?.(t.key)}
               className="px-3 py-1.5 rounded text-[11px] font-medium transition-all whitespace-nowrap"
               style={{
-                background: activeTab === t.key ? T.teal2 : 'transparent',
-                color: activeTab === t.key ? BRAND.teal : T.tx2,
+                background: activeTab === t.key ? brand.accent + '1F' : 'transparent',
+                color: activeTab === t.key ? brand.accentText : T.tx2,
                 border: activeTab === t.key
-                  ? '1px solid ' + BRAND.teal + '40'
+                  ? '1px solid ' + brand.accent + '66'
                   : '1px solid transparent',
               }}
             >
@@ -257,7 +276,7 @@ export default function UnifiedHeader({
         {showTabs && (
           <a
             className="text-[12px] cursor-pointer transition-colors font-semibold mr-2 hidden lg:block whitespace-nowrap"
-            style={{ color: BRAND.teal, textDecoration: 'none' }}
+            style={{ color: brand.accentText, textDecoration: 'none' }}
             onClick={() => {
               if (onMigrateClick) onMigrateClick()
               else router.push('/migrate')
@@ -336,8 +355,8 @@ export default function UnifiedHeader({
                 className="flex items-center justify-center rounded-full text-[11px] font-bold flex-shrink-0"
                 style={{
                   width: 28, height: 28,
-                  background: `linear-gradient(135deg, ${BRAND.blue}, ${BRAND.teal})`,
-                  color: '#fff',
+                  background: brand.branded ? brand.accent : `linear-gradient(135deg, ${BRAND.blue}, ${BRAND.teal})`,
+                  color: brand.branded ? brand.onAccent : '#fff',
                 }}
               >
                 {(user?.full_name || user?.email || '?')[0].toUpperCase()}
@@ -348,7 +367,7 @@ export default function UnifiedHeader({
                   {user?.full_name || user?.email}
                 </div>
                 <div className="text-[9px] leading-tight" style={{ color: T.tx3 }}>
-                  {user?.role.replace(/_/g, ' ')}
+                  {roleLabel(user?.role)}
                 </div>
               </div>
               {/* Chevron */}
@@ -383,13 +402,13 @@ export default function UnifiedHeader({
                   <div className="text-[10px] mt-0.5" style={{ color: T.tx3 }}>
                     {user?.email}
                   </div>
-                  {user?.tenant_key && (
+                  {brand.displayName && (
                     <div
-                      className="inline-flex items-center gap-1 mt-1.5 px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide"
-                      style={{ background: `${BRAND.teal}15`, color: BRAND.teal, border: `1px solid ${BRAND.teal}25` }}
+                      className="inline-flex items-center gap-1 mt-1.5 px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-wide"
+                      style={{ background: `${brand.accent}15`, color: brand.accentText, border: `1px solid ${brand.accent}40` }}
                     >
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: BRAND.teal }} />
-                      {user.tenant_key}
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: brand.accent }} />
+                      {brand.displayName}
                     </div>
                   )}
                 </div>
@@ -459,6 +478,13 @@ export default function UnifiedHeader({
                     <span className="text-[12px] font-medium">Migrate Your IVR</span>
                   </button>
                 </div>
+
+                {/* Branded tenants: platform credit */}
+                {brand.branded && (
+                  <div className="px-4 py-1.5 text-[10px] border-t" style={{ borderColor: T.b1, color: T.tx3 }} data-testid="powered-by">
+                    Powered by AiIVRs
+                  </div>
+                )}
 
                 {/* Sign out — separated */}
                 <div className="border-t py-1" style={{ borderColor: T.b1 }}>
