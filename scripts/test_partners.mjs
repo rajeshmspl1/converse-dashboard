@@ -16,7 +16,7 @@ const GOOD = {
   name: 'P One', logo: '/partners/p1/logo.svg', font: 'Open Sans',
   colours: { primary: '#310627', accent: '#F54D1D', secondary: '#4DBBC2', alert: '#F3061B' },
   hero_title: 'Title', hero_subtitle: 'Sub', cta_label: 'Try', journeys_title: 'Pick', contact_title: 'Talk',
-  contact_text: 'Text', powered_by: 'Powered',
+  contact_text: 'Text',
   journeys: [1, 2, 3, 4].map(n => ({ label: `L${n}`, outcome: `O${n}` })),
 }
 
@@ -87,6 +87,31 @@ t('optional favicon: under /partners/<id>/, png/svg/ico only, bad → dropped', 
 t('template headings use the optional heading font, falling back to the body font', () => {
   const html = readFileSync(path.join(root, 'public/partners/template.html'), 'utf8')
   assert.ok(html.includes('h1,h2,h3{font-family:var(--fh,var(--f))}'))
+})
+t('optional show_name: strict boolean, default true, anything else ignored', () => {
+  assert.equal(T.validateConfig('p1', GOOD).show_name, true)
+  assert.equal(T.validateConfig('p1', { ...GOOD, show_name: false }).show_name, false)
+  assert.equal(T.validateConfig('p1', { ...GOOD, show_name: true }).show_name, true)
+  for (const v of ['false', 0, null, 'no', [], {}, 'true', 1]) {
+    const c = T.validateConfig('p1', { ...GOOD, show_name: v })
+    assert.ok(c, String(v)); assert.equal(c.show_name, true, JSON.stringify(v))
+  }
+})
+t('show_name:false hides the name only when a logo is shown; logo alt = name; title unchanged', () => {
+  const src = readFileSync(path.join(root, 'public/partners/template.js'), 'utf8')
+  assert.ok(src.includes('logo.alt = cfg.name'))
+  assert.ok(src.includes('if (name && cfg.logo && !cfg.show_name) name.hidden = true'))
+  assert.ok(src.includes('document.title = cfg.name'))
+})
+t('footer is built from config: partner name + platform credit (no partner text in code)', () => {
+  assert.equal(T.footerText(T.validateConfig('p1', GOOD)), 'P One · Powered by AiIVRs')
+  assert.equal(T.validateConfig('p1', { ...GOOD, powered_by: 'Other' }).powered_by, undefined, 'free-text footer no longer read')
+})
+t('template a11y/contrast rules: Log in never wraps, accent CTA is large bold text, J labels use primary', () => {
+  const html = readFileSync(path.join(root, 'public/partners/template.html'), 'utf8')
+  assert.ok(/\.nav \.btn\{[^}]*white-space:nowrap/.test(html))
+  assert.ok(/\.btn\.s\{[^}]*font-size:19px;font-weight:700/.test(html))
+  assert.ok(/\.jcard \.jn\{[^}]*color:var\(--ink\)/.test(html))
 })
 t('J1–J4 URLs: Experience Shop, journey + routing mode, no tenant', () => {
   assert.deepEqual([0, 1, 2, 3].map(T.journeyUrl), [

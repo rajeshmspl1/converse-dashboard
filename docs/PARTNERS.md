@@ -26,9 +26,12 @@ home page.
    `config.json`: the WAF (OWASP CRS rule 930130, restricted files) blocks any path containing it.
    - `name`, `logo` (must be under `/partners/<id>/`), `font` (Google Fonts family name)
    - optional: `heading_font` (Google Fonts family for headings; body keeps `font`), `favicon` (browser-tab icon,
-     `.png`/`.svg`/`.ico` under `/partners/<id>/`; without it the tab shows the AiIVRs icon)
+     `.png`/`.svg`/`.ico` under `/partners/<id>/`; without it the tab shows the AiIVRs icon),
+     `show_name` (strict `true`/`false`, default `true`; `false` hides the text name next to the logo when the
+     logo already contains the wordmark — the logo's alt text is still the name; any other value is ignored)
    - `colours`: `primary`, `accent`, `secondary`, `alert` — each `#RRGGBB`
-   - `hero_title`, `hero_subtitle`, `cta_label`, `journeys_title`, `contact_title`, `contact_text`, `powered_by`
+   - `hero_title`, `hero_subtitle`, `cta_label`, `journeys_title`, `contact_title`, `contact_text`
+   - Footer is built by the platform: `<name> · Powered by AiIVRs` (no footer field)
    - `journeys`: exactly 4 × `{ "label", "outcome" }` for J1–J4 (journey and routing mode are fixed by the platform)
    - `demo_tenant_key`, `demo_display_name`, `post_login` (same-site path, e.g. `/migrate`), `hide_reset`
    - Public copy states outcomes only — never how the product works. Write "and", not "&".

@@ -10,7 +10,9 @@ export const FALLBACK_URL = '/preview/home-v2.html'
 // J1–J4: journey index and routing mode are platform behaviour, not partner data.
 export const JOURNEY_ROUTING = ['', 'sales', 'complexity', 'premium']
 const COLOUR_KEYS = ['primary', 'accent', 'secondary', 'alert']
-const TEXT_KEYS = ['name', 'hero_title', 'hero_subtitle', 'cta_label', 'journeys_title', 'contact_title', 'contact_text', 'powered_by']
+const TEXT_KEYS = ['name', 'hero_title', 'hero_subtitle', 'cta_label', 'journeys_title', 'contact_title', 'contact_text']
+// Platform credit (not partner data); the footer is the partner name from config + this credit.
+export const PLATFORM_CREDIT = 'Powered by AiIVRs'
 
 /** Partner id for this page: registry host match first, else a ?p= value that is a registry id. */
 export function resolvePartnerId(registry, hostname, search) {
@@ -45,6 +47,9 @@ export function fontsUrl(families) {
   return 'https://fonts.googleapis.com/css2?' + fams.map(f => `family=${encodeURIComponent(f)}:wght@400;600;700;800`).join('&') + '&display=swap'
 }
 
+/** Footer line, built from the validated config: "<name> · Powered by AiIVRs". */
+export function footerText(cfg) { return `${cfg.name} · ${PLATFORM_CREDIT}` }
+
 function text(v, max = 400) { return typeof v === 'string' && v.trim() && v.length <= max ? v : null }
 
 /** Validated config or null. Unknown keys are ignored; any invalid required value rejects it. */
@@ -57,7 +62,9 @@ export function validateConfig(id, cfg) {
   const heading_font = cfg.heading_font && FONT_RE.test(cfg.heading_font) ? cfg.heading_font : null
   const logo = safeLogoPath(id, cfg.logo)
   const favicon = safeFaviconPath(id, cfg.favicon)
-  const out = { id, colours: Object.fromEntries(COLOUR_KEYS.map(k => [k, colours[k]])), font, heading_font, logo, favicon }
+  // Optional show_name: strict boolean, default true. Anything else is ignored (→ true).
+  const show_name = cfg.show_name === false ? false : true
+  const out = { id, colours: Object.fromEntries(COLOUR_KEYS.map(k => [k, colours[k]])), font, heading_font, logo, favicon, show_name }
   for (const k of TEXT_KEYS) {
     out[k] = text(cfg[k])
     if (!out[k]) return null
@@ -113,9 +120,13 @@ function render(cfg) {
   set('[data-k="journeys_title"]', cfg.journeys_title)
   set('[data-k="contact_title"]', cfg.contact_title)
   set('[data-k="contact_text"]', cfg.contact_text)
-  set('[data-k="powered_by"]', cfg.powered_by)
+  set('[data-k="footer"]', footerText(cfg))
   const logo = document.querySelector('[data-k="logo"]')
   if (logo && cfg.logo) { logo.src = cfg.logo; logo.alt = cfg.name; logo.hidden = false }
+  // show_name:false hides the text name only when a logo is shown (it carries the wordmark;
+  // its alt is the name). Without a valid logo the name stays, so the header is never empty.
+  const name = document.querySelector('[data-k="name"]')
+  if (name && cfg.logo && !cfg.show_name) name.hidden = true
   const cta = document.querySelector('[data-k="cta_label"]')
   if (cta) cta.href = journeyUrl(0)
   const list = document.querySelector('[data-k="journeys"]')
