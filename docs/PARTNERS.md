@@ -25,6 +25,8 @@ home page.
 1. **Config** — `public/partners/<id>/partner.json` (`<id>` matches `^[a-z0-9-]+$`). Never name it
    `config.json`: the WAF (OWASP CRS rule 930130, restricted files) blocks any path containing it.
    - `name`, `logo` (must be under `/partners/<id>/`), `font` (Google Fonts family name)
+   - optional: `heading_font` (Google Fonts family for headings; body keeps `font`), `favicon` (browser-tab icon,
+     `.png`/`.svg`/`.ico` under `/partners/<id>/`; without it the tab shows the AiIVRs icon)
    - `colours`: `primary`, `accent`, `secondary`, `alert` — each `#RRGGBB`
    - `hero_title`, `hero_subtitle`, `cta_label`, `journeys_title`, `contact_title`, `contact_text`, `powered_by`
    - `journeys`: exactly 4 × `{ "label", "outcome" }` for J1–J4 (journey and routing mode are fixed by the platform)

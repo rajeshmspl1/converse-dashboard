@@ -32,6 +32,19 @@ export function safeLogoPath(id, path) {
     && /^[A-Za-z0-9/_.-]+$/.test(path) ? path : null
 }
 
+/** Optional favicon: same rule as the logo, and an image type browsers accept as a tab icon. */
+export function safeFaviconPath(id, path) {
+  const p = safeLogoPath(id, path)
+  return p && /\.(png|svg|ico)$/i.test(p) ? p : null
+}
+
+/** Google Fonts stylesheet URL for the validated families (one request, duplicates dropped). */
+export function fontsUrl(families) {
+  const fams = [...new Set(families.filter(f => typeof f === 'string' && FONT_RE.test(f)))]
+  if (!fams.length) return null
+  return 'https://fonts.googleapis.com/css2?' + fams.map(f => `family=${encodeURIComponent(f)}:wght@400;600;700;800`).join('&') + '&display=swap'
+}
+
 function text(v, max = 400) { return typeof v === 'string' && v.trim() && v.length <= max ? v : null }
 
 /** Validated config or null. Unknown keys are ignored; any invalid required value rejects it. */
@@ -40,8 +53,11 @@ export function validateConfig(id, cfg) {
   const colours = cfg.colours || {}
   if (!COLOUR_KEYS.every(k => isColour(colours[k]))) return null
   const font = cfg.font && FONT_RE.test(cfg.font) ? cfg.font : null
+  // Optional: heading_font (headings only; body keeps `font`) and favicon. Invalid → dropped, not rejected.
+  const heading_font = cfg.heading_font && FONT_RE.test(cfg.heading_font) ? cfg.heading_font : null
   const logo = safeLogoPath(id, cfg.logo)
-  const out = { id, colours: Object.fromEntries(COLOUR_KEYS.map(k => [k, colours[k]])), font, logo }
+  const favicon = safeFaviconPath(id, cfg.favicon)
+  const out = { id, colours: Object.fromEntries(COLOUR_KEYS.map(k => [k, colours[k]])), font, heading_font, logo, favicon }
   for (const k of TEXT_KEYS) {
     out[k] = text(cfg[k])
     if (!out[k]) return null
@@ -72,12 +88,21 @@ function render(cfg) {
   root.setProperty('--sun', cfg.colours.accent)
   root.setProperty('--teal', cfg.colours.secondary)
   root.setProperty('--alert', cfg.colours.alert)
-  if (cfg.font) {
+  const href = fontsUrl([cfg.font, cfg.heading_font])
+  if (href) {
     const link = document.createElement('link')
     link.rel = 'stylesheet'
-    link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(cfg.font)}:wght@400;600;700;800&display=swap`
+    link.href = href
     document.head.appendChild(link)
-    root.setProperty('--f', `'${cfg.font}',system-ui,-apple-system,'Segoe UI',Arial,sans-serif`)
+  }
+  const stack = f => `'${f}',system-ui,-apple-system,'Segoe UI',Arial,sans-serif`
+  if (cfg.font) root.setProperty('--f', stack(cfg.font))
+  if (cfg.heading_font) root.setProperty('--fh', stack(cfg.heading_font))
+  if (cfg.favicon) {
+    const icon = document.createElement('link')
+    icon.rel = 'icon'
+    icon.href = cfg.favicon
+    document.head.appendChild(icon)
   }
   document.title = cfg.name
   const set = (sel, v) => { const n = document.querySelector(sel); if (n) n.textContent = v }

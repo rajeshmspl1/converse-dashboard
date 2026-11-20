@@ -64,6 +64,30 @@ t('bad font / logo are dropped, not injected', () => {
   const v = T.validateConfig('p1', { ...GOOD, font: "x');@import url(evil)", logo: '//evil/x.svg' })
   assert.equal(v.font, null); assert.equal(v.logo, null)
 })
+t('optional heading_font: validated, absent → null, bad → dropped (config still valid)', () => {
+  assert.equal(T.validateConfig('p1', GOOD).heading_font, null)
+  assert.equal(T.validateConfig('p1', { ...GOOD, heading_font: 'Poppins' }).heading_font, 'Poppins')
+  const v = T.validateConfig('p1', { ...GOOD, heading_font: "x');@import url(evil)" })
+  assert.ok(v); assert.equal(v.heading_font, null)
+})
+t('fonts URL: one request, encoded, deduped, invalid families skipped', () => {
+  assert.equal(T.fontsUrl(['Open Sans', 'Poppins', 'Open Sans', "x');y", null]),
+    'https://fonts.googleapis.com/css2?family=Open%20Sans:wght@400;600;700;800&family=Poppins:wght@400;600;700;800&display=swap')
+  assert.equal(T.fontsUrl([null, '']), null)
+})
+t('optional favicon: under /partners/<id>/, png/svg/ico only, bad → dropped', () => {
+  assert.equal(T.validateConfig('p1', GOOD).favicon, null)
+  assert.equal(T.validateConfig('p1', { ...GOOD, favicon: '/partners/p1/favicon.png' }).favicon, '/partners/p1/favicon.png')
+  for (const f of ['/partners/p2/favicon.png', '/partners/p1/../favicon.png', 'https://evil/f.png', '//evil/f.png',
+    '/partners/p1/favicon.html', '/partners/p1/favicon.png?x=1', 'data:image/png;base64,AA', 'javascript:alert(1)']) {
+    const v = T.validateConfig('p1', { ...GOOD, favicon: f })
+    assert.ok(v, f); assert.equal(v.favicon, null, f)
+  }
+})
+t('template headings use the optional heading font, falling back to the body font', () => {
+  const html = readFileSync(path.join(root, 'public/partners/template.html'), 'utf8')
+  assert.ok(html.includes('h1,h2,h3{font-family:var(--fh,var(--f))}'))
+})
 t('J1–J4 URLs: Experience Shop, journey + routing mode, no tenant', () => {
   assert.deepEqual([0, 1, 2, 3].map(T.journeyUrl), [
     '/experience?journey=0', '/experience?journey=1&routing_mode=sales',
