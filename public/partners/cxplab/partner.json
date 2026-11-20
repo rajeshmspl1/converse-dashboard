@@ -1,0 +1,25 @@
+{
+  "name": "Customer Experience Lab",
+  "logo": "/partners/cxplab/logo.png",
+  "favicon": "/partners/cxplab/favicon.png",
+  "colours": { "primary": "#7A4564", "accent": "#F54D1D", "secondary": "#5B8C8F", "alert": "#F54D1D" },
+  "font": "Open Sans",
+  "heading_font": "Poppins",
+  "hero_title": "Your customers do not want to wait. They want resolutions.",
+  "hero_subtitle": "Fewer repeat calls, lower cost per call and calmer customers. Hear it on a live demo call in under a minute, with no sign-up.",
+  "cta_label": "Hear the live demo",
+  "journeys_title": "Pick an outcome. Hear it live.",
+  "journeys": [
+    { "label": "Lower cost per call", "outcome": "Routine requests are resolved end to end, so every call costs less." },
+    { "label": "Service calls that sell", "outcome": "The right offer at the right moment turns everyday calls into warm leads." },
+    { "label": "Win back frustrated callers", "outcome": "Upset callers are calmed quickly and leave with their issue resolved." },
+    { "label": "Premium care for top customers", "outcome": "Your highest-value customers get a premium experience automatically." }
+  ],
+  "contact_title": "Proof beats promise. Hear it with your own customers.",
+  "contact_text": "Talk to the Customer Experience Lab team to plan a pilot for your contact centre.",
+  "powered_by": "Sparrow CX · Powered by AiIVRs",
+  "demo_tenant_key": "sparrow_demo",
+  "demo_display_name": "Demo Bank",
+  "post_login": "/migrate",
+  "hide_reset": true
+}
