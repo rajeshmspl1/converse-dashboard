@@ -6,17 +6,18 @@ import { canonicalRole, isAdminRole, isSuperAdmin as isSuperRole, roleLabel } fr
 import { useBranding } from '@/components/branding/BrandingProvider'
 import SettingsSidebar from '@/components/settings/SettingsSidebar'
 import UnifiedHeader from '@/components/layout/UnifiedHeader'
-import { T, BRAND, FONTS } from '@/lib/theme'
+import { T, BRAND, FONTS, tint, v, type Token } from '@/lib/theme'
 
 // Service B calls go through the shared fetchB (token refresh, one auth client — R172).
 const authFetch = (path: string, opts: RequestInit = {}) => fetchB(path, opts)
 
 const ROLES = [
-  { key: 'tenant_admin', label: 'Admin', color: BRAND.teal, desc: 'Full control — invite users, manage roles, configure IVRs, view audit logs' },
-  { key: 'analyst', label: 'Tester', color: BRAND.blue, desc: 'Make test calls, leave feedback, rate calls, view own sessions' },
-  { key: 'viewer', label: 'Viewer', color: T.tx2, desc: 'View recordings, analytics, sessions (read-only)' },
+  { key: 'tenant_admin', label: 'Admin', tok: 'teal' as Token, color: BRAND.teal, desc: 'Full control — invite users, manage roles, configure IVRs, view audit logs' },
+  { key: 'analyst', label: 'Tester', tok: 'blue' as Token, color: BRAND.blue, desc: 'Make test calls, leave feedback, rate calls, view own sessions' },
+  { key: 'viewer', label: 'Viewer', tok: 'tx2' as Token, color: T.tx2, desc: 'View recordings, analytics, sessions (read-only)' },
 ]
-const ROLE_COLOR: Record<string, string> = { super_admin: '#f5a623', tenant_admin: BRAND.teal, analyst: BRAND.blue, tester: BRAND.blue, viewer: T.tx2 }
+// Role colours as theme tokens (super_admin's #f5a623 == amber) so alpha variants go through tint().
+const ROLE_TOKEN: Record<string, Token> = { super_admin: 'amber', tenant_admin: 'teal', analyst: 'blue', tester: 'blue', viewer: 'tx2' }
 
 interface TeamMember { id: number; email: string; full_name: string; role: string; is_active: boolean; region_code: string | null; ivr_keys: string[]; allowed_stages: string[]; last_login_at: string | null; created_at: string }
 interface AuditEntry { id: number; user_email: string; action: string; detail: string; ip_address: string | null; created_at: string }
@@ -132,7 +133,7 @@ export default function SettingsTeamPage() {
               </div>
             ))}
           </div>}
-          footer={isAdmin ? <button onClick={() => { setShowInvite(true); setInvMsg(null) }} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-[12px] font-semibold transition-all hover:opacity-90" style={{ background: BRAND.teal, color: '#000' }}>+ Add Member</button> : undefined}
+          footer={isAdmin ? <button onClick={() => { setShowInvite(true); setInvMsg(null) }} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-[12px] font-semibold transition-all hover:opacity-90" style={{ background: BRAND.teal, color: T.onTeal }}>+ Add Member</button> : undefined}
         />
 
         {/* MAIN */}
@@ -147,28 +148,28 @@ export default function SettingsTeamPage() {
               </select>
               <div className="text-[11px]" style={{ color: T.tx3 }}>{filtered.length} of {members.length}</div>
             </div>
-            {error && <div className="mx-6 mt-3 px-4 py-3 rounded-lg text-[12px]" style={{ background: 'rgba(248,113,113,.08)', color: '#f87171', border: '1px solid rgba(248,113,113,.2)' }}>{error}</div>}
+            {error && <div className="mx-6 mt-3 px-4 py-3 rounded-lg text-[12px]" style={{ background: tint('danger', '.08'), color: T.danger, border: `1px solid ${tint('danger', '.2')}` }}>{error}</div>}
             {loading ? <div className="text-center py-16"><div className="text-[13px]" style={{ color: T.tx3 }}>Loading team\u2026</div></div> : (
               <div className="px-6 py-4"><div className="rounded-xl border overflow-hidden" style={{ borderColor: T.b1 }}>
                 <div className="grid gap-2 px-5 py-3 text-[10px] font-semibold uppercase tracking-wider" style={{ gridTemplateColumns: '2fr 0.9fr 0.8fr 1fr 0.8fr 0.8fr 0.7fr', background: T.s1, color: T.tx3, borderBottom: `1px solid ${T.b1}` }}>
                   <div>Member</div><div>Role</div><div>Region</div><div>IVR Access</div><div>Stage Access</div><div>Last Login</div><div className="text-right">Actions</div>
                 </div>
-                {filtered.map(m => { const rc = ROLE_COLOR[canonicalRole(m.role)] || T.tx3; const rl = roleLabel(m.role); const isMe = m.id === user.id; const isS = m.role === 'super_admin'; return (
-                  <div key={m.id} className="grid gap-2 px-5 py-3 items-center border-b row-hover transition-colors" style={{ gridTemplateColumns: '2fr 0.9fr 0.8fr 1fr 0.8fr 0.8fr 0.7fr', borderColor: T.b1, background: isMe ? `${BRAND.blue}04` : 'transparent' }}>
+                {filtered.map(m => { const rt: Token = ROLE_TOKEN[canonicalRole(m.role)] || 'tx3'; const rc = v(rt); const rl = roleLabel(m.role); const isMe = m.id === user.id; const isS = m.role === 'super_admin'; return (
+                  <div key={m.id} className="grid gap-2 px-5 py-3 items-center border-b row-hover transition-colors" style={{ gridTemplateColumns: '2fr 0.9fr 0.8fr 1fr 0.8fr 0.8fr 0.7fr', borderColor: T.b1, background: isMe ? tint('blue', '04') : 'transparent' }}>
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex items-center justify-center rounded-full text-[10px] font-bold flex-shrink-0" style={{ width: 34, height: 34, background: `linear-gradient(135deg, ${rc}40, ${rc}15)`, color: rc, border: `1px solid ${rc}25` }}>{(m.full_name || m.email)[0].toUpperCase()}</div>
+                      <div className="flex items-center justify-center rounded-full text-[10px] font-bold flex-shrink-0" style={{ width: 34, height: 34, background: `linear-gradient(135deg, ${tint(rt, '40')}, ${tint(rt, '15')})`, color: rc, border: `1px solid ${tint(rt, '25')}` }}>{(m.full_name || m.email)[0].toUpperCase()}</div>
                       <div className="min-w-0">
-                        <div className="text-[12px] font-semibold truncate flex items-center gap-1.5" style={{ color: T.tx }}>{m.full_name || 'Unnamed'}{isMe && <span className="text-[8px] px-1 py-0.5 rounded font-bold" style={{ background: `${BRAND.blue}20`, color: BRAND.blue }}>YOU</span>}{!m.is_active && <span className="text-[8px] px-1 py-0.5 rounded font-bold" style={{ background: 'rgba(248,113,113,.12)', color: '#f87171' }}>INACTIVE</span>}</div>
+                        <div className="text-[12px] font-semibold truncate flex items-center gap-1.5" style={{ color: T.tx }}>{m.full_name || 'Unnamed'}{isMe && <span className="text-[8px] px-1 py-0.5 rounded font-bold" style={{ background: tint('blue', '20'), color: BRAND.blue }}>YOU</span>}{!m.is_active && <span className="text-[8px] px-1 py-0.5 rounded font-bold" style={{ background: tint('danger', '.12'), color: T.danger }}>INACTIVE</span>}</div>
                         <div className="text-[10px] truncate" style={{ color: T.tx3 }}>{m.email}</div>
                         <div className="text-[9px] mt-0.5" style={{ color: T.tx3 }}>Joined {fmt(m.created_at)}</div>
                       </div>
                     </div>
-                    <div><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold" style={{ background: `${rc}12`, color: rc, border: `1px solid ${rc}20` }}><span className="w-1.5 h-1.5 rounded-full" style={{ background: rc }} />{rl}</span></div>
+                    <div><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold" style={{ background: tint(rt, '12'), color: rc, border: `1px solid ${tint(rt, '20')}` }}><span className="w-1.5 h-1.5 rounded-full" style={{ background: rc }} />{rl}</span></div>
                     <div className="text-[11px]" style={{ color: m.region_code ? T.tx : T.tx3, fontFamily: FONTS.mono }}>{m.region_code || 'All'}</div>
                     <div className="flex flex-wrap gap-1">{(m.ivr_keys?.length > 0) ? m.ivr_keys.map(k => <span key={k} className="px-1.5 py-0.5 rounded text-[9px] font-mono" style={{ background: T.s2, color: T.tx2, border: `1px solid ${T.b1}` }}>{k}</span>) : <span className="text-[10px]" style={{ color: T.tx3 }}>All</span>}</div>
                     <div className="flex flex-wrap gap-1">{(m.allowed_stages?.length > 0) ? m.allowed_stages.map(s => <span key={s} className="px-1.5 py-0.5 rounded text-[9px] font-mono" style={{ background: T.s2, color: T.tx2, border: `1px solid ${T.b1}` }}>{s}</span>) : <span className="text-[10px]" style={{ color: T.tx3 }}>All</span>}</div>
                     <div className="text-[10px]" style={{ color: m.last_login_at ? T.tx2 : T.tx3 }}>{m.last_login_at ? fmt(m.last_login_at) : 'Never'}</div>
-                    <div className="flex items-center justify-end gap-1">{isAdmin && !isS && !isMe && (<><button onClick={() => openEdit(m)} className="px-2.5 py-1 rounded text-[10px] font-medium" style={{ color: BRAND.blue, background: `${BRAND.blue}10`, border: `1px solid ${BRAND.blue}20` }}>Edit</button><button onClick={() => setRemoveMember(m)} className="px-2.5 py-1 rounded text-[10px] font-medium" style={{ color: '#f87171', background: 'rgba(248,113,113,.06)', border: '1px solid rgba(248,113,113,.15)' }}>Remove</button></>)}{(isMe || isS) && <span className="text-[9px]" style={{ color: T.tx3 }}>{'\u2014'}</span>}</div>
+                    <div className="flex items-center justify-end gap-1">{isAdmin && !isS && !isMe && (<><button onClick={() => openEdit(m)} className="px-2.5 py-1 rounded text-[10px] font-medium" style={{ color: BRAND.blue, background: tint('blue', '10'), border: `1px solid ${tint('blue', '20')}` }}>Edit</button><button onClick={() => setRemoveMember(m)} className="px-2.5 py-1 rounded text-[10px] font-medium" style={{ color: T.danger, background: tint('danger', '.06'), border: `1px solid ${tint('danger', '.15')}` }}>Remove</button></>)}{(isMe || isS) && <span className="text-[9px]" style={{ color: T.tx3 }}>{'\u2014'}</span>}</div>
                   </div>
                 ) })}
                 {filtered.length === 0 && !loading && <div className="text-center py-12"><div className="text-[24px] mb-2">{'\uD83D\uDC65'}</div><div className="text-[13px]" style={{ color: T.tx3 }}>{search || roleFilter !== 'all' ? 'No matching members' : 'No team members yet'}</div></div>}
@@ -183,7 +184,7 @@ export default function SettingsTeamPage() {
               <button onClick={fetchAudit} className="px-3 py-1.5 rounded-lg text-[11px] font-medium" style={{ color: T.tx2, background: T.s1, border: `1px solid ${T.b2}` }}>{'\u21BB'} Refresh</button>
             </div>
             <div className="px-6 py-4">
-              {auditError && <div className="mb-3 px-4 py-3 rounded-lg text-[12px]" style={{ background: 'rgba(248,113,113,.08)', color: '#f87171', border: '1px solid rgba(248,113,113,.2)' }}>{auditError}</div>}
+              {auditError && <div className="mb-3 px-4 py-3 rounded-lg text-[12px]" style={{ background: tint('danger', '.08'), color: T.danger, border: `1px solid ${tint('danger', '.2')}` }}>{auditError}</div>}
               {auditLoading && <div className="text-center py-16"><div className="text-[13px]" style={{ color: T.tx3 }}>Loading\u2026</div></div>}
               {!auditLoading && !auditError && auditLog.length === 0 && <div className="rounded-xl border p-8 text-center" style={{ background: T.s1, borderColor: T.b1 }}>
                 <div className="text-[28px] mb-3">{'\uD83D\uDCCB'}</div>
@@ -210,17 +211,17 @@ export default function SettingsTeamPage() {
               <div className="rounded-xl border p-6 mb-6" style={{ background: T.s1, borderColor: T.b1 }}>
                 <div className="text-[14px] font-bold mb-5" style={{ color: T.tx }}>How access scoping works</div>
                 <div className="flex items-center gap-3">
-                  {[{ icon: '\uD83C\uDFE2', title: 'Tenant', desc: 'Organization isolation \u2014 HDFC never sees ICICI data.', color: '#f5a623' },
-                    { icon: '\uD83D\uDDFA\uFE0F', title: 'Region', desc: '"west" = Mumbai/Pune only. Empty = all.', color: BRAND.blue },
-                    { icon: '\uD83D\uDCDE', title: 'IVR Key', desc: '"retail" vs "credit_card". Empty = all flows.', color: BRAND.teal },
-                    { icon: '\uD83D\uDCCA', title: 'Stage', desc: 'explore, pilot, prod_test, prod_live.', color: '#8b5cf6' },
-                    { icon: '\uD83C\uDFAD', title: 'Role', desc: 'Admin > Tester > Viewer.', color: '#f03060' }
+                  {[{ icon: '\uD83C\uDFE2', title: 'Tenant', desc: 'Organization isolation \u2014 HDFC never sees ICICI data.', tok: 'amber' as Token },
+                    { icon: '\uD83D\uDDFA\uFE0F', title: 'Region', desc: '"west" = Mumbai/Pune only. Empty = all.', tok: 'blue' as Token },
+                    { icon: '\uD83D\uDCDE', title: 'IVR Key', desc: '"retail" vs "credit_card". Empty = all flows.', tok: 'teal' as Token },
+                    { icon: '\uD83D\uDCCA', title: 'Stage', desc: 'explore, pilot, prod_test, prod_live.', tok: 'purple' as Token },
+                    { icon: '\uD83C\uDFAD', title: 'Role', desc: 'Admin > Tester > Viewer.', tok: 'red' as Token }
                   ].map((x, i) => (
                     <div key={x.title} className="flex items-center gap-2 flex-1">
                       {i > 0 && <div className="text-[14px] flex-shrink-0" style={{ color: T.tx3 }}>{'\u2192'}</div>}
-                      <div className="flex-1 text-center rounded-lg p-3" style={{ background: `${x.color}08`, border: `1px solid ${x.color}15` }}>
+                      <div className="flex-1 text-center rounded-lg p-3" style={{ background: tint(x.tok, '08'), border: `1px solid ${tint(x.tok, '15')}` }}>
                         <div className="text-[18px] mb-1">{x.icon}</div>
-                        <div className="text-[11px] font-bold mb-0.5" style={{ color: x.color }}>{x.title}</div>
+                        <div className="text-[11px] font-bold mb-0.5" style={{ color: v(x.tok) }}>{x.title}</div>
                         <div className="text-[9px] leading-relaxed" style={{ color: T.tx3 }}>{x.desc}</div>
                       </div>
                     </div>
@@ -248,7 +249,7 @@ export default function SettingsTeamPage() {
                   { a: 'Remove team members', ad: true, te: false, vi: false },
                   { a: 'Approve adaptive routing for prod', ad: true, te: false, vi: false },
                 ].map((r, i) => (
-                  <div key={r.a} className="grid gap-2 px-5 py-2.5 border-b items-center" style={{ gridTemplateColumns: '2.5fr 0.6fr 0.6fr 0.6fr', borderColor: T.b1, background: i % 2 === 0 ? 'transparent' : `${T.s1}80` }}>
+                  <div key={r.a} className="grid gap-2 px-5 py-2.5 border-b items-center" style={{ gridTemplateColumns: '2.5fr 0.6fr 0.6fr 0.6fr', borderColor: T.b1, background: i % 2 === 0 ? 'transparent' : tint('s1', '80') }}>
                     <div className="text-[11px]" style={{ color: T.tx2 }}>{r.a}</div>
                     <div className="text-center text-[12px]">{r.ad ? '\u2705' : '\u2014'}</div>
                     <div className="text-center text-[12px]">{r.te ? '\u2705' : '\u2014'}</div>
@@ -262,7 +263,7 @@ export default function SettingsTeamPage() {
       </div>
 
       {/* INVITE MODAL */}
-      {showInvite && <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: 'rgba(4,8,18,.85)', backdropFilter: 'blur(8px)', animation: 'fadeIn .2s ease-out' }} onClick={e => { if (e.target === e.currentTarget) setShowInvite(false) }}>
+      {showInvite && <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: T.overlay, backdropFilter: 'blur(8px)', animation: 'fadeIn .2s ease-out' }} onClick={e => { if (e.target === e.currentTarget) setShowInvite(false) }}>
         <div className="w-full max-w-lg rounded-2xl border overflow-hidden max-h-[90vh] overflow-y-auto" style={{ background: T.s1, borderColor: T.b2, boxShadow: '0 24px 80px rgba(0,0,0,.6)', animation: 'fadeUp .3s ease-out' }}>
           <div className="px-6 pt-5 pb-4 border-b sticky top-0" style={{ borderColor: T.b1, background: T.s1 }}><div className="text-[15px] font-bold" style={{ color: T.tx }}>Add Team Member</div><div className="text-[11px] mt-0.5" style={{ color: T.tx3 }}>Create login for {orgName || 'your organisation'}</div></div>
           <div className="px-6 py-5 flex flex-col gap-4">
@@ -272,50 +273,50 @@ export default function SettingsTeamPage() {
             </div>
             <div><label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: T.tx3 }}>Temporary Password *</label><input type="text" value={invPassword} onChange={e => setInvPassword(e.target.value)} placeholder="Min 8 chars" className="w-full px-3 py-2.5 rounded-lg text-[13px]" style={inputStyle} /><div className="text-[9px] mt-1" style={{ color: T.tx3 }}>Share securely \u2014 they should change on first login</div></div>
             <div><label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: T.tx3 }}>Role *</label>
-              <div className="flex flex-col gap-2">{ROLES.map(r => <label key={r.key} className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer" style={{ background: invRole === r.key ? `${r.color}08` : T.s2, border: `1px solid ${invRole === r.key ? r.color + '30' : T.b2}` }}><input type="radio" name="invRole" value={r.key} checked={invRole === r.key} onChange={() => setInvRole(r.key)} style={{ accentColor: r.color }} /><div><div className="text-[12px] font-semibold" style={{ color: r.color }}>{r.label}</div><div className="text-[10px]" style={{ color: T.tx3 }}>{r.desc}</div></div></label>)}</div>
+              <div className="flex flex-col gap-2">{ROLES.map(r => <label key={r.key} className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer" style={{ background: invRole === r.key ? tint(r.tok, '08') : T.s2, border: `1px solid ${invRole === r.key ? tint(r.tok, '30') : T.b2}` }}><input type="radio" name="invRole" value={r.key} checked={invRole === r.key} onChange={() => setInvRole(r.key)} style={{ accentColor: r.color }} /><div><div className="text-[12px] font-semibold" style={{ color: r.color }}>{r.label}</div><div className="text-[10px]" style={{ color: T.tx3 }}>{r.desc}</div></div></label>)}</div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: T.tx3 }}>Region</label><input type="text" value={invRegion} onChange={e => setInvRegion(e.target.value)} placeholder="e.g. west" className="w-full px-3 py-2.5 rounded-lg text-[13px]" style={inputStyle} /></div>
               <div><label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: T.tx3 }}>IVR Access</label><input type="text" value={invIvrKeys} onChange={e => setInvIvrKeys(e.target.value)} placeholder="e.g. retail" className="w-full px-3 py-2.5 rounded-lg text-[13px]" style={inputStyle} /></div>
             </div>
-            {invMsg && <div className="px-3 py-2 rounded-lg text-[11px]" style={{ background: invMsg.type === 'ok' ? `${BRAND.teal}10` : 'rgba(248,113,113,.08)', color: invMsg.type === 'ok' ? BRAND.teal : '#f87171' }}>{invMsg.text}</div>}
+            {invMsg && <div className="px-3 py-2 rounded-lg text-[11px]" style={{ background: invMsg.type === 'ok' ? tint('teal', '10') : tint('danger', '.08'), color: invMsg.type === 'ok' ? BRAND.teal : T.danger }}>{invMsg.text}</div>}
           </div>
           <div className="px-6 py-4 border-t flex items-center justify-end gap-3" style={{ borderColor: T.b1 }}>
             <button onClick={() => setShowInvite(false)} className="px-4 py-2 rounded-lg text-[12px]" style={{ color: T.tx2, border: `1px solid ${T.b2}` }}>Cancel</button>
-            <button onClick={handleInvite} disabled={invSaving || !invEmail.trim() || invPassword.length < 8} className="px-5 py-2 rounded-lg text-[12px] font-semibold disabled:opacity-50" style={{ background: BRAND.teal, color: '#000' }}>{invSaving ? 'Creating\u2026' : 'Create User'}</button>
+            <button onClick={handleInvite} disabled={invSaving || !invEmail.trim() || invPassword.length < 8} className="px-5 py-2 rounded-lg text-[12px] font-semibold disabled:opacity-50" style={{ background: BRAND.teal, color: T.onTeal }}>{invSaving ? 'Creating\u2026' : 'Create User'}</button>
           </div>
         </div>
       </div>}
 
       {/* EDIT MODAL */}
-      {editMember && <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: 'rgba(4,8,18,.85)', backdropFilter: 'blur(8px)', animation: 'fadeIn .2s ease-out' }} onClick={e => { if (e.target === e.currentTarget) setEditMember(null) }}>
+      {editMember && <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: T.overlay, backdropFilter: 'blur(8px)', animation: 'fadeIn .2s ease-out' }} onClick={e => { if (e.target === e.currentTarget) setEditMember(null) }}>
         <div className="w-full max-w-lg rounded-2xl border overflow-hidden" style={{ background: T.s1, borderColor: T.b2, boxShadow: '0 24px 80px rgba(0,0,0,.6)', animation: 'fadeUp .3s ease-out' }}>
           <div className="px-6 pt-5 pb-4 border-b" style={{ borderColor: T.b1 }}><div className="text-[15px] font-bold" style={{ color: T.tx }}>Edit Member</div><div className="text-[11px] mt-0.5" style={{ color: T.tx3 }}>{editMember.full_name || editMember.email}</div></div>
           <div className="px-6 py-5 flex flex-col gap-4">
             <div><label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: T.tx3 }}>Role</label>
-              <div className="flex flex-col gap-2">{ROLES.map(r => <label key={r.key} className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer" style={{ background: editRole === r.key ? `${r.color}08` : T.s2, border: `1px solid ${editRole === r.key ? r.color + '30' : T.b2}` }}><input type="radio" name="editRole" value={r.key} checked={editRole === r.key} onChange={() => setEditRole(r.key)} style={{ accentColor: r.color }} /><div><div className="text-[12px] font-semibold" style={{ color: r.color }}>{r.label}</div><div className="text-[10px]" style={{ color: T.tx3 }}>{r.desc}</div></div></label>)}</div>
+              <div className="flex flex-col gap-2">{ROLES.map(r => <label key={r.key} className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer" style={{ background: editRole === r.key ? tint(r.tok, '08') : T.s2, border: `1px solid ${editRole === r.key ? tint(r.tok, '30') : T.b2}` }}><input type="radio" name="editRole" value={r.key} checked={editRole === r.key} onChange={() => setEditRole(r.key)} style={{ accentColor: r.color }} /><div><div className="text-[12px] font-semibold" style={{ color: r.color }}>{r.label}</div><div className="text-[10px]" style={{ color: T.tx3 }}>{r.desc}</div></div></label>)}</div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: T.tx3 }}>Region</label><input type="text" value={editRegion} onChange={e => setEditRegion(e.target.value)} placeholder="Empty = all" className="w-full px-3 py-2.5 rounded-lg text-[13px]" style={inputStyle} /></div>
               <div><label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: T.tx3 }}>IVR Access</label><input type="text" value={editIvrKeys} onChange={e => setEditIvrKeys(e.target.value)} placeholder="Comma-separated" className="w-full px-3 py-2.5 rounded-lg text-[13px]" style={inputStyle} /></div>
             </div>
             <div><label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: T.tx3 }}>Stage Access</label><input type="text" value={editStages} onChange={e => setEditStages(e.target.value)} placeholder="explore, pilot, prod_test, prod_live" className="w-full px-3 py-2.5 rounded-lg text-[13px]" style={inputStyle} /></div>
-            {editMsg && <div className="px-3 py-2 rounded-lg text-[11px]" style={{ background: editMsg.type === 'ok' ? `${BRAND.teal}10` : 'rgba(248,113,113,.08)', color: editMsg.type === 'ok' ? BRAND.teal : '#f87171' }}>{editMsg.text}</div>}
+            {editMsg && <div className="px-3 py-2 rounded-lg text-[11px]" style={{ background: editMsg.type === 'ok' ? tint('teal', '10') : tint('danger', '.08'), color: editMsg.type === 'ok' ? BRAND.teal : T.danger }}>{editMsg.text}</div>}
           </div>
           <div className="px-6 py-4 border-t flex items-center justify-end gap-3" style={{ borderColor: T.b1 }}>
             <button onClick={() => setEditMember(null)} className="px-4 py-2 rounded-lg text-[12px]" style={{ color: T.tx2, border: `1px solid ${T.b2}` }}>Cancel</button>
-            <button onClick={handleEditSave} disabled={editSaving} className="px-5 py-2 rounded-lg text-[12px] font-semibold disabled:opacity-50" style={{ background: BRAND.blue, color: '#fff' }}>{editSaving ? 'Saving\u2026' : 'Save Changes'}</button>
+            <button onClick={handleEditSave} disabled={editSaving} className="px-5 py-2 rounded-lg text-[12px] font-semibold disabled:opacity-50" style={{ background: BRAND.blue, color: T.onBlue }}>{editSaving ? 'Saving\u2026' : 'Save Changes'}</button>
           </div>
         </div>
       </div>}
 
       {/* REMOVE MODAL */}
-      {removeMember && <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: 'rgba(4,8,18,.85)', backdropFilter: 'blur(8px)', animation: 'fadeIn .2s ease-out' }} onClick={e => { if (e.target === e.currentTarget) setRemoveMember(null) }}>
-        <div className="w-full max-w-sm rounded-2xl border overflow-hidden" style={{ background: T.s1, borderColor: 'rgba(248,113,113,.2)', boxShadow: '0 24px 80px rgba(0,0,0,.6)', animation: 'fadeUp .3s ease-out' }}>
-          <div className="px-6 py-5"><div className="text-[15px] font-bold mb-2" style={{ color: '#f87171' }}>Remove Member</div><div className="text-[12px] leading-relaxed" style={{ color: T.tx2 }}>Remove <strong style={{ color: T.tx }}>{removeMember.full_name || removeMember.email}</strong>? They lose access to all {orgName || 'your organisation'} data immediately.</div></div>
+      {removeMember && <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: T.overlay, backdropFilter: 'blur(8px)', animation: 'fadeIn .2s ease-out' }} onClick={e => { if (e.target === e.currentTarget) setRemoveMember(null) }}>
+        <div className="w-full max-w-sm rounded-2xl border overflow-hidden" style={{ background: T.s1, borderColor: tint('danger', '.2'), boxShadow: '0 24px 80px rgba(0,0,0,.6)', animation: 'fadeUp .3s ease-out' }}>
+          <div className="px-6 py-5"><div className="text-[15px] font-bold mb-2" style={{ color: T.danger }}>Remove Member</div><div className="text-[12px] leading-relaxed" style={{ color: T.tx2 }}>Remove <strong style={{ color: T.tx }}>{removeMember.full_name || removeMember.email}</strong>? They lose access to all {orgName || 'your organisation'} data immediately.</div></div>
           <div className="px-6 py-4 border-t flex items-center justify-end gap-3" style={{ borderColor: T.b1 }}>
             <button onClick={() => setRemoveMember(null)} className="px-4 py-2 rounded-lg text-[12px]" style={{ color: T.tx2, border: `1px solid ${T.b2}` }}>Cancel</button>
-            <button onClick={handleRemove} disabled={removing} className="px-5 py-2 rounded-lg text-[12px] font-semibold disabled:opacity-50" style={{ background: '#f87171', color: '#fff' }}>{removing ? 'Removing\u2026' : 'Remove'}</button>
+            <button onClick={handleRemove} disabled={removing} className="px-5 py-2 rounded-lg text-[12px] font-semibold disabled:opacity-50" style={{ background: T.danger, color: T.onDanger }}>{removing ? 'Removing\u2026' : 'Remove'}</button>
           </div>
         </div>
       </div>}

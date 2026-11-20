@@ -15,9 +15,15 @@ export interface Branding {
   logo_url?: string
   logo_plate?: LogoPlate
   partner_name?: string   // top-level in /branding/me; set only for partner tenants
+  fonts?: { heading?: string; body?: string }
+  theme?: 'dark' | 'light'          // B4 (0004): logged-in theme; absent = AiIVRs dark
+  show_name?: boolean               // B4 (0004): show the display name next to the logo
+  favicon_url?: string
 }
 
 const ASSET_RE = /^\/branding\/asset\/(partner|tenant)\/[a-z0-9_]{1,64}\/logo\/[0-9a-f]{64}$/
+const FAVICON_RE = /^\/branding\/asset\/(partner|tenant)\/[a-z0-9_]{1,64}\/favicon\/[0-9a-f]{64}$/
+const FONT_NAMES = ['Open Sans', 'Poppins', 'Inter', 'Roboto', 'Lato', 'Montserrat', 'Nunito', 'Source Sans 3']
 const PLATES: LogoPlate[] = ['auto', 'light', 'none']
 export const LOGO_TYPES = ['image/png', 'image/jpeg']
 
@@ -32,6 +38,13 @@ export function sanitizeBranding(raw: unknown): Branding {
   if (Object.keys(colors).length) out.colors = colors
   if (typeof b.logo_url === 'string' && ASSET_RE.test(b.logo_url)) out.logo_url = b.logo_url
   if (typeof b.logo_plate === 'string' && (PLATES as string[]).includes(b.logo_plate)) out.logo_plate = b.logo_plate as LogoPlate
+  if (b.theme === 'dark' || b.theme === 'light') out.theme = b.theme
+  if (typeof b.show_name === 'boolean') out.show_name = b.show_name
+  if (typeof b.favicon_url === 'string' && FAVICON_RE.test(b.favicon_url)) out.favicon_url = b.favicon_url
+  const f = (b.fonts && typeof b.fonts === 'object' ? b.fonts : {}) as Record<string, unknown>
+  const fonts: Branding['fonts'] = {}
+  for (const k of ['heading', 'body'] as const) if (typeof f[k] === 'string' && FONT_NAMES.includes(f[k] as string)) fonts[k] = f[k] as string
+  if (Object.keys(fonts).length) out.fonts = fonts
   if (typeof b.partner_name === 'string' && b.partner_name.trim() && b.partner_name.length <= 60) out.partner_name = b.partner_name.trim()
   return out
 }
@@ -66,6 +79,16 @@ export async function loadBranding(user: CxUser): Promise<Branding> {
     writeCache(user, b)
     return b
   } catch { return {} }
+}
+
+/**
+ * Platform copy shown to a logged-in PARTNER tenant: "Converse" / "Converse AI" / "AiIVRs" in frontend strings
+ * become the tenant's display name (plain text; the string is rendered as a text node). Anyone else — or no
+ * name — gets the text unchanged. ("Powered by AiIVRs" is rendered separately and never passed through here.)
+ */
+export function brandCopy(text: string, partnerName: string | null | undefined, displayName: string | null | undefined): string {
+  if (!partnerName || !displayName) return text
+  return text.replace(/\bConverse(?: AI)?\b|\bAiIVRs\b/g, displayName)
 }
 
 /** Drop this user's cached branding (e.g. after saving it in Settings → Branding). */

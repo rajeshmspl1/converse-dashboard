@@ -2,6 +2,8 @@
 import { useState, useCallback } from 'react'
 import { INFRA_CONFIG, DEPLOY_CONFIG, DEMO_SCENARIOS } from '@/lib/data'
 import type { InfraLevel, DeployModel } from '@/types'
+import { useBranding } from '@/components/branding/BrandingProvider'
+import { brandCopy } from '@/lib/branding'
 
 interface Props {
   onComplete: () => void
@@ -56,6 +58,9 @@ export default function InfraMigrationDemo({ onComplete }: Props) {
   }, [migrating])
 
   const infraCfg = INFRA_CONFIG[currentInfra]
+  // Logged-in partner tenants see their own name instead of the platform name (display only; text node).
+  const brand = useBranding()
+  const copy = (s: string) => brandCopy(s, brand.partnerName, brand.displayName)
   const deployCfg = DEPLOY_CONFIG[currentDeploy]
 
   return (
@@ -80,7 +85,7 @@ export default function InfraMigrationDemo({ onComplete }: Props) {
             <span className="text-[14px]">{infraCfg.icon}</span>
             <div>
               <div className="text-[12px] font-bold" style={{ color: infraCfg.color }}>{infraCfg.label}</div>
-              <div className="text-[8px]" style={{ color: 'var(--dim)' }}>{DATA_LOCATIONS[currentInfra].split('—')[0].trim()}</div>
+              <div className="text-[8px]" style={{ color: 'var(--dim)' }}>{copy(DATA_LOCATIONS[currentInfra].split('—')[0].trim())}</div>
             </div>
           </div>
           <div className="text-[10px]" style={{ color: 'var(--b2)' }}>·</div>
@@ -88,7 +93,7 @@ export default function InfraMigrationDemo({ onComplete }: Props) {
             <span className="text-[14px]">{deployCfg.icon}</span>
             <div>
               <div className="text-[12px] font-bold" style={{ color: deployCfg.color }}>{deployCfg.label}</div>
-              <div className="text-[8px]" style={{ color: 'var(--dim)' }}>{DEPLOY_DETAILS[currentDeploy].split(',')[0]}</div>
+              <div className="text-[8px]" style={{ color: 'var(--dim)' }}>{copy(DEPLOY_DETAILS[currentDeploy].split(',')[0])}</div>
             </div>
           </div>
         </div>
@@ -141,7 +146,7 @@ export default function InfraMigrationDemo({ onComplete }: Props) {
                   <span className="text-[10px] font-bold" style={{ color: isCurrent ? cfg.color : 'var(--text)' }}>{cfg.label}</span>
                 </div>
                 <div className="text-[7px] leading-snug" style={{ color: 'var(--dim)' }}>
-                  {DATA_LOCATIONS[tier].split('—')[0].trim()}
+                  {copy(DATA_LOCATIONS[tier].split('—')[0].trim())}
                 </div>
                 {isCurrent
                   ? <div className="text-[7px] font-bold mt-1 px-1.5 py-0.5 rounded inline-block" style={{ background: `${cfg.color}22`, color: cfg.color }}>Current</div>
@@ -176,7 +181,7 @@ export default function InfraMigrationDemo({ onComplete }: Props) {
                   <span className="text-[11px]">{cfg.icon}</span>
                   <span className="text-[10px] font-bold" style={{ color: isCurrent ? cfg.color : 'var(--text)' }}>{cfg.label}</span>
                 </div>
-                <div className="text-[7px] leading-snug" style={{ color: 'var(--dim)' }}>{DEPLOY_DETAILS[model].split(',')[0]}</div>
+                <div className="text-[7px] leading-snug" style={{ color: 'var(--dim)' }}>{copy(DEPLOY_DETAILS[model].split(',')[0])}</div>
                 {isCurrent
                   ? <div className="text-[7px] font-bold mt-1 px-1.5 py-0.5 rounded inline-block" style={{ background: `${cfg.color}22`, color: cfg.color }}>Current</div>
                   : !migrating && <div className="text-[7px] mt-1" style={{ color: 'var(--dim)' }}>Switch — 2 hrs</div>

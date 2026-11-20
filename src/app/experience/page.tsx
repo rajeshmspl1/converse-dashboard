@@ -30,6 +30,7 @@ import { getEnv } from '@/lib/env'
 import { resolveCrmIndustry, demoProfileUrl } from '@/lib/crmIndustry'
 import { tenantLabel, usePartnerConfig } from '@/lib/partner'
 import { useBranding } from '@/components/branding/BrandingProvider'
+import { brandCopy } from '@/lib/branding'
 const SERVICE_B_URL = getEnv().serviceB
 const TENANT_KEY    = 'experience_shop'
 const DEFAULT_IVR_KEY = 'global_banking'
@@ -75,7 +76,10 @@ function HomeInner() {
   // ── Auth state ──────────────────────────────────────────────────────────
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<CxUser | null>(null)
-  const orgName = useBranding().displayName
+  const brandCtx = useBranding()
+  const orgName = brandCtx.displayName
+  // Partner tenants (logged in) see their own name in the system line; everyone else: unchanged.
+  const connectingText = brandCopy('Connecting to AiIVRs…', brandCtx.partnerName, orgName)
   // Own tenant: branding display_name → partner demo name → company_name (never the raw key).
   const ivrLabel = (tk: string) => tk === currentUser?.tenant_key ? (orgName || 'Your IVR') : tenantLabel(tk, partnerCfg)
   useEffect(() => { setCurrentUser(getUser()) }, [])
@@ -383,7 +387,7 @@ function HomeInner() {
     setTxCollapsed(false)
     setCallStartTime(Date.now())
     if (!demoStartTime) setDemoStartTime(Date.now())
-    addTx({ who: 'sys', text: 'Connecting to AiIVRs…' })
+    addTx({ who: 'sys', text: connectingText })
     liveCall.connect(qTenant || TENANT_KEY, qIvr || selectedIvrRef.current, SERVICE_B_URL, {
       routingMode: qRoutingMode || scenario?.mode,
       ...(scenario?.experienceLevel ? { experienceLevel: scenario.experienceLevel } : {}),
@@ -400,7 +404,7 @@ function HomeInner() {
     }
     // Include demoStep/scenario/demoProfile/valueTier so the connect payload uses the
     // current scenario (sales caller_mobile, value-tier crm_tier), not stale initials.
-  }, [startCall, addTx, reveal, liveCall, demoStartTime, revealed, isInfraDemo, currentUser,
+  }, [startCall, addTx, reveal, liveCall, demoStartTime, revealed, isInfraDemo, currentUser, connectingText,
       demoStep, scenario, demoProfile, valueTier])
 
   // Mic preflight (no prompt, no getUserMedia) before starting — never connect

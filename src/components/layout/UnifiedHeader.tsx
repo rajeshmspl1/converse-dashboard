@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { T, BRAND, GRADIENTS, HEADER, FONTS } from '@/lib/theme'
+import { T, BRAND, GRADIENTS, HEADER, FONTS, tint } from '@/lib/theme'
 import { CURRENCY_CONFIG } from '@/lib/data'
 import Logo from '@/components/ui/Logo'
 import type { Currency } from '@/types'
@@ -118,6 +118,11 @@ export default function UnifiedHeader({
           ) : (
             <Logo size={HEADER.logoSize} showWordmark={true} showTagline={true} />
           )}
+          {showTenantLogo && brand.showName && brand.displayName && (
+            <span className="hidden sm:inline text-[13px] font-bold whitespace-nowrap" style={{ color: T.tx, fontFamily: FONTS.heading }} data-testid="tenant-name">
+              {brand.displayName}
+            </span>
+          )}
         </div>
 
         {showBackHome && (
@@ -167,7 +172,7 @@ export default function UnifiedHeader({
             <a
               key={link}
               className="text-[12px] lg:text-[13px] cursor-pointer transition-colors hover:text-white whitespace-nowrap"
-              style={{ color: 'rgba(255,255,255,.45)', textDecoration: 'none' }}
+              style={{ color: T.navText, textDecoration: 'none' }}
               onClick={() => {
                 if (link === 'Dashboard') {
                   if (isLoggedIn) {
@@ -196,9 +201,11 @@ export default function UnifiedHeader({
               {link}
             </a>
           ))}
-          <a
+          {/* AiIVRs product link — hidden for partner tenants (white-label) */}
+          {!brand.partnerName && <a
             className="text-[12px] lg:text-[13px] cursor-pointer transition-colors hover:text-white whitespace-nowrap font-semibold flex flex-col items-center leading-[1.15]"
             style={{ color: BRAND.teal, textDecoration: 'none' }}
+            data-testid="zero-integration-link"
             onClick={() => {
               const el = document.getElementById('integrations')
               if (el) {
@@ -234,7 +241,7 @@ export default function UnifiedHeader({
           >
             <span style={{ fontSize: 10, lineHeight: 1.2 }}>Zero Integration</span>
             <span style={{ fontSize: 10, lineHeight: 1.2, opacity: 0.7 }}>Ecosystem</span>
-          </a>
+          </a>}
           <a
             className="text-[12px] lg:text-[13px] cursor-pointer transition-colors font-semibold whitespace-nowrap"
             style={{ color: brand.accentText, textDecoration: 'none' }}
@@ -300,7 +307,7 @@ export default function UnifiedHeader({
                 style={{
                   fontFamily: FONTS.mono,
                   background: currency === c ? BRAND.blue : 'transparent',
-                  color: currency === c ? '#fff' : T.tx3,
+                  color: currency === c ? T.onBlue : T.tx3,
                 }}
               >
                 {CURRENCY_CONFIG[c].flag} {CURRENCY_CONFIG[c].label}
@@ -509,8 +516,8 @@ export default function UnifiedHeader({
                   <button
                     onClick={() => { setUserMenu(false); onSignOut?.() }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
-                    style={{ color: '#f87171', background: 'transparent' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,.06)'}
+                    style={{ color: T.danger, background: 'transparent' }}
+                    onMouseEnter={e => e.currentTarget.style.background = tint('danger', '.06')}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   >
                     <span className="text-[13px] w-5 text-center">🚪</span>
@@ -536,7 +543,7 @@ export default function UnifiedHeader({
               <button
                 onClick={onGetStarted}
                 className="px-2 sm:px-3 py-1 text-[10px] sm:text-[11px] font-semibold rounded"
-                style={{ background: BRAND.blue, color: '#fff' }}
+                style={{ background: BRAND.blue, color: T.onBlue }}
               >
                 {isJourney ? 'Try Live →' : 'Get Started'}
               </button>
@@ -545,7 +552,7 @@ export default function UnifiedHeader({
               <button
                 onClick={onSignIn}
                 className="px-3 py-1 text-[10px] font-semibold rounded cursor-pointer"
-                style={{ background: BRAND.teal, color: '#000' }}
+                style={{ background: BRAND.teal, color: T.onTeal }}
               >
                 Sign Up Free
               </button>

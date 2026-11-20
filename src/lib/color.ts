@@ -40,6 +40,28 @@ export function lighten(hex: string, t: number): string {
   return ('#' + out.join('')).toUpperCase()
 }
 
+/** Mix `hex` toward black by t (0–1). */
+export function darken(hex: string, t: number): string {
+  const k = Math.min(1, Math.max(0, t))
+  const out = [1, 3, 5].map(i => Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - k)).toString(16).padStart(2, '0'))
+  return ('#' + out.join('')).toUpperCase()
+}
+
+/**
+ * A colour used as TEXT on all of `surfaces`: unchanged when it already reaches `min` on every one,
+ * otherwise darkened (light surfaces) or lightened (dark surfaces) in 5% steps until it does.
+ */
+export function readableOn(color: string, surfaces: string[], min: number = MIN_TEXT_CONTRAST): string {
+  if (!isHex(color) || !surfaces.length) return color
+  const ok = (c: string) => surfaces.every(s => contrastRatio(c, s) >= min)
+  const lightSurfaces = surfaces.reduce((a, s) => a + luminance(s), 0) / surfaces.length > 0.5
+  for (let step = 0; step <= 20; step++) {
+    const c = step === 0 ? color.toUpperCase() : lightSurfaces ? darken(color, step * 0.05) : lighten(color, step * 0.05)
+    if (ok(c)) return c
+  }
+  return lightSurfaces ? '#000000' : WHITE
+}
+
 /**
  * Accent used as TEXT on a dark surface: the accent itself when it already reaches `min`,
  * otherwise lightened in 5% steps until it does (white at the latest).

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import BrandingProvider from '@/components/branding/BrandingProvider'
+import { PREPAINT_SCRIPT } from '@/lib/brandTheme'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -129,6 +130,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        {/* B4: apply this user's cached brand theme before first paint (constant script; validates every value). */}
+        <script dangerouslySetInnerHTML={{ __html: PREPAINT_SCRIPT }} />
         {/* Preconnect for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

@@ -1,11 +1,15 @@
 // ═══════════════════════════════════════════════════════════════════
 // Converse AI — Brand Design Tokens (Single Source of Truth)
-// Version 1.0 — March 2026
-// Import: import { T, BRAND, FONTS, GRADIENTS, HEADER, RADIUS } from '@/lib/theme'
+// Version 2.0 — B4 (R90 Phase 3): tokens are CSS variables (--brand-*) whose fallbacks are
+// today's AiIVRs dark values, so with no variables set every page renders exactly as before.
+// BrandingProvider (src/components/branding/BrandingProvider.tsx) sets the variables for a
+// branded tenant (light theme / brand colours) from validated hex only — never raw CSS.
+// Import: import { T, BRAND, FONTS, GRADIENTS, HEADER, RADIUS, tint } from '@/lib/theme'
+// Raw hex (for calculations, never for styling a themed page): BRAND_HEX, SURFACES, TEXT, DARK
 // ═══════════════════════════════════════════════════════════════════
 
-// ── Primary Palette ──────────────────────────────────────────────
-export const BRAND = {
+// ── Raw AiIVRs palette (dark) ────────────────────────────────────
+export const BRAND_HEX = {
   blue:   '#3370E8',  // Primary — CTAs, links, active states, logo
   teal:   '#00C9B1',  // Success — active tabs, resolution, positive KPIs
   amber:  '#F5A623',  // Warning — CSAT, demo badges, FREE tags
@@ -15,7 +19,6 @@ export const BRAND = {
   cyan:   '#0EA8B8',  // Gradient end only — never standalone
 } as const
 
-// ── Backgrounds & Surfaces (Dark Theme ONLY) ────────────────────
 export const SURFACES = {
   bg:  '#080D18',   // Deepest page background
   s1:  '#0D1526',   // Cards, nav bars, panels
@@ -25,41 +28,96 @@ export const SURFACES = {
   b2:  '#243558',   // Secondary borders, inactive buttons
 } as const
 
-// ── Text Hierarchy ───────────────────────────────────────────────
 export const TEXT = {
-  primary:   '#DDE6F5',  // Headlines, body, KPI values
-  secondary: '#7A90B5',  // Descriptions, labels, inactive tabs
-  tertiary:  '#4A5F80',  // Hints, timestamps, disabled text
+  primary:     '#DDE6F5',  // Headlines, body, KPI values
+  secondary:   '#7A90B5',  // Descriptions, labels, inactive tabs
+  tertiary:    '#4A5F80',  // Hints, timestamps, disabled text
+  tertiaryDim: '#364D6A',  // dashboard / Telephony local palettes (kept: AiIVRs stays pixel-identical)
 } as const
 
-// ── Combined T object (drop-in replacement for local T = {...}) ──
+/** Every themable token with its AiIVRs dark value (the CSS fallback). Keys are camelCase; CSS names kebab-case. */
+export const DARK = {
+  blue: BRAND_HEX.blue, blueAlt: '#3D85E0',   // blueAlt: dashboard / session / Telephony local palettes
+  teal: BRAND_HEX.teal, amber: BRAND_HEX.amber, red: BRAND_HEX.red, green: BRAND_HEX.green, purple: BRAND_HEX.purple,
+  tx: TEXT.primary, tx2: TEXT.secondary, tx3: TEXT.tertiary, tx3Dim: TEXT.tertiaryDim,
+  bg: SURFACES.bg, s1: SURFACES.s1, s2: SURFACES.s2, s3: SURFACES.s3, b1: SURFACES.b1, b2: SURFACES.b2,
+  danger: '#f87171',            // error text / destructive actions
+  onTeal: '#000', onBlue: '#fff', onDanger: '#fff', white: '#fff',
+  navText: 'rgba(255,255,255,.45)',
+  headerBg: 'rgba(7,13,26,0.96)',
+  overlay: 'rgba(4,8,18,.85)',
+  teal2: 'rgba(0,201,177,.12)', amber2: 'rgba(245,166,35,.12)', red2: 'rgba(240,48,96,.12)',
+  green2: 'rgba(0,222,122,.12)', blue2: 'rgba(61,133,224,.12)', purple2: 'rgba(139,92,246,.12)',
+} as const
+export type Token = keyof typeof DARK
+
+export function cssName(token: string): string {
+  return '--brand-' + token.replace(/[A-Z]/g, m => '-' + m.toLowerCase()).replace(/(\d+)/g, '-$1')
+}
+/** var(--brand-<token>, <AiIVRs dark value>) */
+export function v(token: Token): string {
+  return `var(${cssName(token)}, ${DARK[token]})`
+}
+
+// ── Alpha variants (replaces string-built `${colour}15` / rgba literals) ──────────
+// alpha is written exactly as the old code did: 2 hex digits ('15' → #RRGGBB15) or a decimal ('.08' →
+// rgba(r,g,b,.08)), so the fallback string is byte-for-byte the old colour. Every (token, alpha) used
+// must be listed here: BrandingProvider sets exactly these variables for a branded theme.
+export const TINTS: ReadonlyArray<readonly [Token, string]> = [
+  ['teal', '08'], ['teal', '10'], ['teal', '12'], ['teal', '15'], ['teal', '20'], ['teal', '25'], ['teal', '30'], ['teal', '40'],
+  ['tx3', '12'], ['tx3', '15'], ['tx3', '20'], ['tx3', '25'], ['tx3', '40'],
+  ['s1', '80'],
+  ['blue', '04'], ['blue', '08'], ['blue', '10'], ['blue', '12'], ['blue', '15'], ['blue', '20'], ['blue', '25'], ['blue', '30'], ['blue', '40'],
+  ['tx2', '08'], ['tx2', '12'], ['tx2', '15'], ['tx2', '20'], ['tx2', '25'], ['tx2', '30'], ['tx2', '40'],
+  ['amber', '08'], ['amber', '12'], ['amber', '15'], ['amber', '20'], ['amber', '25'], ['amber', '30'], ['amber', '40'],
+  ['red', '08'], ['red', '12'], ['red', '15'], ['red', '20'], ['red', '25'], ['red', '30'], ['red', '40'],
+  ['purple', '08'], ['purple', '12'], ['purple', '15'], ['purple', '20'], ['purple', '25'], ['purple', '30'], ['purple', '40'],
+  ['danger', '.05'], ['danger', '.06'], ['danger', '.08'], ['danger', '.12'], ['danger', '.15'], ['danger', '.2'], ['danger', '.5'],
+  ['green', '.08'], ['green', '.12'], ['green', '.2'],
+]
+const TINT_SET = new Set(TINTS.map(([t, a]) => `${t}:${a}`))
+
+function rgbOf(hex: string): [number, number, number] {
+  const h = hex.replace('#', '')
+  const f = h.length === 3 ? h.split('').map(c => c + c).join('') : h
+  return [0, 2, 4].map(i => parseInt(f.slice(i, i + 2), 16)) as [number, number, number]
+}
+/** The old string for (dark hex, alpha): '#RRGGBBhh' or 'rgba(r,g,b,.08)'. */
+export function tintValue(hex: string, alpha: string): string {
+  if (/^[0-9a-fA-F]{2}$/.test(alpha)) return `${hex}${alpha}`
+  const [r, g, b] = rgbOf(hex)
+  return `rgba(${r},${g},${b},${alpha})`
+}
+export function tintName(token: Token, alpha: string): string {
+  return `${cssName(token)}-a${alpha.replace('.', 'd')}`
+}
+export function tint(token: Token, alpha: string): string {
+  if (!TINT_SET.has(`${token}:${alpha}`)) throw new Error(`tint(${token}, ${alpha}) is not registered in theme.ts TINTS`)
+  return `var(${tintName(token, alpha)}, ${tintValue(DARK[token], alpha)})`
+}
+
+// ── Themed tokens for styling (CSS variable references) ───────────
+export const BRAND = {
+  blue: v('blue'), teal: v('teal'), amber: v('amber'), red: v('red'), green: v('green'), purple: v('purple'),
+  cyan: BRAND_HEX.cyan,
+} as const
+
 export const T = {
-  // Brand colors
-  blue: BRAND.blue, teal: BRAND.teal, amber: BRAND.amber,
-  red: BRAND.red, green: BRAND.green, purple: BRAND.purple,
-
-  // Alpha variants (tags, badges, highlights)
-  teal2:   'rgba(0,201,177,.12)',
-  amber2:  'rgba(245,166,35,.12)',
-  red2:    'rgba(240,48,96,.12)',
-  green2:  'rgba(0,222,122,.12)',
-  blue2:   'rgba(61,133,224,.12)',
-  purple2: 'rgba(139,92,246,.12)',
-
-  // Text
-  tx:  TEXT.primary,
-  tx2: TEXT.secondary,
-  tx3: TEXT.tertiary,
-
-  // Surfaces
-  bg: SURFACES.bg, s1: SURFACES.s1, s2: SURFACES.s2, s3: SURFACES.s3,
-  b1: SURFACES.b1, b2: SURFACES.b2,
+  blue: v('blue'), blueAlt: v('blueAlt'), teal: v('teal'), amber: v('amber'), red: v('red'), green: v('green'), purple: v('purple'),
+  teal2: v('teal2'), amber2: v('amber2'), red2: v('red2'), green2: v('green2'), blue2: v('blue2'), purple2: v('purple2'),
+  tx: v('tx'), tx2: v('tx2'), tx3: v('tx3'), tx3Dim: v('tx3Dim'),
+  bg: v('bg'), s1: v('s1'), s2: v('s2'), s3: v('s3'), b1: v('b1'), b2: v('b2'),
+  danger: v('danger'), onTeal: v('onTeal'), onBlue: v('onBlue'), onDanger: v('onDanger'), white: v('white'),
+  navText: v('navText'), overlay: v('overlay'),
 } as const
 
-// ── Typography ───────────────────────────────────────────────────
+// ── Typography (brand fonts arrive as --brand-font-* from the allow-list) ──
+const UI_STACK = "'DM Sans', 'Inter', system-ui, -apple-system, sans-serif"
 export const FONTS = {
-  ui:   "'DM Sans', 'Inter', system-ui, -apple-system, sans-serif",
+  ui:   `var(--brand-font-body, ${UI_STACK})`,
+  heading: `var(--brand-font-heading, var(--brand-font-body, ${UI_STACK}))`,
   mono: "'JetBrains Mono', 'Fira Code', monospace",
+  uiStack: UI_STACK,
 } as const
 
 // ── Approved Gradients (only 2 allowed) ──────────────────────────
@@ -71,7 +129,7 @@ export const GRADIENTS = {
 // ── Header Spec ──────────────────────────────────────────────────
 export const HEADER = {
   height:  44,           // px — h-11 in tailwind
-  bg:      'rgba(7,13,26,0.96)',
+  bg:      v('headerBg'),
   blur:    'blur(12px)',
   logoSize: 22,          // px — w-[22px] h-[22px]
   logoRadius: 7,         // px — rounded-[7px]
@@ -89,12 +147,12 @@ export const RADIUS = {
 // ── CSS Variable Map (for pages using var(--blue) pattern) ───────
 export const CSS_VARS = `
   :root {
-    --blue: ${BRAND.blue};
-    --teal: ${BRAND.teal};
-    --amber: ${BRAND.amber};
-    --red: ${BRAND.red};
-    --green: ${BRAND.green};
-    --purple: ${BRAND.purple};
+    --blue: ${BRAND_HEX.blue};
+    --teal: ${BRAND_HEX.teal};
+    --amber: ${BRAND_HEX.amber};
+    --red: ${BRAND_HEX.red};
+    --green: ${BRAND_HEX.green};
+    --purple: ${BRAND_HEX.purple};
     --bright: ${TEXT.primary};
     --text: ${TEXT.primary};
     --dim: ${TEXT.secondary};

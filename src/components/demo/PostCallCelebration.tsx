@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react'
 import { DEMO_SCENARIOS, CURRENCY_CONFIG, INFRA_CONFIG, DEPLOY_CONFIG } from '@/lib/data'
 import type { Currency } from '@/types'
+import { useBranding } from '@/components/branding/BrandingProvider'
+import { brandCopy } from '@/lib/branding'
 
 interface LiveIntent {
   key: string
@@ -23,6 +25,8 @@ interface Props {
 
 export default function PostCallCelebration({ demoStep, intents, totalCost, currency, onTryNext, callDuration }: Props) {
   const [phase, setPhase] = useState(0)
+  // Logged-in partner tenants see their own name instead of the platform name (display only; text node).
+  const brand = useBranding()
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase(1), 600)
@@ -113,7 +117,7 @@ export default function PostCallCelebration({ demoStep, intents, totalCost, curr
             <span>{deployCfg.icon}</span>
             <span style={{ color: deployCfg.color }}>{deployCfg.label}</span>
             <span style={{ color: 'var(--dim)' }}>·</span>
-            <span style={{ color: 'var(--dim)' }}>Data: {scenario.dataResides.split('—')[0].trim()}</span>
+            <span style={{ color: 'var(--dim)' }}>Data: {brandCopy(scenario.dataResides.split('—')[0].trim(), brand.partnerName, brand.displayName)}</span>
           </div>
 
           {scenario.isSimulated && !scenario.isInfraDemo && (

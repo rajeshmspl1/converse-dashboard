@@ -10,7 +10,8 @@ import { apiErrorMessage, fetchB, fetchI, getUser, isLoggedIn, signOut, type CxU
 import { fetchAssetBlobUrl } from '@/lib/branding'
 import { buttonTextColor } from '@/lib/color'
 import { isSuperAdmin } from '@/lib/roles'
-import { T, BRAND, FONTS } from '@/lib/theme'
+import { T, BRAND, BRAND_HEX, DARK, FONTS, tint } from '@/lib/theme'
+import { LIGHT } from '@/lib/brandTheme'
 import {
   EMPTY, FONT_ALLOWLIST, IMAGE_LIMITS, LOGO_PLATES, UPLOAD_TYPES, applySuggestions, buildPatch, canEditBranding, checkColor,
   formFrom, suggestionUsable, validate, valuesFromAdmin, valuesFromMerged,
@@ -36,6 +37,8 @@ export default function SettingsBrandingPage() {
   // super_admin pickers
   const [tenants, setTenants] = useState<{ key: string; name: string; partner: string | null }[]>([])
   const partners = useMemo(() => [...new Set(tenants.map(t => t.partner).filter((p): p is string => !!p))].sort(), [tenants])
+  const [partnerNames, setPartnerNames] = useState<Record<string, string>>({})   // partner id → display name (never show the id)
+  const partnerLabel = (id: string) => partnerNames[id] || 'Unnamed partner'
   const [scope, setScope] = useState<Scope | null>(null)
 
   // form
@@ -82,6 +85,11 @@ export default function SettingsBrandingPage() {
         }))
         const ok = list.filter(Boolean) as { key: string; name: string; partner: string | null }[]
         setTenants(ok)
+        const ids = [...new Set(ok.map(t => t.partner).filter((p): p is string => !!p))]
+        const names = await Promise.all(ids.map(async id => {
+          try { const r = await fetchB(`/admin/branding/partner/${encodeURIComponent(id)}`); return [id, r.display_name || ''] as const } catch { return [id, ''] as const }
+        }))
+        setPartnerNames(Object.fromEntries(names.filter(([, n]) => n)))
         const firstPartner = ok.find(t => t.partner)?.partner
         setScope(firstPartner ? { type: 'partner', id: firstPartner } : ok[0] ? { type: 'tenant', id: ok[0].key } : null)
       } catch (e) { setMsg({ type: 'err', text: apiErrorMessage(e) }); setLoading(false) }
@@ -211,14 +219,19 @@ export default function SettingsBrandingPage() {
   // ── preview values (override → form, else inherited) ──
   const pv = {
     name: shown('display_name', 'display_name') || brand.displayName || 'Your organisation',
-    primary: shown('primary', 'primary') || BRAND.blue, accent: shown('accent', 'accent') || BRAND.teal, dark: shown('dark', 'dark') || '#0D1526',
+    primary: shown('primary', 'primary') || BRAND_HEX.blue, accent: shown('accent', 'accent') || BRAND_HEX.teal, dark: shown('dark', 'dark') || DARK.s1,
+    theme: ((isTenant && !form.override.theme ? inherited?.theme : form.theme) || 'dark') as 'dark' | 'light',
     gFrom: shown('gradient_from', 'gradient'), gTo: shown('gradient_to', 'gradient'),
     heading: shown('heading', 'heading'), body: shown('body', 'body'),
     plate: (isTenant && !form.override.logo_plate ? inherited?.logo_plate : form.logo_plate) || 'auto',
   }
   const plateOn = pv.plate !== 'none'
   const previewLogo = (assetPreview.logo && !removeAsset.logo) ? assetPreview.logo : (isTenant ? inheritedAsset.logo : null)
-  const scopeLabel = scope ? (scope.type === 'partner' ? `Partner · ${scope.id}` : tenants.find(t => t.key === scope.id)?.name || brand.displayName || scope.id) : ''
+  const tenantName = (key: string) => tenants.find(t => t.key === key)?.name || brand.displayName || 'Tenant'
+  const scopeLabel = scope ? (scope.type === 'partner' ? `Partner · ${partnerLabel(scope.id)}` : tenantName(scope.id)) : ''
+  // Sidebar "Organization": the scope being edited (super admin on a partner → the platform itself).
+  const sidebarName = !superAdmin ? brand.displayName : scope?.type === 'partner' ? 'AiIVRs Platform'
+    : scope ? (form.override.display_name && form.display_name.trim()) || tenantName(scope.id) : null
 
   // ── small UI pieces ──
   const section = (title: string, children: React.ReactNode) => (
@@ -238,13 +251,13 @@ export default function SettingsBrandingPage() {
       {inherited ? (inheritedKnown[field] ? <>Inherited from partner: <span style={{ color: T.tx2 }}>{value || '— (not set)'}</span></> : 'Partner value shown after saving') : 'No partner — AiIVRs default'}
     </div>
   )
-  const err = (field: Field) => errors[field] ? <div className="text-[11px] mt-1" style={{ color: '#f87171' }} data-testid={`error-${field}`}>{errors[field]}</div> : null
+  const err = (field: Field) => errors[field] ? <div className="text-[11px] mt-1" style={{ color: T.danger }} data-testid={`error-${field}`}>{errors[field]}</div> : null
   const badge = (kind: ColorKey | 'gradient', value: string) => {
     if (!value) return null
     const c = checkColor(kind, value)
-    if (!c.ratio) return <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(248,113,113,.12)', color: '#f87171' }}>invalid</span>
+    if (!c.ratio) return <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: tint('danger', '.12'), color: T.danger }}>invalid</span>
     return <span className="text-[10px] px-1.5 py-0.5 rounded font-mono" data-testid={`badge-${kind}`}
-      style={{ background: c.ok ? 'rgba(0,222,122,.12)' : 'rgba(248,113,113,.12)', color: c.ok ? BRAND.green : '#f87171' }}>{c.ok ? '✓' : '✗'} {c.ratio}:1</span>
+      style={{ background: c.ok ? tint('green', '.12') : tint('danger', '.12'), color: c.ok ? BRAND.green : T.danger }}>{c.ok ? '✓' : '✗'} {c.ratio}:1</span>
   }
   const colorRow = (k: ColorKey, label: string, hint: string) => (
     <div className="mb-3">
@@ -278,7 +291,7 @@ export default function SettingsBrandingPage() {
           <label className="px-3 py-1.5 rounded text-[11px] font-medium cursor-pointer" style={{ color: T.tx2, background: T.s2, border: `1px solid ${T.b2}` }}>
             Upload<input type="file" accept="image/png,image/jpeg" className="hidden" onChange={e => pick(kind, e.target.files?.[0])} data-testid={`upload-${kind}`} />
           </label>
-          {has && <button onClick={() => { setRemoveAsset(r => ({ ...r, [kind]: true })); setStaged(s => ({ ...s, [kind]: undefined })) }} className="text-[11px]" style={{ color: '#f87171' }}>Remove</button>}
+          {has && <button onClick={() => { setRemoveAsset(r => ({ ...r, [kind]: true })); setStaged(s => ({ ...s, [kind]: undefined })) }} className="text-[11px]" style={{ color: T.danger }}>Remove</button>}
           {inh && <span className="text-[10px]" style={{ color: T.tx3 }}>Inherited from partner — upload to override.</span>}
           <span className="text-[10px]" style={{ color: T.tx3 }}>PNG or JPEG, ≤ {lim.maxBytes / 1024} KB, {lim.minW}–{lim.maxW} × {lim.minH}–{lim.maxH} px{lim.square ? ', roughly square' : ''}{staged[kind] ? ' · new file, saved on Save' : ''}</span>
         </div>
@@ -290,7 +303,7 @@ export default function SettingsBrandingPage() {
     <div className="flex flex-col h-screen overflow-hidden" style={{ background: T.bg, fontFamily: FONTS.ui }}>
       <UnifiedHeader variant="dashboard" user={user} onSignOut={signOut} />
       <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-        <SettingsSidebar active="branding" role={user.role} orgName={brand.displayName} accent={brand.accent} />
+        <SettingsSidebar active="branding" role={user.role} orgName={sidebarName} accent={brand.accent} />
         <div className="flex-1 overflow-auto">
           <div className="flex items-center gap-3 px-4 md:px-6 py-3 border-b sticky top-0 flex-wrap" style={{ background: T.bg, borderColor: T.b1, zIndex: 10 }}>
             <div className="text-[14px] font-bold" style={{ color: T.tx }}>Branding</div>
@@ -298,7 +311,7 @@ export default function SettingsBrandingPage() {
               <label className="flex items-center gap-2 text-[11px]" style={{ color: T.tx3 }}>Editing
                 <select value={scope ? `${scope.type}:${scope.id}` : ''} onChange={e => { const [t, ...id] = e.target.value.split(':'); setScope({ type: t as Scope['type'], id: id.join(':') }) }}
                   className="px-2 py-1.5 rounded text-[12px]" style={inputStyle} data-testid="scope-picker">
-                  {partners.map(p => <option key={`p-${p}`} value={`partner:${p}`}>Partner · {p}</option>)}
+                  {partners.map(p => <option key={`p-${p}`} value={`partner:${p}`}>Partner · {partnerLabel(p)}</option>)}
                   {tenants.map(t => <option key={`t-${t.key}`} value={`tenant:${t.key}`}>Tenant · {t.name}</option>)}
                 </select>
               </label>
@@ -307,7 +320,7 @@ export default function SettingsBrandingPage() {
               <label className="flex items-center gap-2 text-[11px]" style={{ color: T.tx3 }}>Partner
                 <select value={tenants.find(t => t.key === scope.id)?.partner || ''} onChange={e => setPartner(scope.id, e.target.value)} className="px-2 py-1.5 rounded text-[12px]" style={inputStyle} data-testid="partner-picker">
                   <option value="">None</option>
-                  {partners.map(p => <option key={p} value={p}>{p}</option>)}
+                  {partners.map(p => <option key={p} value={p}>{partnerLabel(p)}</option>)}
                 </select>
               </label>
             )}
@@ -317,8 +330,8 @@ export default function SettingsBrandingPage() {
           </div>
 
           {msg && <div className="mx-4 md:mx-6 mt-3 px-4 py-2.5 rounded-lg text-[12px]" data-testid="branding-msg"
-            style={msg.type === 'ok' ? { background: 'rgba(0,222,122,.08)', color: BRAND.green, border: '1px solid rgba(0,222,122,.2)' } : { background: 'rgba(248,113,113,.08)', color: '#f87171', border: '1px solid rgba(248,113,113,.2)' }}>{msg.text}</div>}
-          {blocked && <div className="mx-4 md:mx-6 mt-3 text-[11px]" style={{ color: '#f87171' }} data-testid="save-blocked">Fix the highlighted values to save.</div>}
+            style={msg.type === 'ok' ? { background: tint('green', '.08'), color: BRAND.green, border: `1px solid ${tint('green', '.2')}` } : { background: tint('danger', '.08'), color: T.danger, border: `1px solid ${tint('danger', '.2')}` }}>{msg.text}</div>}
+          {blocked && <div className="mx-4 md:mx-6 mt-3 text-[11px]" style={{ color: T.danger }} data-testid="save-blocked">Fix the highlighted values to save.</div>}
 
           {loading ? <div className="text-center py-16 text-[13px]" style={{ color: T.tx3 }}>Loading…</div> : (
             <div className="px-4 md:px-6 py-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -329,7 +342,7 @@ export default function SettingsBrandingPage() {
                     <button onClick={runImport} disabled={importing || !importUrl.trim()} className="px-3 py-2 rounded text-[12px] font-medium disabled:opacity-40" style={{ color: T.tx, background: T.s2, border: `1px solid ${T.b2}` }} data-testid="import-run">{importing ? 'Reading the site…' : 'Find branding'}</button>
                   </div>
                   <div className="text-[10px] mt-1.5" style={{ color: T.tx3 }}>Reads one public page and suggests values. Nothing is saved until you press Save.</div>
-                  {importErr && <div className="text-[12px] mt-2" style={{ color: '#f87171' }} data-testid="import-error">{importErr}</div>}
+                  {importErr && <div className="text-[12px] mt-2" style={{ color: T.danger }} data-testid="import-error">{importErr}</div>}
                   {result && (
                     <div className="mt-3" data-testid="import-results">
                       {(Object.keys(SUGGESTION_LABELS) as SuggestionKey[]).map(k => {
@@ -372,9 +385,27 @@ export default function SettingsBrandingPage() {
                     )}
                     {inheritNote('logo_plate', inherited?.logo_plate || '')}
                   </div>
-                  <div className="flex items-center justify-between opacity-60">
-                    <label className="flex items-center gap-2 text-[12px]" style={{ color: T.tx3 }}><input type="checkbox" disabled checked readOnly /> Show name next to the logo</label>
-                    <span className="text-[10px]" style={{ color: T.tx3 }}>Not stored yet (needs a backend field)</span>
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between mb-1"><span className="text-[12px] font-medium" style={{ color: T.tx }}>Show name next to the logo</span>{override('show_name')}</div>
+                    {(!isTenant || form.override.show_name) && (
+                      <label className="flex items-center gap-2 text-[12px] cursor-pointer" style={{ color: T.tx2 }}>
+                        <input type="checkbox" checked={form.show_name === true} onChange={e => set('show_name', e.target.checked)} data-testid="show-name" />
+                        Show the display name in the header next to the logo
+                      </label>
+                    )}
+                    {inheritNote('show_name', inherited ? (inherited.show_name ? 'on' : 'off') : '')}
+                  </div>
+                  <div className="mb-1">
+                    <div className="flex items-center justify-between mb-1"><span className="text-[12px] font-medium" style={{ color: T.tx }}>Theme (logged-in pages)</span>{override('theme')}</div>
+                    {(!isTenant || form.override.theme) && (
+                      <select value={form.theme} onChange={e => set('theme', e.target.value as Values['theme'])} className="px-2 py-1.5 rounded text-[12px]" style={inputStyle} data-testid="theme-select">
+                        <option value="">Default (AiIVRs dark)</option>
+                        <option value="dark">Dark</option>
+                        <option value="light">Light</option>
+                      </select>
+                    )}
+                    {inheritNote('theme', inherited?.theme || '')}
+                    {err('theme')}
                   </div>
                 </>)}
 
@@ -422,13 +453,13 @@ export default function SettingsBrandingPage() {
                 <div className="lg:sticky lg:top-16">
                   {section('Live preview', <>
                     <div className="rounded-lg overflow-hidden border" style={{ borderColor: T.b1 }} data-testid="preview">
-                      <div className="flex items-center gap-2 px-3" style={{ height: 44, background: '#0D1526' }}>
+                      <div className="flex items-center gap-2 px-3" style={{ height: 44, background: pv.theme === 'light' ? LIGHT.s1 : DARK.s1, borderBottom: `1px solid ${pv.theme === 'light' ? LIGHT.b1 : DARK.b1}` }}>
                         {previewLogo
                           ? <span className="flex items-center rounded" style={plateOn ? { background: '#FFFFFF', height: 30, padding: '3px 8px' } : { height: 30 }}><img src={previewLogo} alt={pv.name} style={{ maxHeight: plateOn ? 24 : 30, maxWidth: 110 }} /></span>
-                          : <span className="text-[12px] font-bold" style={{ color: T.tx }}>{pv.name}</span>}
+                          : <span className="text-[12px] font-bold" style={{ color: pv.theme === 'light' ? LIGHT.tx : DARK.tx }}>{pv.name}</span>}
                         <span className="text-[10px] px-2 py-0.5 rounded ml-1" style={{ color: pv.accent, border: `1px solid ${pv.accent}66`, background: `${pv.accent}1F` }}>Overview</span>
                       </div>
-                      <div className="px-4 py-5" style={{ background: pv.gFrom && pv.gTo ? `linear-gradient(180deg, ${pv.gFrom}, ${pv.gTo})` : T.s2 }}>
+                      <div className="px-4 py-5" style={{ background: pv.gFrom && pv.gTo ? `linear-gradient(180deg, ${pv.gFrom}, ${pv.gTo})` : DARK.s2 }}>
                         <div className="text-[16px] font-extrabold mb-1" style={{ color: '#FFFFFF', fontFamily: pv.heading ? `'${pv.heading}', ${FONTS.ui}` : FONTS.ui }}>{pv.name}</div>
                         <div className="text-[11px] mb-3" style={{ color: '#FFFFFF', fontFamily: pv.body ? `'${pv.body}', ${FONTS.ui}` : FONTS.ui }}>Hear it on a live demo call.</div>
                         <span className="inline-block px-3 py-1.5 rounded text-[11px] font-semibold" style={{ background: pv.primary, color: buttonTextColor(pv.primary) }}>Primary button</span>

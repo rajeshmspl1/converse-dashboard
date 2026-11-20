@@ -5,14 +5,15 @@ import { getUser, isLoggedIn, signOut, fetchB, apiErrorMessage, type CxUser } fr
 import { canonicalRole, roleLabel } from '@/lib/roles'
 import { useBranding } from '@/components/branding/BrandingProvider'
 import UnifiedHeader from '@/components/layout/UnifiedHeader'
-import { T, BRAND, FONTS } from '@/lib/theme'
+import { T, BRAND, FONTS, tint, v, type Token } from '@/lib/theme'
 
 // Service B calls go through the shared fetchB (token refresh, one auth client — R172).
 const authFetch = (path: string, opts: RequestInit = {}) => fetchB(path, opts)
 
 // ── Role display ──
-const ROLE_COLORS: Record<string, string> = {
-  super_admin: '#f5a623', tenant_admin: BRAND.teal, tester: BRAND.blue, analyst: BRAND.blue, viewer: T.tx2,
+// Role colours as theme tokens (super_admin's #f5a623 == amber) so alpha variants go through tint().
+const ROLE_TOKENS: Record<string, Token> = {
+  super_admin: 'amber', tenant_admin: 'teal', tester: 'blue', analyst: 'blue', viewer: 'tx2',
 }
 const PASSWORD_MIN = 12 // same rule as service-b /auth/change-password
 
@@ -123,7 +124,8 @@ export default function AccountPage() {
 
   if (!user) return null
 
-  const roleInfo = { label: roleLabel(user.role), color: ROLE_COLORS[canonicalRole(user.role)] || T.tx2 }
+  const roleToken: Token = ROLE_TOKENS[canonicalRole(user.role)] || 'tx2'
+  const roleInfo = { label: roleLabel(user.role), color: v(roleToken) }
 
   const tabs = [
     { key: 'profile' as const,  label: 'Profile',         icon: '👤' },
@@ -173,7 +175,7 @@ export default function AccountPage() {
               style={{
                 width: 48, height: 48,
                 background: `linear-gradient(135deg, ${BRAND.blue}, ${BRAND.teal})`,
-                color: '#fff',
+                color: T.white,
               }}
             >
               {(user.full_name || user.email)[0].toUpperCase()}
@@ -187,14 +189,14 @@ export default function AccountPage() {
             <div className="flex items-center gap-2 flex-shrink-0">
               <span
                 className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide"
-                style={{ background: `${roleInfo.color}15`, color: roleInfo.color, border: `1px solid ${roleInfo.color}25` }}
+                style={{ background: tint(roleToken, '15'), color: roleInfo.color, border: `1px solid ${tint(roleToken, '25')}` }}
               >
                 {roleInfo.label}
               </span>
               {orgName && (
                 <span
                   className="px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide"
-                  style={{ background: `${BRAND.teal}12`, color: BRAND.teal, border: `1px solid ${BRAND.teal}20` }}
+                  style={{ background: tint('teal', '12'), color: BRAND.teal, border: `1px solid ${tint('teal', '20')}` }}
                 >
                   {orgName}
                 </span>
@@ -211,7 +213,7 @@ export default function AccountPage() {
                 className="flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-medium transition-all flex-1 justify-center"
                 style={{
                   background: tab === t.key ? T.s2 : 'transparent',
-                  color: tab === t.key ? (t.key === 'danger' ? '#f87171' : T.tx) : T.tx3,
+                  color: tab === t.key ? (t.key === 'danger' ? T.danger : T.tx) : T.tx3,
                   border: tab === t.key ? `1px solid ${T.b2}` : '1px solid transparent',
                 }}
               >
@@ -311,14 +313,14 @@ export default function AccountPage() {
                   onClick={handleSaveProfile}
                   disabled={profileSaving}
                   className="px-5 py-2.5 rounded-lg text-[13px] font-semibold transition-all hover:opacity-90 disabled:opacity-50"
-                  style={{ background: BRAND.blue, color: '#fff' }}
+                  style={{ background: BRAND.blue, color: T.onBlue }}
                 >
                   {profileSaving ? 'Saving…' : 'Save Changes'}
                 </button>
                 {profileMsg && (
                   <span
                     className="text-[12px] font-medium"
-                    style={{ color: profileMsg.type === 'ok' ? BRAND.teal : '#f87171' }}
+                    style={{ color: profileMsg.type === 'ok' ? BRAND.teal : T.danger }}
                   >
                     {profileMsg.text}
                   </span>
@@ -396,14 +398,14 @@ export default function AccountPage() {
                             className="h-1 flex-1 rounded-full"
                             style={{
                               background: newPwd.length >= i * 3
-                                ? (newPwd.length >= 16 ? BRAND.teal : newPwd.length >= PASSWORD_MIN ? '#f5a623' : '#f87171')
+                                ? (newPwd.length >= 16 ? BRAND.teal : newPwd.length >= PASSWORD_MIN ? T.amber : T.danger)
                                 : T.b1,
                             }}
                           />
                         ))}
                       </div>
                       <span className="text-[9px]" style={{
-                        color: newPwd.length >= 16 ? BRAND.teal : newPwd.length >= PASSWORD_MIN ? '#f5a623' : '#f87171'
+                        color: newPwd.length >= 16 ? BRAND.teal : newPwd.length >= PASSWORD_MIN ? T.amber : T.danger
                       }}>
                         {newPwd.length >= 16 ? 'Strong' : newPwd.length >= PASSWORD_MIN ? 'OK' : 'Too short'}
                       </span>
@@ -425,7 +427,7 @@ export default function AccountPage() {
                     style={inputStyle}
                   />
                   {confirmPwd && newPwd !== confirmPwd && (
-                    <div className="text-[10px] mt-1" style={{ color: '#f87171' }}>
+                    <div className="text-[10px] mt-1" style={{ color: T.danger }}>
                       Passwords don't match
                     </div>
                   )}
@@ -438,14 +440,14 @@ export default function AccountPage() {
                   onClick={handleChangePassword}
                   disabled={pwdSaving}
                   className="px-5 py-2.5 rounded-lg text-[13px] font-semibold transition-all hover:opacity-90 disabled:opacity-50"
-                  style={{ background: BRAND.blue, color: '#fff' }}
+                  style={{ background: BRAND.blue, color: T.onBlue }}
                 >
                   {pwdSaving ? 'Changing…' : 'Change Password'}
                 </button>
                 {pwdMsg && (
                   <span
                     className="text-[12px] font-medium"
-                    style={{ color: pwdMsg.type === 'ok' ? BRAND.teal : '#f87171' }}
+                    style={{ color: pwdMsg.type === 'ok' ? BRAND.teal : T.danger }}
                   >
                     {pwdMsg.text}
                   </span>
@@ -458,8 +460,8 @@ export default function AccountPage() {
               DANGER ZONE TAB
               ════════════════════════════════════════════ */}
           {tab === 'danger' && (
-            <div className="acct-card rounded-xl border p-6" style={{ background: T.s1, borderColor: 'rgba(248,113,113,.2)' }}>
-              <div className="text-[14px] font-semibold mb-1" style={{ color: '#f87171' }}>
+            <div className="acct-card rounded-xl border p-6" style={{ background: T.s1, borderColor: tint('danger', '.2') }}>
+              <div className="text-[14px] font-semibold mb-1" style={{ color: T.danger }}>
                 ⚠️ Delete Account
               </div>
               <div className="text-[12px] mb-5 leading-relaxed" style={{ color: T.tx2 }}>
@@ -470,9 +472,9 @@ export default function AccountPage() {
 
               <div
                 className="rounded-lg p-4 mb-5"
-                style={{ background: 'rgba(248,113,113,.05)', border: '1px solid rgba(248,113,113,.15)' }}
+                style={{ background: tint('danger', '.05'), border: `1px solid ${tint('danger', '.15')}` }}
               >
-                <div className="text-[11px] font-semibold mb-2" style={{ color: '#f87171' }}>
+                <div className="text-[11px] font-semibold mb-2" style={{ color: T.danger }}>
                   What will be deleted:
                 </div>
                 <div className="text-[11px] leading-relaxed" style={{ color: T.tx3 }}>
@@ -494,7 +496,7 @@ export default function AccountPage() {
                   className="w-full px-3 py-2.5 rounded-lg text-[13px] font-mono tracking-wider transition-all"
                   style={{
                     ...inputStyle,
-                    borderColor: deleteConfirm === 'DELETE' ? 'rgba(248,113,113,.5)' : T.b2,
+                    borderColor: deleteConfirm === 'DELETE' ? tint('danger', '.5') : T.b2,
                   }}
                 />
                 <label className="text-[10px] font-semibold uppercase tracking-wider mt-3 mb-1.5 block" style={{ color: T.tx3 }}>
@@ -518,15 +520,15 @@ export default function AccountPage() {
                   disabled={deleting || !(deleteConfirm === 'DELETE' && !!deletePwd)}
                   className="px-5 py-2.5 rounded-lg text-[13px] font-semibold transition-all disabled:opacity-30"
                   style={{
-                    background: deleteConfirm === 'DELETE' && !!deletePwd ? '#f87171' : T.s2,
-                    color: deleteConfirm === 'DELETE' && !!deletePwd ? '#fff' : T.tx3,
+                    background: deleteConfirm === 'DELETE' && !!deletePwd ? T.danger : T.s2,
+                    color: deleteConfirm === 'DELETE' && !!deletePwd ? T.onDanger : T.tx3,
                     cursor: deleteConfirm === 'DELETE' && !!deletePwd ? 'pointer' : 'not-allowed',
                   }}
                 >
                   {deleting ? 'Deleting…' : 'Permanently Delete My Account'}
                 </button>
                 {deleteMsg && (
-                  <span className="text-[12px] font-medium" style={{ color: '#f87171' }}>
+                  <span className="text-[12px] font-medium" style={{ color: T.danger }}>
                     {deleteMsg.text}
                   </span>
                 )}

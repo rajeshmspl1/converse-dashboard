@@ -19,8 +19,10 @@ const WHITE = '#FFFFFF'
 const DARK_SURFACE = '#080D18' // B1 REFERENCE_DARK_SURFACE (= theme.ts SURFACES.bg)
 
 export type ColorKey = 'primary' | 'accent' | 'dark'
-export type Field = 'display_name' | ColorKey | 'gradient' | 'heading' | 'body' | 'logo_plate'
-export const FIELDS: Field[] = ['display_name', 'primary', 'accent', 'dark', 'gradient', 'heading', 'body', 'logo_plate']
+export type Field = 'display_name' | ColorKey | 'gradient' | 'heading' | 'body' | 'logo_plate' | 'theme' | 'show_name'
+export const FIELDS: Field[] = ['display_name', 'primary', 'accent', 'dark', 'gradient', 'heading', 'body', 'logo_plate', 'theme', 'show_name']
+export const THEME_VALUES = ['', 'dark', 'light'] as const   // '' = not set (inherit / AiIVRs dark)
+export type ThemeValue = typeof THEME_VALUES[number]
 
 export interface Values {
   display_name: string
@@ -32,12 +34,14 @@ export interface Values {
   heading: string
   body: string
   logo_plate: LogoPlate
+  theme: ThemeValue          // B4 (0004)
+  show_name: boolean | null  // B4 (0004): null = not set (inherit; header default: logo only)
 }
 export interface FormState extends Values {
   override: Record<Field, boolean> // tenant scope: on = tenant value set, off = cleared (inherit)
 }
 
-export const EMPTY: Values = { display_name: '', primary: '', accent: '', dark: '', gradient_from: '', gradient_to: '', heading: '', body: '', logo_plate: 'auto' }
+export const EMPTY: Values = { display_name: '', primary: '', accent: '', dark: '', gradient_from: '', gradient_to: '', heading: '', body: '', logo_plate: 'auto', theme: '', show_name: null }
 
 /** Who may open Settings → Branding (testers/viewers keep the existing redirect). */
 export function canEditBranding(role: string | null | undefined): boolean {
@@ -95,6 +99,8 @@ export function validate(form: FormState): Partial<Record<Field, string>> {
     if (on(k) && form[k] && !(FONT_ALLOWLIST as readonly string[]).includes(form[k])) e[k] = 'Choose a font from the list'
   }
   if (on('logo_plate') && !(LOGO_PLATES as readonly string[]).includes(form.logo_plate)) e.logo_plate = 'Choose auto, light or none'
+  if (on('theme') && !(THEME_VALUES as readonly string[]).includes(form.theme)) e.theme = 'Choose dark or light'
+  if (on('show_name') && form.show_name !== null && typeof form.show_name !== 'boolean') e.show_name = 'Choose on or off'
   return e
 }
 
@@ -108,16 +114,20 @@ export function valuesFromAdmin(row: any): Values {
     gradient_from: g?.from || '', gradient_to: g?.to || '',
     heading: f.heading || '', body: f.body || '',
     logo_plate: (LOGO_PLATES as readonly string[]).includes(row?.logo_plate) ? row.logo_plate : 'auto',
+    theme: row?.theme === 'dark' || row?.theme === 'light' ? row.theme : '',
+    show_name: typeof row?.show_name === 'boolean' ? row.show_name : null,
   }
 }
 /** Values shown as "Inherited from partner" (from /branding/me merged branding, or the partner admin row). */
 export function valuesFromMerged(b: any): Values {
-  return valuesFromAdmin({ display_name: b?.display_name, colors: b?.colors, fonts: b?.fonts, hero_gradient: b?.hero_gradient, logo_plate: b?.logo_plate })
+  return valuesFromAdmin({ display_name: b?.display_name, colors: b?.colors, fonts: b?.fonts, hero_gradient: b?.hero_gradient, logo_plate: b?.logo_plate,
+    theme: b?.theme, show_name: b?.show_name })
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 const isSet = (v: Values, f: Field): boolean =>
-  f === 'gradient' ? !!(v.gradient_from || v.gradient_to) : f === 'logo_plate' ? v.logo_plate !== 'auto' : !!v[f]
+  f === 'gradient' ? !!(v.gradient_from || v.gradient_to) : f === 'logo_plate' ? v.logo_plate !== 'auto'
+    : f === 'show_name' ? v.show_name !== null : !!v[f]
 
 /** Partner scope: every field is the scope's own value (override always on). Tenant scope: on = set on the tenant row. */
 export function formFrom(values: Values, scopeType: 'partner' | 'tenant'): FormState {
@@ -133,6 +143,7 @@ function effective(form: FormState, f: Field): unknown {
     case 'gradient': return form.gradient_from && form.gradient_to ? { from: form.gradient_from.toUpperCase(), to: form.gradient_to.toUpperCase() } : null
     case 'logo_plate': return form.logo_plate === 'auto' ? null : form.logo_plate
     case 'primary': case 'accent': case 'dark': return form[f] ? form[f].toUpperCase() : null
+    case 'show_name': return typeof form.show_name === 'boolean' ? form.show_name : null
     default: return form[f] || null
   }
 }
@@ -150,6 +161,8 @@ export function buildPatch(original: FormState, form: FormState): Record<string,
   if (Object.keys(fonts).length) patch.fonts = fonts
   if (changed('logo_plate')) patch.logo_plate = effective(form, 'logo_plate')
   if (changed('gradient')) patch.hero_gradient = effective(form, 'gradient')
+  if (changed('theme')) patch.theme = effective(form, 'theme')
+  if (changed('show_name')) patch.show_name = effective(form, 'show_name')
   return patch
 }
 
