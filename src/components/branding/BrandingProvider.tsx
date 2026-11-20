@@ -4,7 +4,7 @@
 // (AUTH_CLEARED_EVENT from auth.ts). Logged out → AiIVRs defaults from theme.ts.
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { AUTH_CLEARED_EVENT, getUser, isLoggedIn, type CxUser } from '@/lib/auth'
-import { displayNameFor, fetchLogoBlobUrl, loadBranding, wantsPlate, type Branding } from '@/lib/branding'
+import { displayNameFor, fetchLogoBlobUrl, forgetBranding, loadBranding, wantsPlate, type Branding } from '@/lib/branding'
 import { buttonTextColor, readableAccent } from '@/lib/color'
 import { usePartnerConfig } from '@/lib/partner'
 import { BRAND } from '@/lib/theme'
@@ -12,16 +12,18 @@ import { BRAND } from '@/lib/theme'
 export interface BrandingState {
   ready: boolean
   branded: boolean            // the tenant has any branding configured
+  partnerName: string | null  // set only for partner tenants ("Powered by AiIVRs")
   displayName: string | null  // never the raw tenant key
   accent: string              // fill colour (buttons, avatar)
   accentText: string          // accent as text on the dark theme (>= 4.5:1)
   onAccent: string            // text colour on an accent fill
   logoSrc: string | null      // blob: URL of the tenant logo
   logoPlate: boolean          // draw a light plate behind the logo
+  reload: () => void          // re-fetch /branding/me (after Settings → Branding saves)
 }
 
 const DEFAULTS: BrandingState = {
-  ready: false, branded: false, displayName: null,
+  ready: false, branded: false, partnerName: null, displayName: null, reload: () => {},
   accent: BRAND.teal, accentText: BRAND.teal, onAccent: buttonTextColor(BRAND.teal),
   logoSrc: null, logoPlate: false,
 }
@@ -36,7 +38,9 @@ function stateFrom(user: CxUser | null, b: Branding, partner: ReturnType<typeof 
   const accent = b.colors?.accent || BRAND.teal
   return {
     ready: true,
-    branded: Object.keys(b).length > 0,
+    reload: () => {},
+    branded: Object.keys(b).filter(k => k !== 'partner_name').length > 0,
+    partnerName: b.partner_name || null,
     displayName: displayNameFor(user, b, partner),
     accent,
     accentText: b.colors?.accent ? readableAccent(accent) : BRAND.teal,
@@ -74,6 +78,12 @@ export default function BrandingProvider({ children }: { children: React.ReactNo
     setState(stateFrom(user, b, partner, logo))
   }, [partner, revoke])
 
+  const reload = useCallback(() => {
+    const user = getUser()
+    if (user) forgetBranding(user)
+    void load()
+  }, [load])
+
   useEffect(() => {
     void Promise.resolve().then(load)  // after the effect, not synchronously inside it
     const onCleared = () => { runRef.current++; revoke(); setState({ ...DEFAULTS, ready: true }) }
@@ -81,5 +91,5 @@ export default function BrandingProvider({ children }: { children: React.ReactNo
     return () => { window.removeEventListener(AUTH_CLEARED_EVENT, onCleared); revoke() }
   }, [load, revoke])
 
-  return <Ctx.Provider value={state}>{children}</Ctx.Provider>
+  return <Ctx.Provider value={{ ...state, reload }}>{children}</Ctx.Provider>
 }

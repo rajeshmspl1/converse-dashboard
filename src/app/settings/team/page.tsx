@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { getUser, isLoggedIn, signOut, fetchB, apiErrorMessage, type CxUser } from '@/lib/auth'
 import { canonicalRole, isAdminRole, isSuperAdmin as isSuperRole, roleLabel } from '@/lib/roles'
 import { useBranding } from '@/components/branding/BrandingProvider'
+import SettingsSidebar from '@/components/settings/SettingsSidebar'
 import UnifiedHeader from '@/components/layout/UnifiedHeader'
 import { T, BRAND, FONTS } from '@/lib/theme'
 
@@ -20,6 +21,7 @@ const ROLE_COLOR: Record<string, string> = { super_admin: '#f5a623', tenant_admi
 interface TeamMember { id: number; email: string; full_name: string; role: string; is_active: boolean; region_code: string | null; ivr_keys: string[]; allowed_stages: string[]; last_login_at: string | null; created_at: string }
 interface AuditEntry { id: number; user_email: string; action: string; detail: string; ip_address: string | null; created_at: string }
 type SideTab = 'members' | 'activity' | 'permissions'
+const SIDE_TABS: SideTab[] = ['members', 'activity', 'permissions']
 
 export default function SettingsTeamPage() {
   const router = useRouter()
@@ -58,6 +60,8 @@ export default function SettingsTeamPage() {
     const u = getUser()
     if (u) {
       if (!isAdminRole(u.role)) { router.replace('/dashboard'); return }
+      const t = new URLSearchParams(window.location.search).get('tab') as SideTab | null
+      if (t && SIDE_TABS.includes(t)) setSideTab(t)
       setUser(u); fetchTeam()
     }
   }, [router])
@@ -112,34 +116,24 @@ export default function SettingsTeamPage() {
     <div className="flex flex-col h-screen overflow-hidden" style={{ background: T.bg, fontFamily: FONTS.ui }}>
       <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}.anim-up{animation:fadeUp .3s ease-out}input:focus,select:focus{border-color:${BRAND.blue}!important;outline:none}.row-hover:hover{background:${T.s2}!important}`}</style>
       <UnifiedHeader variant="dashboard" user={user} onSignOut={handleSignOut} />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
 
-        {/* SIDEBAR */}
-        <div className="w-56 flex-shrink-0 border-r flex flex-col" style={{ background: T.s1, borderColor: T.b1 }}>
-          <div className="px-4 py-4 border-b" style={{ borderColor: T.b1 }}>
-            <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: T.tx3 }}>Organization</div>
-            <div className="text-[16px] font-bold mt-0.5" style={{ color: T.tx }}>{orgName || 'your organisation'}</div>
-          </div>
-          <div className="px-4 py-3 border-b grid grid-cols-2 gap-2" style={{ borderColor: T.b1 }}>
+        {/* SIDEBAR (shared with Settings → Branding) */}
+        <SettingsSidebar
+          active={sideTab}
+          role={user.role}
+          orgName={orgName}
+          onTeamTab={k => setSideTab(k)}
+          stats={<div className="px-4 py-3 border-b grid grid-cols-2 gap-2" style={{ borderColor: T.b1 }}>
             {[{ n: activeCt, l: 'Total', c: T.tx }, { n: adminCt, l: 'Admins', c: BRAND.teal }, { n: testerCt, l: 'Testers', c: BRAND.blue }, { n: viewerCt, l: 'Viewers', c: T.tx2 }].map(s => (
               <div key={s.l} className="text-center py-1.5">
                 <div className="text-[16px] font-bold" style={{ color: s.c, fontFamily: FONTS.mono }}>{s.n}</div>
                 <div className="text-[9px] uppercase tracking-wide" style={{ color: T.tx3 }}>{s.l}</div>
               </div>
             ))}
-          </div>
-          <div className="flex-1 py-2">
-            {([{ key: 'members' as SideTab, label: 'Team Members', icon: '\uD83D\uDC65' }, { key: 'activity' as SideTab, label: 'Activity Log', icon: '\uD83D\uDCCB' }, { key: 'permissions' as SideTab, label: 'Access Guide', icon: '\uD83D\uDD10' }]).map(t => (
-              <button key={t.key} onClick={() => setSideTab(t.key)} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left transition-all"
-                style={{ background: sideTab === t.key ? T.s2 : 'transparent', color: sideTab === t.key ? T.tx : T.tx3, borderLeft: sideTab === t.key ? `2px solid ${BRAND.teal}` : '2px solid transparent' }}>
-                <span className="text-[13px]">{t.icon}</span><span className="text-[12px] font-medium">{t.label}</span>
-              </button>
-            ))}
-          </div>
-          {isAdmin && <div className="px-3 py-3 border-t" style={{ borderColor: T.b1 }}>
-            <button onClick={() => { setShowInvite(true); setInvMsg(null) }} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-[12px] font-semibold transition-all hover:opacity-90" style={{ background: BRAND.teal, color: '#000' }}>+ Add Member</button>
           </div>}
-        </div>
+          footer={isAdmin ? <button onClick={() => { setShowInvite(true); setInvMsg(null) }} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-[12px] font-semibold transition-all hover:opacity-90" style={{ background: BRAND.teal, color: '#000' }}>+ Add Member</button> : undefined}
+        />
 
         {/* MAIN */}
         <div className="flex-1 overflow-auto">

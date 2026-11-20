@@ -14,6 +14,7 @@ export interface Branding {
   colors?: { primary?: string; accent?: string; dark?: string; teal?: string }
   logo_url?: string
   logo_plate?: LogoPlate
+  partner_name?: string   // top-level in /branding/me; set only for partner tenants
 }
 
 const ASSET_RE = /^\/branding\/asset\/(partner|tenant)\/[a-z0-9_]{1,64}\/logo\/[0-9a-f]{64}$/
@@ -31,6 +32,7 @@ export function sanitizeBranding(raw: unknown): Branding {
   if (Object.keys(colors).length) out.colors = colors
   if (typeof b.logo_url === 'string' && ASSET_RE.test(b.logo_url)) out.logo_url = b.logo_url
   if (typeof b.logo_plate === 'string' && (PLATES as string[]).includes(b.logo_plate)) out.logo_plate = b.logo_plate as LogoPlate
+  if (typeof b.partner_name === 'string' && b.partner_name.trim() && b.partner_name.length <= 60) out.partner_name = b.partner_name.trim()
   return out
 }
 
@@ -60,17 +62,30 @@ export async function loadBranding(user: CxUser): Promise<Branding> {
     const res = await fetchB('/branding/me')
     // The response must be for this user's tenant (never show another tenant's brand).
     if ((res?.tenant_key || '') !== (user.tenant_key || '')) return {}
-    const b = sanitizeBranding(res?.branding)
+    const b = sanitizeBranding({ ...(res?.branding || {}), partner_name: res?.partner_name })
     writeCache(user, b)
     return b
   } catch { return {} }
 }
 
+/** Drop this user's cached branding (e.g. after saving it in Settings → Branding). */
+export function forgetBranding(user: Pick<CxUser, 'id' | 'tenant_key'>): void {
+  try { sessionStorage.removeItem(cacheKey(user)) } catch { /* ignore */ }
+}
+
+const ANY_ASSET_RE = /^\/branding\/asset\/(partner|tenant)\/[a-z0-9_]{1,64}\/(logo|favicon)\/[0-9a-f]{64}$/
+
 /** Fetch the logo with the login token and return a blob: URL (PNG/JPEG only), or null. Caller revokes it. */
 export async function fetchLogoBlobUrl(logoUrl: string): Promise<string | null> {
   if (!ASSET_RE.test(logoUrl)) return null
+  return fetchAssetBlobUrl(logoUrl)
+}
+
+/** Same for any branding asset (logo or favicon) — used by Settings → Branding previews. */
+export async function fetchAssetBlobUrl(assetUrl: string): Promise<string | null> {
+  if (!ANY_ASSET_RE.test(assetUrl)) return null
   try {
-    const res = await authFetch(getEnv().serviceB + logoUrl)
+    const res = await authFetch(getEnv().serviceB + assetUrl)
     const type = (res.headers.get('content-type') || '').split(';')[0].trim().toLowerCase()
     if (!res.ok || !LOGO_TYPES.includes(type)) return null
     const blob = await res.blob()

@@ -7,7 +7,7 @@ import Logo from '@/components/ui/Logo'
 import type { Currency } from '@/types'
 import { guardBackForwardCache } from '@/lib/auth'
 import { useBranding } from '@/components/branding/BrandingProvider'
-import { roleLabel } from '@/lib/roles'
+import { isAdminRole, roleLabel } from '@/lib/roles'
 
 // ═══════════════════════════════════════════════════════════════════
 // UnifiedHeader — One header for all pages (Brand Guide §4.1)
@@ -439,8 +439,8 @@ export default function UnifiedHeader({
                     <span className="text-[12px] font-medium">Account</span>
                   </button>
 
-                  {/* Settings & Team — only for admin roles */}
-                  {user?.role && (user.role === 'tenant_admin' || user.role === 'super_admin' || user.role === 'customer_admin') && (
+                  {/* Settings & Team — only for admin roles (legacy names via roles.ts) */}
+                  {isAdminRole(user?.role) && (
                     <button
                       onClick={() => { setUserMenu(false); if (onSettings) onSettings(); else router.push('/settings/team') }}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
@@ -452,6 +452,24 @@ export default function UnifiedHeader({
                       <div>
                         <span className="text-[12px] font-medium">Settings & Team</span>
                         <div className="text-[9px] mt-0.5" style={{ color: T.tx3 }}>Invite members, manage roles</div>
+                      </div>
+                    </button>
+                  )}
+
+                  {/* Branding — admin roles only */}
+                  {isAdminRole(user?.role) && (
+                    <button
+                      onClick={() => { setUserMenu(false); router.push('/settings/branding') }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
+                      style={{ color: T.tx2, background: 'transparent' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = T.s2; e.currentTarget.style.color = T.tx }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.tx2 }}
+                      data-testid="menu-branding"
+                    >
+                      <span className="text-[13px] w-5 text-center">🎨</span>
+                      <div>
+                        <span className="text-[12px] font-medium">Branding</span>
+                        <div className="text-[9px] mt-0.5" style={{ color: T.tx3 }}>Logo, colours, fonts</div>
                       </div>
                     </button>
                   )}
@@ -479,8 +497,8 @@ export default function UnifiedHeader({
                   </button>
                 </div>
 
-                {/* Branded tenants: platform credit */}
-                {brand.branded && (
+                {/* Partner tenants: platform credit */}
+                {brand.partnerName && (
                   <div className="px-4 py-1.5 text-[10px] border-t" style={{ borderColor: T.b1, color: T.tx3 }} data-testid="powered-by">
                     Powered by AiIVRs
                   </div>
