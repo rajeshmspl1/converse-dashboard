@@ -72,6 +72,18 @@ export function cleanName(v: string): string {
   return v.replace(INVISIBLE, '').replace(/\s+/g, ' ').trim()
 }
 
+/**
+ * Label for a tenant in the Settings → Branding picker: branding display_name, then company_name, never the raw
+ * tenant key (the provisioning list returns the key as "name" when no company name is set).
+ */
+export function tenantPickerLabel(displayName: unknown, companyName: unknown, tenantKey: string): string {
+  for (const v of [displayName, companyName]) {
+    const s = typeof v === 'string' ? cleanName(v) : ''
+    if (s && s !== tenantKey) return s
+  }
+  return 'Unnamed tenant'
+}
+
 /** Errors per field for the values that will be saved (overridden fields only on tenant scope). */
 export function validate(form: FormState): Partial<Record<Field, string>> {
   const e: Partial<Record<Field, string>> = {}

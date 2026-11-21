@@ -14,7 +14,7 @@ import { T, BRAND, BRAND_HEX, DARK, FONTS, tint } from '@/lib/theme'
 import { LIGHT, lightAccent } from '@/lib/brandTheme'
 import {
   EMPTY, FONT_ALLOWLIST, IMAGE_LIMITS, LOGO_PLATES, UPLOAD_TYPES, applySuggestions, buildPatch, canEditBranding, checkColor,
-  formFrom, suggestionUsable, validate, valuesFromAdmin, valuesFromMerged,
+  formFrom, suggestionUsable, tenantPickerLabel, validate, valuesFromAdmin, valuesFromMerged,
   type ColorKey, type Field, type FormState, type Staged, type SuggestionKey, type Values,
 } from '@/lib/brandingForm'
 
@@ -80,7 +80,7 @@ export default function SettingsBrandingPage() {
       try {
         const all = await fetchI('/api/i/provisioning/all-tenants')
         const list = await Promise.all((all.tenants || []).map(async (t: any) => {
-          try { const r = await fetchB(`/admin/branding/tenant/${encodeURIComponent(t.tenant_key)}`); return { key: t.tenant_key, name: t.name || t.tenant_key, partner: r.partner_id || null } }
+          try { const r = await fetchB(`/admin/branding/tenant/${encodeURIComponent(t.tenant_key)}`); return { key: t.tenant_key, name: tenantPickerLabel(r.display_name, t.company_name ?? t.name, t.tenant_key), partner: r.partner_id || null } }
           catch { return null }
         }))
         const ok = list.filter(Boolean) as { key: string; name: string; partner: string | null }[]

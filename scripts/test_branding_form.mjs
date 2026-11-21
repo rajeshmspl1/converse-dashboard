@@ -142,4 +142,15 @@ await t('"Powered by AiIVRs" only for partner tenants (partner_name)', () => {
   assert.ok(read('src/lib/branding.ts').includes('partner_name: res?.partner_name'))
 })
 
+await t('picker label: display_name → company_name → never the raw tenant key', () => {
+  assert.equal(F.tenantPickerLabel('South Indian Bank', 'tenant_4_south_india_bank_2', 'tenant_4_south_india_bank_2'), 'South Indian Bank')
+  assert.equal(F.tenantPickerLabel(null, 'Demo Bank', 'sparrow_demo'), 'Demo Bank')
+  assert.equal(F.tenantPickerLabel('  ', 'tenant_4_south_india_bank_2', 'tenant_4_south_india_bank_2'), 'Unnamed tenant')
+  assert.equal(F.tenantPickerLabel(undefined, undefined, 'x_key'), 'Unnamed tenant')
+  assert.equal(F.tenantPickerLabel('A​cme‮', null, 'k'), 'Acme')
+  const page = read('src/app/settings/branding/page.tsx')
+  assert.ok(page.includes('tenantPickerLabel(r.display_name, t.company_name ?? t.name, t.tenant_key)'))
+  assert.doesNotMatch(page, /name: t\.name \|\| t\.tenant_key/)
+})
+
 console.log(`\n${passed} passed`)
