@@ -6,6 +6,7 @@ import { getUser, signOut, fetchI, isLoggedIn, getAccessToken, fetchB as sharedF
 import UnifiedHeader from '@/components/layout/UnifiedHeader'
 import { useBranding } from '@/components/branding/BrandingProvider'
 import TelephonyTab from '@/components/dashboard/TelephonyTab'
+import { T_DASH, alpha } from '@/lib/theme'
 
 /**
  * Call Service B provisioning proxy (JWT auth — admin key stays server-side).
@@ -24,17 +25,12 @@ async function fetchB(path: string, method: string = 'POST', body?: any): Promis
   }
 }
 
-const T = {
-  teal:'#00c9b1',teal2:'rgba(0,201,177,.12)',amber:'#f5a623',amber2:'rgba(245,166,35,.12)',
-  red:'#f03060',red2:'rgba(240,48,96,.12)',green:'#00de7a',green2:'rgba(0,222,122,.12)',
-  blue:'#3d85e0',blue2:'rgba(61,133,224,.12)',purple:'#8b5cf6',purple2:'rgba(139,92,246,.12)',
-  tx:'#dde6f5',tx2:'#7a90b5',tx3:'#364d6a',
-  bg:'#080d18',s1:'#0d1526',s2:'#111d30',s3:'#16243a',b1:'#1c2d45',b2:'#243558',
-}
+// Local palette merged into theme.ts (R90): T_DASH = theme tokens with this page's blue #3D85E0 / tx3 #364D6A.
+const T = T_DASH
 
 const fmt=(n:number|null|undefined,d=0)=>n==null?'—':Number(n).toLocaleString('en-IN',{maximumFractionDigits:d})
 const fmtDur=(s:number|null)=>{if(!s)return'—';const m=Math.floor(s/60),sec=Math.round(s%60);return m?`${m}m ${sec}s`:`${sec}s`}
-const STATUS:Record<string,{color:string}>={resolved:{color:'#00de7a'},abandoned:{color:'#f5a623'},handoff_to_agent:{color:'#3d85e0'},error:{color:'#f03060'}}
+const STATUS:Record<string,{color:string}>={resolved:{color:T.green},abandoned:{color:T.amber},handoff_to_agent:{color:T.blue},error:{color:T.red}}
 
 function Gauge({pct,value,label,color}:{pct:number;value:string;label:string;color:string}){
   const r=58,cx=90,cy=80,startAngle=Math.PI,endAngle=Math.PI+pct*Math.PI
@@ -44,14 +40,15 @@ function Gauge({pct,value,label,color}:{pct:number;value:string;label:string;col
   return(
     <div className="flex flex-col items-center">
       <svg width="180" height="100" viewBox="0 0 180 100">
-        <path d={`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`} fill="none" stroke={T.b1} strokeWidth="12" strokeLinecap="round"/>
-        <path d={`M ${x1} ${y1} A ${r} ${r} 0 ${la} 1 ${x2} ${y2}`} fill="none" stroke={color+'40'} strokeWidth="20" strokeLinecap="round"/>
-        {pct>0&&<path d={`M ${x1} ${y1} A ${r} ${r} 0 ${la} 1 ${x2} ${y2}`} fill="none" stroke={color} strokeWidth="12" strokeLinecap="round"/>}
-        {Array.from({length:11},(_,i)=>{const a=Math.PI+i/10*Math.PI;return(<line key={i} x1={cx+Math.cos(a)*(r-7)} y1={cy+Math.sin(a)*(r-7)} x2={cx+Math.cos(a)*(r+5)} y2={cy+Math.sin(a)*(r+5)} stroke={i%5===0?T.b2:T.b1} strokeWidth={i%5===0?2:1}/>)})}
-        <line x1={cx} y1={cy} x2={cx+Math.cos(endAngle)*(r-16)} y2={cy+Math.sin(endAngle)*(r-16)} stroke={T.tx} strokeWidth="2.5" strokeLinecap="round"/>
-        <circle cx={cx} cy={cy} r="4" fill={T.tx}/>
-        <text x={cx} y={cy-8} textAnchor="middle" fill={color} fontSize="22" fontWeight="700">{value}</text>
-        <text x={cx} y={cy+8} textAnchor="middle" fill={T.tx3} fontSize="9">{label}</text>
+        {/* colours via style (CSS variables), not presentation attributes */}
+        <path d={`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`} fill="none" style={{stroke:T.b1}} strokeWidth="12" strokeLinecap="round"/>
+        <path d={`M ${x1} ${y1} A ${r} ${r} 0 ${la} 1 ${x2} ${y2}`} fill="none" style={{stroke:alpha(color,'40')}} strokeWidth="20" strokeLinecap="round"/>
+        {pct>0&&<path d={`M ${x1} ${y1} A ${r} ${r} 0 ${la} 1 ${x2} ${y2}`} fill="none" style={{stroke:color}} strokeWidth="12" strokeLinecap="round"/>}
+        {Array.from({length:11},(_,i)=>{const a=Math.PI+i/10*Math.PI;return(<line key={i} x1={cx+Math.cos(a)*(r-7)} y1={cy+Math.sin(a)*(r-7)} x2={cx+Math.cos(a)*(r+5)} y2={cy+Math.sin(a)*(r+5)} style={{stroke:i%5===0?T.b2:T.b1}} strokeWidth={i%5===0?2:1}/>)})}
+        <line x1={cx} y1={cy} x2={cx+Math.cos(endAngle)*(r-16)} y2={cy+Math.sin(endAngle)*(r-16)} style={{stroke:T.tx}} strokeWidth="2.5" strokeLinecap="round"/>
+        <circle cx={cx} cy={cy} r="4" style={{fill:T.tx}}/>
+        <text x={cx} y={cy-8} textAnchor="middle" style={{fill:color}} fontSize="22" fontWeight="700">{value}</text>
+        <text x={cx} y={cy+8} textAnchor="middle" style={{fill:T.tx3}} fontSize="9">{label}</text>
       </svg>
     </div>
   )
@@ -68,11 +65,11 @@ function Donut({data,colors,size=110,thick=20,center}:{data:number[];colors:stri
     const xi2=cx+Math.cos(angle+sweep)*(r-thick),yi2=cy+Math.sin(angle+sweep)*(r-thick)
     const la=sweep>Math.PI?1:0
     const d=`M ${x1} ${y1} A ${r} ${r} 0 ${la} 1 ${x2} ${y2} L ${xi2} ${yi2} A ${r-thick} ${r-thick} 0 ${la} 0 ${xi1} ${yi1} Z`
-    angle+=sweep;return <path key={i} d={d} fill={colors[i]}/>
+    angle+=sweep;return <path key={i} d={d} style={{fill:colors[i]}}/>
   })
   return(
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>{paths}
-      {center&&<><text x={cx} y={cy-4} textAnchor="middle" fill={T.amber} fontSize="16" fontWeight="700">{center.val}</text><text x={cx} y={cy+12} textAnchor="middle" fill={T.tx3} fontSize="9">{center.sub}</text></>}
+      {center&&<><text x={cx} y={cy-4} textAnchor="middle" style={{fill:T.amber}} fontSize="16" fontWeight="700">{center.val}</text><text x={cx} y={cy+12} textAnchor="middle" style={{fill:T.tx3}} fontSize="9">{center.sub}</text></>}
     </svg>
   )
 }
@@ -158,7 +155,7 @@ function OverviewTab({data,billing,user}:{data:any;billing?:any;user?:CxUser|nul
                 ))}
               </div>
               <div className="ml-auto flex-shrink-0">
-                <span className="text-[10px] font-semibold px-2 py-1 rounded" style={{background:`${T.teal}11`,color:T.teal}}>
+                <span className="text-[10px] font-semibold px-2 py-1 rounded" style={{background:`${alpha(T.teal,'11')}`,color:T.teal}}>
                   {billingExpanded?'▲ Collapse':'▼ Details'}
                 </span>
               </div>
@@ -245,9 +242,9 @@ function OverviewTab({data,billing,user}:{data:any;billing?:any;user?:CxUser|nul
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         <Card className="flex items-center gap-4">
-          <Donut data={[csat.five_star||0.01,csat.four_star||0.01,csat.three_star||0.01,csat.low_star||0.01]} colors={[T.green,'#50c878',T.amber,T.red]} size={120} thick={22} center={{val:String(csat.avg_csat??'—'),sub:'avg CSAT'}}/>
+          <Donut data={[csat.five_star||0.01,csat.four_star||0.01,csat.three_star||0.01,csat.low_star||0.01]} colors={[T.green,T.emerald,T.amber,T.red]} size={120} thick={22} center={{val:String(csat.avg_csat??'—'),sub:'avg CSAT'}}/>
           <div className="flex-1"><CT>⭐ CSAT Distribution</CT>
-            {[{label:'5★ Excellent',val:csat.five_star,color:T.green},{label:'4★ Good',val:csat.four_star,color:'#50c878'},{label:'3★ Neutral',val:csat.three_star,color:T.amber},{label:'1-2★ Poor',val:csat.low_star,color:T.red}].map((r,i)=>(
+            {[{label:'5★ Excellent',val:csat.five_star,color:T.green},{label:'4★ Good',val:csat.four_star,color:T.emerald},{label:'3★ Neutral',val:csat.three_star,color:T.amber},{label:'1-2★ Poor',val:csat.low_star,color:T.red}].map((r,i)=>(
               <div key={i} className="flex items-center gap-2 mb-1.5">
                 <div className="w-2 h-2 rounded-sm flex-shrink-0" style={{background:r.color}}/>
                 <div className="flex-1 text-[11px]" style={{color:T.tx2}}>{r.label}</div>
@@ -298,7 +295,7 @@ function SessionsTab({sessions,total,page,onPage,onOpen,selected,onBack}:any){
               {selected.flows.map((f:any,i:number)=>(
                 <div key={i} className={`flex gap-2 items-start ${f.speaker==='user'?'flex-row-reverse':''}`}>
                   <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold flex-shrink-0" style={{background:f.speaker==='user'?T.teal2:T.blue2,color:f.speaker==='user'?T.teal:T.blue}}>{f.speaker==='user'?'U':'AI'}</div>
-                  <div className="max-w-[70%]"><div className="px-3 py-2 rounded-xl text-[11px] leading-relaxed inline-block" style={{background:f.speaker==='user'?T.teal2:T.s2,border:`1px solid ${f.speaker==='user'?T.teal+'33':T.b1}`,color:T.tx}}>{f.text_input||f.text_output||'—'}</div></div>
+                  <div className="max-w-[70%]"><div className="px-3 py-2 rounded-xl text-[11px] leading-relaxed inline-block" style={{background:f.speaker==='user'?T.teal2:T.s2,border:`1px solid ${f.speaker==='user'?alpha(T.teal,'33'):T.b1}`,color:T.tx}}>{f.text_input||f.text_output||'—'}</div></div>
                 </div>
               ))}
             </div>
@@ -337,7 +334,7 @@ function SessionsTab({sessions,total,page,onPage,onOpen,selected,onBack}:any){
                 <td className="px-3 py-2 font-mono text-[10px]" style={{color:T.teal}}>{s.session_id.slice(-16)}</td>
                 <td className="px-3 py-2 text-[10px]" style={{color:T.tx2}}>{new Date(s.started_at).toLocaleString('en-IN',{dateStyle:'short',timeStyle:'short'})}</td>
                 <td className="px-3 py-2 font-mono text-[10px]" style={{color:T.tx2}}>{fmtDur(s.duration_sec)}</td>
-                <td className="px-3 py-2"><span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{background:`${STATUS[s.final_status||'']?.color||T.b2}22`,color:STATUS[s.final_status||'']?.color||T.tx3}}>{s.final_status||'in progress'}</span></td>
+                <td className="px-3 py-2"><span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{background:`${alpha(STATUS[s.final_status||'']?.color||T.b2,'22')}`,color:STATUS[s.final_status||'']?.color||T.tx3}}>{s.final_status||'in progress'}</span></td>
                 <td className="px-3 py-2 text-[10px]" style={{color:T.tx2}}>{s.session_language||'—'}</td>
                 <td className="px-3 py-2 text-[10px]" style={{color:T.tx3}}>{s.experience_level_final||'—'}</td>
                 <td className="px-3 py-2 font-bold text-[11px] text-center" style={{color:T.tx}}>{s.intents_count}</td>
@@ -409,14 +406,14 @@ function RecordingsTab({data}:{data:any}){
               <button
                 onClick={() => handlePlayClick(r.id, r.session_id)}
                 className="px-3 py-1.5 text-[9px] font-bold rounded transition-all hover:opacity-80"
-                style={{background:T.teal,color:'#000'}}>
+                style={{background:T.teal,color:T.onTeal}}>
                 ▶ Play
               </button>
             )}
           </div>
 
           {playingId === r.id && audioUrl && (
-            <div className="rounded-lg p-3 mb-3" style={{background:T.s3,border:`1px solid ${T.teal}33`}}>
+            <div className="rounded-lg p-3 mb-3" style={{background:T.s3,border:`1px solid ${alpha(T.teal,'33')}`}}>
               <audio controls style={{width:'100%'}} autoPlay>
                 <source src={audioUrl} type="audio/ogg" />
                 Your browser does not support audio playback.
@@ -460,7 +457,7 @@ function IntelTab({data}:{data:any}){
             const pct=total>0?Math.round((intent.total/total)*100):0
             return(<div key={i} className="flex items-center gap-2 mb-2 last:mb-0">
               <div className="text-right text-[10px] w-32 truncate font-mono" style={{color:T.tx2}}>{intent.intent_key}</div>
-              <div className="flex-1 h-[7px] rounded" style={{background:T.s2}}><div className="h-full rounded" style={{width:`${pct}%`,background:`linear-gradient(90deg,${icolors[i]||T.teal},${icolors[i]||T.teal}88)`}}/></div>
+              <div className="flex-1 h-[7px] rounded" style={{background:T.s2}}><div className="h-full rounded" style={{width:`${pct}%`,background:`linear-gradient(90deg,${icolors[i]||T.teal},${alpha(icolors[i]||T.teal,'88')})`}}/></div>
               <div className="font-mono text-[10px] w-8 text-right" style={{color:T.tx2}}>{intent.total}</div>
             </div>)
           })}
@@ -549,7 +546,7 @@ function QualityTab({data}:{data:any}){
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         <Card><CT>⭐ CSAT Breakdown</CT>
-          {[{label:'5★ Excellent',val:csat?.five_star,color:T.green},{label:'4★ Good',val:csat?.four_star,color:'#50c878'},{label:'3★ Neutral',val:csat?.three_star,color:T.amber},{label:'1-2★ Poor',val:csat?.low_star,color:T.red}].map((r,i)=>{
+          {[{label:'5★ Excellent',val:csat?.five_star,color:T.green},{label:'4★ Good',val:csat?.four_star,color:T.emerald},{label:'3★ Neutral',val:csat?.three_star,color:T.amber},{label:'1-2★ Poor',val:csat?.low_star,color:T.red}].map((r,i)=>{
             const pct=Math.round(((r.val||0)/(csat?.total_feedback||1))*100)
             return <HBar key={i} label={r.label} count={r.val??0} pct={pct} color={r.color}/>
           })}
@@ -626,8 +623,8 @@ function JourneyBar({current}:{current:string}){
                 style={{
                   background:done?T.teal:active?T.blue:'transparent',
                   borderColor:done?T.teal:active?T.blue:T.b2,
-                  color:done||active?'#000':T.tx3,
-                  boxShadow:active?`0 0 12px ${T.blue}44`:'none',
+                  color:done||active?T.onColor:T.tx3,
+                  boxShadow:active?`0 0 12px ${alpha(T.blue,'44')}`:'none',
                 }}>
                 {done?'✓':i+1}
               </div>
@@ -649,7 +646,7 @@ function PendingActionBtn({label,color,loading,onClick}:{label:string;color:stri
   return(
     <button onClick={onClick} disabled={loading}
       className="px-3 py-1.5 text-[9px] font-bold rounded transition-all hover:opacity-80 disabled:opacity-40"
-      style={{background:color,color:'#000'}}>
+      style={{background:color,color:T.onColor}}>
       {loading?'…':label}
     </button>
   )
@@ -809,7 +806,7 @@ function ProvisioningTab({user,data,pending,timeline,actionLoading,onAction,bill
                   Upgrade to {TIER_LABEL[d.next_stage.next_tier]||d.next_stage.next_tier}
                 </span>
                 <span className="px-1.5 py-0.5 text-[8px] rounded font-bold"
-                  style={{background:d.next_stage.approval_mode==='auto'?T.green+'22':T.amber2,color:d.next_stage.approval_mode==='auto'?T.green:T.amber}}>
+                  style={{background:d.next_stage.approval_mode==='auto'?alpha(T.green,'22'):T.amber2,color:d.next_stage.approval_mode==='auto'?T.green:T.amber}}>
                   {d.next_stage.approval_mode==='auto'?'AUTO-APPROVE':'MANUAL REVIEW'}
                 </span>
               </div>
@@ -1004,7 +1001,7 @@ function ProvisioningTab({user,data,pending,timeline,actionLoading,onAction,bill
               <div key={tier} className="mb-3 last:mb-0 rounded-lg p-3" style={{background:T.s2,border:`1px solid ${T.b1}`}}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-mono text-[11px] font-bold" style={{color:inf.color}}>{TIER_LABEL[tier]}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded" style={{background:`${inf.color}22`,color:inf.color}}>{count} tenant{count>1?'s':''}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded" style={{background:`${alpha(inf.color,'22')}`,color:inf.color}}>{count} tenant{count>1?'s':''}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                   {[{k:'Database',v:inf.db},{k:'Services',v:inf.services},{k:'Compute',v:inf.compute},{k:'Storage',v:inf.blob},{k:'Isolation',v:inf.isolation}].map(r=>(
@@ -1041,7 +1038,7 @@ function ProvisioningTab({user,data,pending,timeline,actionLoading,onAction,bill
             <div className="text-[9px] font-semibold mb-1" style={{color:T.tx3}}>Available Regions</div>
             <div className="flex flex-wrap gap-1">
               {REGION_OPTIONS.map(r=>(
-                <span key={r.code} className="text-[9px] px-1.5 py-0.5 rounded" style={{background:`${T.teal}11`,color:T.tx2}}>{r.flag} {r.azure}</span>
+                <span key={r.code} className="text-[9px] px-1.5 py-0.5 rounded" style={{background:`${alpha(T.teal,'11')}`,color:T.tx2}}>{r.flag} {r.azure}</span>
               ))}
             </div>
           </div>
@@ -1074,13 +1071,13 @@ function ProvisioningTab({user,data,pending,timeline,actionLoading,onAction,bill
                     <td className="px-3 py-2"><span className="text-[10px]" style={{color:T.tx2}}>{STAGE_LABEL[t.journey_stage]||t.journey_stage||'—'}</span></td>
                     <td className="px-3 py-2">
                       <span className="text-[9px] px-1.5 py-0.5 rounded font-medium"
-                        style={{background:`${PROV_STATUS_COLOR[t.provision_status]||T.tx3}22`,color:PROV_STATUS_COLOR[t.provision_status]||T.tx3}}>
+                        style={{background:`${alpha(PROV_STATUS_COLOR[t.provision_status]||T.tx3,'22')}`,color:PROV_STATUS_COLOR[t.provision_status]||T.tx3}}>
                         {(t.provision_status||'none').replace(/_/g,' ')}
                       </span>
                     </td>
                     <td className="px-3 py-2">
                       <span className="text-[9px] px-1.5 py-0.5 rounded font-bold"
-                        style={{background:`${appr.color}22`,color:appr.color}}>
+                        style={{background:`${alpha(appr.color,'22')}`,color:appr.color}}>
                         {appr.label}
                       </span>
                     </td>
@@ -1093,7 +1090,7 @@ function ProvisioningTab({user,data,pending,timeline,actionLoading,onAction,bill
                       <div className="text-[9px]" style={{color:T.tx2}}>{inf.db}</div>
                       <div className="text-[8px]" style={{color:T.tx3}}>{inf.services}</div>
                       {t.db_url&&(t.db_url.includes('azure')||t.db_url.includes('postgres.database.azure.com'))&&(
-                        <div className="text-[7px] font-bold mt-0.5 px-1 py-0.5 rounded inline-block" style={{background:`${T.teal}11`,color:T.teal}}>☁ AZURE</div>
+                        <div className="text-[7px] font-bold mt-0.5 px-1 py-0.5 rounded inline-block" style={{background:`${alpha(T.teal,'11')}`,color:T.teal}}>☁ AZURE</div>
                       )}
                     </td>
                     <td className="px-3 py-2 font-mono text-[10px]" style={{color:T.green}}>₹{fmt(t.est_monthly_cost_inr)}</td>
@@ -1103,7 +1100,7 @@ function ProvisioningTab({user,data,pending,timeline,actionLoading,onAction,bill
                     <td className="px-3 py-2 relative">
                       <button onClick={()=>{setManagingTenant(isManaging?null:t.tenant_key);setAzureResult(null);setVerifyResult(null)}}
                         className="px-2 py-1 text-[9px] font-bold rounded border transition-all hover:opacity-80"
-                        style={{borderColor:T.b2,color:isManaging?T.teal:T.tx3,background:isManaging?`${T.teal}11`:'transparent'}}>
+                        style={{borderColor:T.b2,color:isManaging?T.teal:T.tx3,background:isManaging?`${alpha(T.teal,'11')}`:'transparent'}}>
                         {isManaging?'✕ Close':'⚙ Manage'}
                       </button>
                     </td>
@@ -1120,7 +1117,7 @@ function ProvisioningTab({user,data,pending,timeline,actionLoading,onAction,bill
           const inf=TIER_INFRA[mt.tier]||TIER_INFRA.tier4
           const tiers=['tier4','tier3','tier2','tier1'].filter(x=>x!==mt.tier)
           return(
-            <div className="px-4 py-4" style={{background:T.s2,borderTop:`1px solid ${T.teal}33`}}>
+            <div className="px-4 py-4" style={{background:T.s2,borderTop:`1px solid ${alpha(T.teal,'33')}`}}>
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-2 h-6 rounded" style={{background:T.teal}}/>
                 <span className="text-[12px] font-bold" style={{color:T.tx}}>Managing: {mt.name||mt.tenant_key}</span>
@@ -1141,7 +1138,7 @@ function ProvisioningTab({user,data,pending,timeline,actionLoading,onAction,bill
                           className="px-2 py-1 text-[9px] font-bold rounded border transition-all"
                           style={{
                             borderColor:selected?TIER_COLOR[tier]||T.b2:T.b2,
-                            background:selected?`${TIER_COLOR[tier]||T.tx3}22`:'transparent',
+                            background:selected?`${alpha(TIER_COLOR[tier]||T.tx3,'22')}`:'transparent',
                             color:TIER_COLOR[tier]||T.tx3,
                           }}>
                           {dir==='upgrade'?'⬆':'⬇'} {tier}
@@ -1221,9 +1218,9 @@ function ProvisioningTab({user,data,pending,timeline,actionLoading,onAction,bill
                 <div className="flex items-center justify-between mb-2">
                   <div className="text-[9px] font-semibold uppercase tracking-wider" style={{color:T.tx3}}>☁️ Azure Database</div>
                   {mt.db_url&&(mt.db_url.includes('azure')||mt.db_url.includes('postgres.database.azure.com'))?(
-                    <span className="text-[9px] px-1.5 py-0.5 rounded font-bold" style={{background:`${T.teal}22`,color:T.teal}}>ON AZURE</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded font-bold" style={{background:`${alpha(T.teal,'22')}`,color:T.teal}}>ON AZURE</span>
                   ):(
-                    <span className="text-[9px] px-1.5 py-0.5 rounded font-bold" style={{background:`${T.amber}22`,color:T.amber}}>LOCAL</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded font-bold" style={{background:`${alpha(T.amber,'22')}`,color:T.amber}}>LOCAL</span>
                   )}
                 </div>
                 <div className="text-[10px] mb-2" style={{color:T.tx2}}>
@@ -1238,10 +1235,10 @@ function ProvisioningTab({user,data,pending,timeline,actionLoading,onAction,bill
                       <span className="text-[9px]" style={{color:T.tx3}}>Check connectivity + tables</span>
                     </div>
                     {verifyResult&&(
-                      <div className="rounded-lg p-2 mt-1" style={{background:T.s2,border:`1px solid ${verifyResult.ok?T.teal:T.red}33`}}>
+                      <div className="rounded-lg p-2 mt-1" style={{background:T.s2,border:`1px solid ${alpha(verifyResult.ok?T.teal:T.red,'33')}`}}>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-[10px] font-bold" style={{color:verifyResult.ok?T.teal:T.red}}>{verifyResult.ok?'✓ Connected':'✕ Failed'}</span>
-                          {verifyResult.is_azure&&<span className="text-[8px] px-1 py-0.5 rounded" style={{background:`${T.teal}11`,color:T.teal}}>Azure</span>}
+                          {verifyResult.is_azure&&<span className="text-[8px] px-1 py-0.5 rounded" style={{background:`${alpha(T.teal,'11')}`,color:T.teal}}>Azure</span>}
                         </div>
                         <div className="flex gap-3 text-[9px]" style={{color:T.tx3}}>
                           <span>Tables: <span className="font-mono" style={{color:verifyResult.has_tables?T.green:T.red}}>{verifyResult.has_tables?'✓':'✕'}</span></span>
@@ -1253,7 +1250,7 @@ function ProvisioningTab({user,data,pending,timeline,actionLoading,onAction,bill
                 ):(
                   <div className="flex flex-col gap-2">
                     {!(mt.data_region||mt.region_code)&&(
-                      <div className="text-[9px] px-2 py-1.5 rounded" style={{background:`${T.amber}11`,color:T.amber}}>
+                      <div className="text-[9px] px-2 py-1.5 rounded" style={{background:`${alpha(T.amber,'11')}`,color:T.amber}}>
                         ⚠ Set a data region above before provisioning on Azure
                       </div>
                     )}
@@ -1264,7 +1261,7 @@ function ProvisioningTab({user,data,pending,timeline,actionLoading,onAction,bill
                       <span className="text-[9px]" style={{color:T.tx3}}>Create DB + copy schema + bootstrap</span>
                     </div>
                     {azureResult&&(
-                      <div className="rounded-lg p-2 mt-1" style={{background:T.s2,border:`1px solid ${azureResult.ok?T.green:T.red}33`}}>
+                      <div className="rounded-lg p-2 mt-1" style={{background:T.s2,border:`1px solid ${alpha(azureResult.ok?T.green:T.red,'33')}`}}>
                         <div className="text-[10px] font-bold mb-1" style={{color:azureResult.ok?T.green:T.red}}>
                           {azureResult.ok?'✓ Provisioned on Azure':'✕ Failed'}
                         </div>
@@ -1438,14 +1435,14 @@ export default function DashboardPage(){
         <div className="flex rounded-lg overflow-hidden border" style={{borderColor:T.b2,background:T.s1}}>
           {[1,7,30].map(d=>(
             <button key={d} onClick={()=>setDays(d)} className="px-3 py-1 text-[10px] font-bold transition-all"
-              style={{background:days===d?T.teal:'transparent',color:days===d?'#000':T.tx3}}>
+              style={{background:days===d?T.teal:'transparent',color:days===d?T.onTeal:T.tx3}}>
               {d===1?'Today':`${d}d`}
             </button>
           ))}
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-5">
-        {error&&<div className="mb-4 px-4 py-2.5 rounded-lg text-[11px]" style={{background:T.red2,color:T.red,border:`1px solid ${T.red}33`}}>{error}</div>}
+        {error&&<div className="mb-4 px-4 py-2.5 rounded-lg text-[11px]" style={{background:T.red2,color:T.red,border:`1px solid ${alpha(T.red,'33')}`}}>{error}</div>}
         {loading?(
           <div className="flex items-center justify-center h-32"><div className="text-[11px] animate-pulse" style={{color:T.tx3}}>Loading…</div></div>
         ):(

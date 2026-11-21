@@ -50,24 +50,69 @@ const walk = d => readdirSync(d).flatMap(f => { const p = path.join(d, f); retur
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const files = walk(path.join(root, 'src')).map(p => [path.relative(root, p), read(path.relative(root, p))])
 const reg = new Set(TH.TINTS.map(([a, b]) => `${a}:${b}`))
-// dynamic token variables → every token they can hold
-const DYN = {
-  rt: ['amber', 'teal', 'blue', 'tx2', 'tx3'], roleToken: ['amber', 'teal', 'blue', 'tx2'],
-  'r.tok': ['teal', 'blue', 'tx2'], 'x.tok': ['amber', 'blue', 'teal', 'purple', 'red'],
-}
-await t('registry covers every tint() call in src (literal and role-token variables)', () => {
+await t('every tint()/alpha() call in src uses a registered alpha; literal tokens are colour tokens', () => {
   let n = 0
   for (const [f, src] of files) {
-    for (const m of src.matchAll(/\btint\(\s*([^,()]+?)\s*,\s*'([^']+)'\s*\)/g)) {
-      const [, tokExpr, a] = m
-      const lit = /^'(\w+)'$/.exec(tokExpr)
-      const toks = lit ? [lit[1]] : DYN[tokExpr]
-      assert.ok(toks, `${f}: unknown dynamic tint token ${tokExpr}`)
-      for (const tok of toks) assert.ok(reg.has(`${tok}:${a}`), `${f}: tint(${tok}, ${a}) not registered`)
+    if (f.endsWith('lib/theme.ts')) continue
+    for (const m of src.matchAll(/\b(tint|alpha)\(\s*([^,()]+?|[^,]*\([^)]*\)[^,]*)\s*,\s*'([^']+)'\s*\)/g)) {
+      const [, fn, tokExpr, a] = m
+      assert.ok(TH.ALPHAS.includes(a), `${f}: ${fn}(…, '${a}') — alpha not in ALPHAS`)
+      const lit = /^'(\w+)'$/.exec(tokExpr.trim())
+      if (fn === 'tint' && lit) assert.ok(reg.has(`${lit[1]}:${a}`), `${f}: tint(${lit[1]}, ${a}) not registered`)
       n++
     }
   }
-  assert.ok(n >= 40, `found ${n} tint() calls`)
+  assert.ok(n >= 300, `found ${n} tint()/alpha() calls`)
+})
+await t('alpha() maps a T value back to its tint; raw hex keeps the legacy string', () => {
+  assert.equal(TH.alpha(TH.T.teal, '22'), TH.tint('teal', '22'))
+  assert.equal(TH.alpha(TH.T_DASH.blue, '44'), 'var(--brand-blue-alt-a44, #3D85E044)')
+  assert.equal(TH.alpha(TH.T_DASH.tx3, '30'), TH.tint('tx3Dim', '30'))
+  assert.equal(TH.alpha('#50c878', '22'), '#50c87822')
+  assert.equal(TH.alpha(TH.T.strong, '.8'), 'var(--brand-strong-ad8, rgba(255,255,255,.8))')
+})
+await t('merged palettes keep each page\'s exact values (R90)', () => {
+  assert.equal(TH.T_DASH.blue, TH.T.blueAlt); assert.equal(TH.T_DASH.tx3, TH.T.tx3Dim)
+  assert.equal(TH.T_SESSION.blue, TH.T.blueAlt); assert.equal(TH.T_SESSION.tx3, TH.T.tx3)
+  for (const f of ['src/app/dashboard/page.tsx', 'src/components/dashboard/TelephonyTab.tsx', 'src/app/dashboard/session/[id]/page.tsx',
+    'src/components/auth/SignUpModal.tsx', 'src/components/dashboard/MigrationLeads.tsx', 'src/app/migrate/page.tsx'])
+    assert.doesNotMatch(read(f), /^const (T|colors) = \{\s*\n?\s*(teal|bg)\s*:/m, `${f}: local palette still defined`)
+})
+await t('no string-built ${colour}hh in files that use theme tokens (var() + "hh" is invalid CSS)', () => {
+  const RAW_OK = /pv\.accent|brand\.accent/          // raw validated brand hex (Settings preview, header plate) — not tokens
+  for (const [f, src] of files) {
+    if (!/from '(@\/lib\/theme|\.\/theme)'/.test(src) || f.endsWith('lib/theme.ts')) continue
+    src.split('\n').forEach((line, i) => {
+      if (RAW_OK.test(line) || /^\s*(\/\/|\*|\/\*)/.test(line)) return
+      assert.doesNotMatch(line, /\$\{[^}]+\}[0-9a-fA-F]{2}\b(?![-\w])/, `${f}:${i + 1}: string-built alpha — use alpha()/tint()`)
+      assert.doesNotMatch(line, /[\w.\])]+ ?\+ ?'[0-9a-fA-F]{2}'/, `${f}:${i + 1}: colour + 'hh' — use alpha()`)
+    })
+  }
+})
+await t('no AiIVRs palette hex left in the STEP 1/2 files (outside var() fallbacks, the logo and data comparisons)', () => {
+  const PALETTE = /'#(00c9b1|3370e8|f5a623|f03060|00de7a|8b5cf6|7a90b5|4a5f80|364d6a|3d85e0|dde6f5|080d18|0d1526|111d30|16243a|1c2d45|243558|f87171|22c55e|f59e0b|000|fff)'/i
+  const SCOPE = ['src/app/dashboard/page.tsx', 'src/components/dashboard/TelephonyTab.tsx', 'src/components/dashboard/MigrationLeads.tsx',
+    'src/app/dashboard/session/[id]/page.tsx', 'src/app/migrate/page.tsx', 'src/app/experience/page.tsx', 'src/components/call/IvrDialpad.tsx',
+    'src/components/call/NudgeSystem.tsx', 'src/components/demo/PostCallBoxes.tsx', 'src/components/demo/ConversionCTA.tsx',
+    'src/components/demo/InfraMigrationDemo.tsx', 'src/components/demo/PostCallCelebration.tsx', 'src/components/auth/SignUpModal.tsx',
+    'src/components/homepage/FloatingIVRBar.tsx', 'src/components/homepage/HomepageSections.tsx',
+    'src/components/layout/UnifiedHeader.tsx', 'src/app/account/page.tsx', 'src/app/settings/team/page.tsx', 'src/app/settings/branding/page.tsx']
+  const OK = /var\(--|jConfig\?\.color === '#f03060' \? '#fff' : '#000'|#3370e8,#0ea8b8|Converse<span|background: '#FFFFFF'|'#000000'/
+  for (const f of SCOPE) read(f).split('\n').forEach((line, i) => {
+    if (OK.test(line)) return
+    assert.doesNotMatch(line, PALETTE, `${f}:${i + 1}: raw palette colour`)
+  })
+})
+await t('light accents stay >= 4.5:1 on their own 20% tint (badges/chips)', () => {
+  const mix = (c, s, a) => '#' + [1, 3, 5].map(i => Math.round(parseInt(c.slice(i, i + 2), 16) * a + parseInt(s.slice(i, i + 2), 16) * (1 - a)).toString(16).padStart(2, '0')).join('')
+  for (const tok of B.TEXT_TOKENS) {
+    const c = B.LIGHT[tok]
+    for (const s of B.LIGHT_SURFACES) assert.ok(C.contrastRatio(c, mix(c, s, B.TINT_CEILING)) >= 4.5, `${tok} ${c} on its tint over ${s}`)
+  }
+  for (const hex of ['#F54D1D', '#C43E17', '#00C9B1', '#FFD400']) {
+    const c = B.lightAccent(hex)
+    assert.ok(C.contrastRatio(c, mix(c, '#FFFFFF', B.TINT_CEILING)) >= 4.5 && C.contrastRatio(c, '#FFFFFF') >= 4.5, `${hex} → ${c}`)
+  }
 })
 await t('no string-built colours left in the B4 Step 1 files', () => {
   const step1 = ['src/components/layout/UnifiedHeader.tsx', 'src/app/account/page.tsx', 'src/app/settings/team/page.tsx', 'src/app/settings/branding/page.tsx']

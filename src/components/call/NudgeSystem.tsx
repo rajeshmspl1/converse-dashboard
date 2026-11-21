@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { getSentences, CHIP_DATA, SENTENCES, JOURNEY_CONFIGS } from '@/lib/journeyData'
 import type { IndustryKey } from '@/lib/journeyData'
+import { T, tint } from '@/lib/theme'
 
 interface Props {
   demoStep: number
@@ -19,7 +20,7 @@ type NudgePhase = 'connecting' | 'live'
 export default function NudgeSystem({ demoStep, callActive, intentDetected, callerCountry, initialIndustry, onIndustryChange, isUploadedTenant, tenantDisplayName }: Props) {
   const [phase, setPhase] = useState<NudgePhase>('connecting')
   const [connectText, setConnectText] = useState('Connecting you...')
-  const [connectColor, setConnectColor] = useState('#f5a623')
+  const [connectColor, setConnectColor] = useState<string>(T.amber)
   const [sentence, setSentence] = useState('')
   const [sentenceOpacity, setSentenceOpacity] = useState(0)
   const [sentenceIsOr, setSentenceIsOr] = useState(false)
@@ -45,7 +46,7 @@ export default function NudgeSystem({ demoStep, callActive, intentDetected, call
     if (!callActive) return
     setPhase('connecting')
     setConnectText('Connecting you...')
-    setConnectColor('#f5a623')
+    setConnectColor(T.amber)
     setSuggestionsVisible(false)
     setIndustry(initialIndustry || null)
     nudgeIdxRef.current = 0
@@ -54,7 +55,7 @@ export default function NudgeSystem({ demoStep, callActive, intentDetected, call
     const t1 = setTimeout(() => {
       if (!mountedRef.current) return
       setConnectText('Connected')
-      setConnectColor('#00de7a')
+      setConnectColor(T.green)
     }, 3000)
 
     // Step 2: After 3.8s, show suggestions (ALL journeys now)
@@ -162,7 +163,7 @@ export default function NudgeSystem({ demoStep, callActive, intentDetected, call
                 opacity: sentenceOpacity,
                 fontSize: sentenceIsOr ? '14px' : '18px',
                 fontWeight: 600,
-                color: sentenceIsOr ? 'var(--dim, #3d5570)' : '#00c9b1',
+                color: sentenceIsOr ? 'var(--dim, #3d5570)' : T.teal,
                 maxWidth: 460,
               }}>
               {sentence}
@@ -184,9 +185,9 @@ export default function NudgeSystem({ demoStep, callActive, intentDetected, call
                     onClick={() => handleIndustrySwitch(key)}
                     className="px-3 py-1.5 rounded-md text-[10px] cursor-pointer transition-all border"
                     style={{
-                      background: industry === key ? 'rgba(0,201,177,.1)' : 'var(--card2, #121e2d)',
-                      borderColor: industry === key ? '#00c9b1' : 'var(--b1, #1a2b40)',
-                      color: industry === key ? '#00c9b1' : 'var(--dim, #3d5570)',
+                      background: industry === key ? tint('teal', '.1') : 'var(--card2, #121e2d)',
+                      borderColor: industry === key ? T.teal : 'var(--b1, #1a2b40)',
+                      color: industry === key ? T.teal : 'var(--dim, #3d5570)',
                     }}>
                     {label}
                   </button>
@@ -198,7 +199,7 @@ export default function NudgeSystem({ demoStep, callActive, intentDetected, call
           {/* Country indicator — shows which country's prompts are active */}
           {callerCountry && callerCountry !== 'India' && (
             <div className="text-center mt-2">
-              <span className="text-[8px] px-2 py-0.5 rounded" style={{ background: 'rgba(51,112,232,.08)', color: 'var(--dim)' }}>
+              <span className="text-[8px] px-2 py-0.5 rounded" style={{ background: tint('blue', '.08'), color: 'var(--dim)' }}>
                 🌐 Showing {callerCountry} intents
               </span>
             </div>

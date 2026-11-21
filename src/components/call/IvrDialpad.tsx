@@ -1,4 +1,5 @@
 'use client'
+import { T, tint } from '@/lib/theme'
 
 const KEYS = [
   { digit: '1', sub: '' },
@@ -35,14 +36,14 @@ export default function IvrDialpad({ visible, onPress, lastDigit, trigger }: Pro
       <div
         className="rounded-xl border-2 p-4 mt-2"
         style={{
-          background: '#0a1a0f',
-          borderColor: '#22c55e',
-          boxShadow: '0 0 24px rgba(34,197,94,0.1)',
+          background: T.padBg,
+          borderColor: T.ok,
+          boxShadow: `0 0 24px ${tint('ok', '.1')}`,
         }}
       >
         {/* Header */}
         <div className="text-center mb-3">
-          <div className="text-[12px] font-bold uppercase tracking-widest" style={{ color: '#22c55e' }}>
+          <div className="text-[12px] font-bold uppercase tracking-widest" style={{ color: T.ok }}>
             IVR Navigation Active
           </div>
           <div className="text-[10px] mt-0.5" style={{ color: 'var(--dim)' }}>
@@ -51,7 +52,7 @@ export default function IvrDialpad({ visible, onPress, lastDigit, trigger }: Pro
           {trigger && (
             <div
               className="inline-block mt-1.5 px-2 py-px rounded text-[9px] font-mono"
-              style={{ background: '#1a2e1f', color: '#4ade80' }}
+              style={{ background: T.padKeyHi, color: T.padLit }}
             >
               trigger: {trigger}
             </div>
@@ -66,9 +67,9 @@ export default function IvrDialpad({ visible, onPress, lastDigit, trigger }: Pro
               onMouseDown={() => onPress(digit)}
               className="rounded-xl border flex flex-col items-center justify-center py-3 transition-all active:scale-95 select-none cursor-pointer"
               style={{
-                background: lastDigit === digit ? '#22c55e' : '#0f2518',
-                borderColor: lastDigit === digit ? '#22c55e' : '#1e3a2a',
-                color: lastDigit === digit ? '#000' : '#e0e4ec',
+                background: lastDigit === digit ? T.ok : T.padKey,
+                borderColor: lastDigit === digit ? T.ok : T.padEdge,
+                color: lastDigit === digit ? T.onColor : T.padText,
                 fontSize: '22px',
                 fontWeight: 700,
                 minHeight: '56px',
@@ -78,7 +79,7 @@ export default function IvrDialpad({ visible, onPress, lastDigit, trigger }: Pro
               {sub && (
                 <span
                   className="text-[7px] font-normal tracking-widest mt-0.5"
-                  style={{ color: lastDigit === digit ? '#064e3b' : '#4b5563' }}
+                  style={{ color: lastDigit === digit ? T.padSub : T.padDim }}
                 >
                   {sub}
                 </span>
@@ -92,7 +93,7 @@ export default function IvrDialpad({ visible, onPress, lastDigit, trigger }: Pro
           {lastDigit && (
             <span
               className="font-mono text-[11px] px-2.5 py-0.5 rounded"
-              style={{ background: '#0f2518', color: '#22c55e' }}
+              style={{ background: T.padKey, color: T.ok }}
             >
               Sent: {lastDigit}
             </span>

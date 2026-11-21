@@ -1,18 +1,10 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { signup, verifyOtp, resendOtp, isLoggedIn, collectDemoSessionIds, claimDemoSessions, type SignupPayload } from '@/lib/auth'
+import { T as TT, alpha, tint } from '@/lib/theme'
 
-// ── Design tokens (matches existing Converse AI theme) ──
-const T = {
-  teal: '#00c9b1', tealBg: 'rgba(0,201,177,.08)', tealBorder: 'rgba(0,201,177,.25)',
-  blue: '#3370e8', purple: '#8b5cf6',
-  red: '#f03060', redBg: 'rgba(240,48,96,.08)',
-  amber: '#f5a623',
-  tx: '#dde6f5', tx2: '#7a90b5', tx3: '#4a5f80',
-  bg: '#080d18', s1: '#0d1526', s2: '#111d30', s3: '#16243a',
-  b1: '#1c2d45', b2: '#243558',
-  overlay: 'rgba(4,8,18,.85)',
-}
+// ── Design tokens: theme.ts T (merged — R90) + this modal's three tints ──
+const T = { ...TT, tealBg: tint('teal', '.08'), tealBorder: tint('teal', '.25'), redBg: tint('red', '.08') }
 
 interface SignUpModalProps {
   open: boolean
@@ -211,7 +203,7 @@ export default function SignUpModal({ open, onClose, source = 'homepage', onSucc
         style={{
           background: T.s1,
           borderColor: T.b1,
-          boxShadow: `0 24px 80px rgba(0,0,0,.6), 0 0 0 1px ${T.b1}, inset 0 1px 0 rgba(255,255,255,.03)`,
+          boxShadow: `0 24px 80px ${tint('shade', '.6')}, 0 0 0 1px ${T.b1}, inset 0 1px 0 ${tint('veil', '.03')}`,
           animation: 'slideUp .3s ease-out',
         }}>
 
@@ -246,7 +238,7 @@ export default function SignUpModal({ open, onClose, source = 'homepage', onSucc
                 style={{
                   background: step === 'form' ? T.teal : 'transparent',
                   border: `2px solid ${T.teal}`,
-                  color: step === 'form' ? '#000' : T.teal,
+                  color: step === 'form' ? T.onTeal : T.teal,
                 }}>1</div>
               <span className="text-[10px] font-medium" style={{ color: step === 'form' ? T.teal : T.tx3 }}>Details</span>
             </div>
@@ -256,7 +248,7 @@ export default function SignUpModal({ open, onClose, source = 'homepage', onSucc
                 style={{
                   background: step === 'otp' ? T.teal : 'transparent',
                   border: `2px solid ${step === 'otp' ? T.teal : T.b2}`,
-                  color: step === 'otp' ? '#000' : T.tx3,
+                  color: step === 'otp' ? T.onTeal : T.tx3,
                 }}>2</div>
               <span className="text-[10px] font-medium" style={{ color: step === 'otp' ? T.teal : T.tx3 }}>Verify</span>
             </div>
@@ -266,7 +258,7 @@ export default function SignUpModal({ open, onClose, source = 'homepage', onSucc
         {/* ── Error banner ── */}
         {error && (
           <div className="mx-6 mb-3 px-3 py-2 rounded-lg text-[11px]"
-            style={{ background: T.redBg, color: T.red, border: `1px solid ${T.red}22` }}>
+            style={{ background: T.redBg, color: T.red, border: `1px solid ${alpha(T.red, '22')}` }}>
             {error}
           </div>
         )}
@@ -357,12 +349,12 @@ export default function SignUpModal({ open, onClose, source = 'homepage', onSucc
               className="w-full mt-4 py-3 rounded-xl text-[14px] font-bold transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:translate-y-0"
               style={{
                 background: loading
-                  ? `linear-gradient(90deg, ${T.teal}80, ${T.blue}80, ${T.teal}80)`
+                  ? `linear-gradient(90deg, ${alpha(T.teal, '80')}, ${alpha(T.blue, '80')}, ${alpha(T.teal, '80')})`
                   : T.teal,
                 backgroundSize: loading ? '200% 100%' : 'auto',
                 animation: loading ? 'shimmer 1.5s linear infinite' : 'none',
-                color: '#000', border: 'none', cursor: loading ? 'wait' : 'pointer',
-                boxShadow: `0 4px 16px rgba(0,201,177,.25)`,
+                color: T.onTeal, border: 'none', cursor: loading ? 'wait' : 'pointer',
+                boxShadow: `0 4px 16px ${tint('teal', '.25')}`,
               }}>
               {loading ? 'Sending code…' : 'Get Verification Code →'}
             </button>
@@ -407,7 +399,7 @@ export default function SignUpModal({ open, onClose, source = 'homepage', onSucc
                   style={{
                     background: digit ? T.s3 : T.s2,
                     color: T.tx,
-                    border: digit ? `2px solid ${T.teal}50` : `2px solid ${T.b2}`,
+                    border: digit ? `2px solid ${alpha(T.teal, '50')}` : `2px solid ${T.b2}`,
                     caretColor: T.teal,
                   }}
                 />
@@ -421,13 +413,13 @@ export default function SignUpModal({ open, onClose, source = 'homepage', onSucc
               className="w-full py-3 rounded-xl text-[14px] font-bold transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:translate-y-0"
               style={{
                 background: loading
-                  ? `linear-gradient(90deg, ${T.teal}80, ${T.blue}80, ${T.teal}80)`
+                  ? `linear-gradient(90deg, ${alpha(T.teal, '80')}, ${alpha(T.blue, '80')}, ${alpha(T.teal, '80')})`
                   : T.teal,
                 backgroundSize: loading ? '200% 100%' : 'auto',
                 animation: loading ? 'shimmer 1.5s linear infinite' : 'none',
-                color: '#000', border: 'none',
+                color: T.onTeal, border: 'none',
                 cursor: loading ? 'wait' : otp.join('').length < 6 ? 'not-allowed' : 'pointer',
-                boxShadow: otp.join('').length === 6 ? `0 4px 16px rgba(0,201,177,.25)` : 'none',
+                boxShadow: otp.join('').length === 6 ? `0 4px 16px ${tint('teal', '.25')}` : 'none',
               }}>
               {loading ? 'Verifying…' : 'Verify & Sign In'}
             </button>

@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { T, tint } from '@/lib/theme'
 
 interface Props {
   visible: boolean
@@ -14,14 +15,14 @@ export default function FloatingIVRBar({ visible, onClose }: Props) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[45] px-5 py-2.5 flex items-center justify-center gap-2.5 flex-wrap"
       style={{
-        background: 'rgba(13,21,38,.96)',
+        background: tint('s1', '.96'),
         backdropFilter: 'blur(12px)',
         borderTop: '1px solid var(--b1)',
         animation: 'slideUp .3s ease',
       }}>
       <style>{`@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }`}</style>
 
-      <span className="text-[11px]" style={{ color: 'var(--tx2, #7a90b5)' }}>📱 Connect your IVR:</span>
+      <span className="text-[11px]" style={{ color: T.tx2 }}>📱 Connect your IVR:</span>
       <input
         type="tel"
         placeholder="Enter your IVR number"
@@ -30,15 +31,15 @@ export default function FloatingIVRBar({ visible, onClose }: Props) {
         className="px-3.5 py-2.5 rounded-[7px] border text-[13px] outline-none w-[280px]"
         style={{
           borderColor: 'var(--b2, #243558)',
-          background: 'var(--s2, #111d30)',
-          color: 'var(--tx, #dde6f5)',
+          background: T.s2,
+          color: T.tx,
           fontFamily: 'inherit',
         }}
       />
       <button
         onClick={() => alert('Connecting IVR: ' + ivrNumber)}
         className="px-5 py-2.5 rounded-[7px] border-none text-[12px] font-bold cursor-pointer"
-        style={{ background: '#8b5cf6', color: '#fff' }}>
+        style={{ background: T.purple, color: T.white }}>
         Connect →
       </button>
       <span className="text-[10px]" style={{ color: 'var(--tx3)' }}>or</span>

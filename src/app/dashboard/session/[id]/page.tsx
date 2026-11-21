@@ -7,6 +7,7 @@ import { JOURNEY_CONFIGS } from '@/lib/journeyData'
 import type { Currency } from '@/types'
 import UnifiedHeader from '@/components/layout/UnifiedHeader'
 import SignUpModal from '@/components/auth/SignUpModal'
+import { T_SESSION, alpha, tint } from '@/lib/theme'
 
 interface StoredIntent { key: string; exp: number; cost: number; latencyMs: number; wasPromoted: boolean; ts: number }
 interface StoredSession {
@@ -18,13 +19,8 @@ interface StoredSession {
 
 const SESSION_EXPIRY_MS = 8 * 60 * 60 * 1000
 
-const T = {
-  teal:'#00c9b1',teal2:'rgba(0,201,177,.12)',amber:'#f5a623',amber2:'rgba(245,166,35,.12)',
-  red:'#f03060',red2:'rgba(240,48,96,.12)',green:'#00de7a',green2:'rgba(0,222,122,.12)',
-  blue:'#3d85e0',blue2:'rgba(61,133,224,.12)',purple:'#8b5cf6',purple2:'rgba(139,92,246,.12)',
-  tx:'#dde6f5',tx2:'#7a90b5',tx3:'#4a5f80',
-  bg:'#080d18',s1:'#0d1526',s2:'#111d30',s3:'#16243a',b1:'#1c2d45',b2:'#243558',
-}
+// Local palette merged into theme.ts (R90): T_SESSION = theme tokens with this page's blue #3D85E0.
+const T = T_SESSION
 
 function Kpi({label,value,sub,color=T.tx}:{label:string;value:string;sub?:string;color?:string}){
   return(<div className="rounded-xl border p-4" style={{background:T.s1,borderColor:T.b1}}>
@@ -63,10 +59,10 @@ function Gauge({pct,value,label,color}:{pct:number;value:string;label:string;col
   return(
     <div className="flex flex-col items-center">
       <svg width="180" height="100" viewBox="0 0 180 100">
-        <path d={`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`} fill="none" stroke={T.b1} strokeWidth="12" strokeLinecap="round"/>
-        {pct>0&&<path d={`M ${x1} ${y1} A ${r} ${r} 0 ${la} 1 ${x2} ${y2}`} fill="none" stroke={color} strokeWidth="12" strokeLinecap="round"/>}
-        <text x={cx} y={cy-8} textAnchor="middle" fill={color} fontSize="22" fontWeight="700">{value}</text>
-        <text x={cx} y={cy+8} textAnchor="middle" fill={T.tx3} fontSize="9">{label}</text>
+        <path d={`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`} fill="none" style={{stroke:T.b1}} strokeWidth="12" strokeLinecap="round"/>
+        {pct>0&&<path d={`M ${x1} ${y1} A ${r} ${r} 0 ${la} 1 ${x2} ${y2}`} fill="none" style={{stroke:color}} strokeWidth="12" strokeLinecap="round"/>}
+        <text x={cx} y={cy-8} textAnchor="middle" style={{fill:color}} fontSize="22" fontWeight="700">{value}</text>
+        <text x={cx} y={cy+8} textAnchor="middle" style={{fill:T.tx3}} fontSize="9">{label}</text>
       </svg>
     </div>
   )
@@ -74,11 +70,11 @@ function Gauge({pct,value,label,color}:{pct:number;value:string;label:string;col
 
 function UpgradeBanner({message,onMigrate}:{message:string;onMigrate?:()=>void}){
   return(
-    <div className="rounded-xl border p-6 text-center" style={{background:'linear-gradient(135deg, rgba(0,201,177,.04), rgba(59,130,246,.04))',borderColor:`${T.teal}20`}}>
+    <div className="rounded-xl border p-6 text-center" style={{background:`linear-gradient(135deg, ${tint('teal','.04')}, ${tint('azure','.04')})`,borderColor:alpha(T.teal,'20')}}>
       <div className="text-[13px] mb-1 font-semibold">{message}</div>
       <div className="text-[11px] mb-3" style={{color:T.tx3}}>Migrate your IVR to access aggregate analytics across all your calls.</div>
       <button onClick={()=>onMigrate?.()} className="px-5 py-2 rounded-lg text-[11px] font-bold border-none cursor-pointer"
-        style={{background:T.teal,color:'#000'}}>📱 Migrate Your IVR</button>
+        style={{background:T.teal,color:T.onTeal}}>📱 Migrate Your IVR</button>
       <div className="text-[9px] mt-1.5" style={{color:T.tx3}}>Zero integration · Zero cost · In 17 minutes</div>
     </div>
   )
@@ -124,7 +120,7 @@ export default function SessionDashboard() {
         <p className="text-[14px] mb-6" style={{color:T.tx2}}>Demo sessions are available for 8 hours. Migrate your IVR for permanent access.</p>
         <div className="flex gap-3 justify-center">
           <button onClick={()=>router.push('/')} className="px-6 py-2.5 rounded-lg text-[13px] font-semibold border cursor-pointer" style={{borderColor:T.b2,color:T.tx,background:'transparent'}}>← Back to Home</button>
-          <button onClick={()=>setShowSignUp(true)} className="px-6 py-2.5 rounded-lg text-[13px] font-bold border-none cursor-pointer" style={{background:T.teal,color:'#000'}}>📱 Migrate Your IVR</button>
+          <button onClick={()=>setShowSignUp(true)} className="px-6 py-2.5 rounded-lg text-[13px] font-bold border-none cursor-pointer" style={{background:T.teal,color:T.onTeal}}>📱 Migrate Your IVR</button>
         </div>
       </div>
     </div>
@@ -142,7 +138,7 @@ export default function SessionDashboard() {
         <div className="text-[48px] mb-4">🔍</div>
         <h1 className="text-[24px] font-bold mb-2">Session Not Found</h1>
         <p className="text-[14px] mb-6" style={{color:T.tx2}}>This session may have expired or the link is invalid.</p>
-        <button onClick={()=>router.push('/experience')} className="px-6 py-2.5 rounded-lg text-[13px] font-bold border-none cursor-pointer" style={{background:T.teal,color:'#000'}}>📞 Try a Demo Call</button>
+        <button onClick={()=>router.push('/experience')} className="px-6 py-2.5 rounded-lg text-[13px] font-bold border-none cursor-pointer" style={{background:T.teal,color:T.onTeal}}>📞 Try a Demo Call</button>
       </div>
     </div>
   )
@@ -218,7 +214,7 @@ export default function SessionDashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               <Card><CT>🧠 Multi-Modal LLM Stack</CT>
                 <div className="flex gap-2 flex-wrap mb-3">
-                  {session.stack.map(s=>(<span key={s} className="px-3 py-1.5 rounded-lg text-[11px] font-semibold border" style={{background:'rgba(0,201,177,.08)',color:T.teal,borderColor:T.b1}}>{s}</span>))}
+                  {session.stack.map(s=>(<span key={s} className="px-3 py-1.5 rounded-lg text-[11px] font-semibold border" style={{background:tint('teal','.08'),color:T.teal,borderColor:T.b1}}>{s}</span>))}
                 </div>
                 <div className="flex flex-col gap-1">
                   {[{l:'Journey',v:session.journeyName},{l:'Experience',v:session.journeyExp},{l:'Duration',v:`${session.duration}s (${durStr})`},{l:'Session ID',v:session.displayId}].map((r,i)=>(
@@ -272,13 +268,13 @@ export default function SessionDashboard() {
                 {session.transcript.map((tx,i)=>(
                   <div key={i} className={`flex gap-2 items-start ${tx.who==='user'?'flex-row-reverse':''}`}>
                     <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold flex-shrink-0"
-                      style={{background:tx.who==='user'?T.teal2:tx.who==='ai'?T.blue2:'rgba(255,255,255,.05)',
+                      style={{background:tx.who==='user'?T.teal2:tx.who==='ai'?T.blue2:tint('veil','.05'),
                         color:tx.who==='user'?T.teal:tx.who==='ai'?T.blue:T.tx3}}>
                       {tx.who==='user'?'U':tx.who==='ai'?'AI':'S'}
                     </div>
                     <div className="max-w-[70%]">
                       <div className="px-3 py-2 rounded-xl text-[11px] leading-relaxed inline-block"
-                        style={{background:tx.who==='user'?T.teal2:T.s2,border:`1px solid ${tx.who==='user'?T.teal+'33':T.b1}`,color:T.tx}}>
+                        style={{background:tx.who==='user'?T.teal2:T.s2,border:`1px solid ${tx.who==='user'?alpha(T.teal,'33'):T.b1}`,color:T.tx}}>
                         {tx.text}
                       </div>
                       {tx.meta&&<div className="text-[8px] mt-0.5 px-1 font-mono" style={{color:T.amber}}>{tx.meta}</div>}
@@ -362,7 +358,7 @@ export default function SessionDashboard() {
                     }}
                     disabled={audioLoading}
                     className="px-4 py-2 text-[11px] font-bold rounded-lg transition-all hover:opacity-90 cursor-pointer"
-                    style={{background:T.teal,color:'#000'}}>
+                    style={{background:T.teal,color:T.onTeal}}>
                     {audioLoading ? '⏳ Loading...' : '▶ Play Recording'}
                   </button>
                 )}
@@ -370,7 +366,7 @@ export default function SessionDashboard() {
 
               {/* Audio player */}
               {audioUrl && (
-                <div className="rounded-lg p-3 mb-3" style={{background:T.s3,border:`1px solid ${T.teal}33`}}>
+                <div className="rounded-lg p-3 mb-3" style={{background:T.s3,border:`1px solid ${alpha(T.teal,'33')}`}}>
                   <div className="text-[9px] font-semibold uppercase tracking-wider mb-2" style={{color:T.teal}}>🎧 Listen to your call</div>
                   <audio controls style={{width:'100%'}} autoPlay>
                     <source src={audioUrl} type="audio/ogg" />
@@ -381,7 +377,7 @@ export default function SessionDashboard() {
               )}
 
               {audioError && (
-                <div className="rounded-lg p-3 mb-3 text-[11px]" style={{background:T.amber2,color:T.amber,border:`1px solid ${T.amber}33`}}>
+                <div className="rounded-lg p-3 mb-3 text-[11px]" style={{background:T.amber2,color:T.amber,border:`1px solid ${alpha(T.amber,'33')}`}}>
                   {audioError}
                 </div>
               )}
@@ -475,10 +471,10 @@ export default function SessionDashboard() {
                     {[{n:'⚡ Per-Intent',j:0},{n:'🎯 Value Routing',j:1},{n:'🔥 Escalation',j:2},{n:'💰 Sales',j:3}].map(row=>{
                       const cur=row.j===session.demoStep
                       return(<tr key={row.j} style={{color:cur?T.teal:T.tx3}}>
-                        <td className="py-2 text-[12px]" style={{borderBottom:`1px solid ${T.b1}30`}}>{row.n}</td>
-                        <td className="py-2 text-[10px]" style={{borderBottom:`1px solid ${T.b1}30`}}>{cur?'✅ Tested':'—'}</td>
-                        <td className="py-2 text-[12px] font-mono" style={{borderBottom:`1px solid ${T.b1}30`}}>{cur?session.intents.length:0}</td>
-                        <td className="py-2 text-[12px] font-mono font-bold" style={{borderBottom:`1px solid ${T.b1}30`}}>{cur?fmt(session.totalCost):'₹0.00'}</td>
+                        <td className="py-2 text-[12px]" style={{borderBottom:`1px solid ${alpha(T.b1,'30')}`}}>{row.n}</td>
+                        <td className="py-2 text-[10px]" style={{borderBottom:`1px solid ${alpha(T.b1,'30')}`}}>{cur?'✅ Tested':'—'}</td>
+                        <td className="py-2 text-[12px] font-mono" style={{borderBottom:`1px solid ${alpha(T.b1,'30')}`}}>{cur?session.intents.length:0}</td>
+                        <td className="py-2 text-[12px] font-mono font-bold" style={{borderBottom:`1px solid ${alpha(T.b1,'30')}`}}>{cur?fmt(session.totalCost):'₹0.00'}</td>
                       </tr>)
                     })}
                     <tr className="font-bold"><td className="py-2" style={{borderTop:`2px solid ${T.b2}`}} colSpan={2}>Total</td>

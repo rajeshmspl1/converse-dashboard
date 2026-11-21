@@ -8,6 +8,7 @@ import { fetchB, getAccessToken, getUser, signOut } from '@/lib/auth';
 import { currentPartnerId, tenantLabel, usePartnerConfig } from '@/lib/partner';
 import { useBranding } from '@/components/branding/BrandingProvider';
 import type { Currency } from '@/types';
+import { T, tint } from '@/lib/theme';
 
 /* ────────────────────────────────────────────────────────────
    /migrate page — R100 flow + v3 post-completion sidebar layout
@@ -23,11 +24,8 @@ import type { Currency } from '@/types';
    ──────────────────────────────────────────────────────────── */
 
 
-const colors = {
-  bg:'#080D18', s1:'#0D1526', s2:'#111D30', s3:'#16243A',
-  b1:'#1C2D45', b2:'#243558', tx:'#DDE6F5', tx2:'#7A90B5', tx3:'#4A5F80',
-  blue:'#3370E8', teal:'#00C9B1', amber:'#F5A623', red:'#F03060', green:'#00DE7A', purple:'#8B5CF6',
-};
+// Same values as theme.ts T (merged — R90).
+const colors = T;
 
 const ALLOWED_EXTENSIONS = ['.vxml','.xml','.grxml','.docx','.pdf','.json','.yaml','.csv','.xlsx'];
 
@@ -220,7 +218,7 @@ export default function MigratePage() {
     return (
       <div style={{height:'100vh',display:'flex',flexDirection:'column',background:colors.bg,color:colors.tx,overflow:'hidden'}}>
         <style>{`
-          @keyframes mic-pulse { 0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,201,177,.15)} 50%{transform:scale(1.04);box-shadow:0 0 18px rgba(0,201,177,.1)} }
+          @keyframes mic-pulse { 0%,100%{transform:scale(1);box-shadow:0 0 0 0 ${tint('teal','.15')}} 50%{transform:scale(1.04);box-shadow:0 0 18px ${tint('teal','.1')}} }
           @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
           .f1{animation:fadeUp .3s ease .05s both} .f2{animation:fadeUp .3s ease .1s both} .f3{animation:fadeUp .3s ease .15s both} .f4{animation:fadeUp .3s ease .2s both} .f5{animation:fadeUp .3s ease .25s both}
         `}</style>
@@ -234,15 +232,15 @@ export default function MigratePage() {
               {STAGES.map((stage,idx) => {
                 const status = stageStatus(idx); const isExp = expandedStages.has(idx); const isSel = selectedStage === idx;
                 return (<React.Fragment key={stage.key}>
-                  <div onClick={()=>toggleStage(idx)} style={{display:'flex',alignItems:'center',gap:10,padding:'9px 8px',borderRadius:7,cursor:'pointer',transition:'all .15s',background:isSel?'rgba(0,201,177,.06)':'transparent',opacity:status==='locked'?.7:1,position:'relative',outline:isSel&&status==='locked'?'1px solid rgba(0,201,177,.2)':'none',outlineOffset:'-1px'}}>
+                  <div onClick={()=>toggleStage(idx)} style={{display:'flex',alignItems:'center',gap:10,padding:'9px 8px',borderRadius:7,cursor:'pointer',transition:'all .15s',background:isSel?tint('teal','.06'):'transparent',opacity:status==='locked'?.7:1,position:'relative',outline:isSel&&status==='locked'?`1px solid ${tint('teal','.2')}`:'none',outlineOffset:'-1px'}}>
                     {idx<STAGES.length-1 && <div style={{position:'absolute',left:20,top:36,width:2,height:'calc(100% - 22px)',background:status==='completed'?colors.teal:status==='active'?`linear-gradient(to bottom,${colors.teal} 40%,${colors.b1})`:colors.b1,zIndex:0}} />}
-                    <div style={{width:26,height:26,borderRadius:7,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,position:'relative',zIndex:2,...(status==='completed'?{background:'rgba(0,201,177,.12)',border:'1.5px solid rgba(0,201,177,.3)',color:colors.teal}:status==='active'||isSel?{background:'rgba(0,201,177,.15)',border:`1.5px solid ${colors.teal}`,boxShadow:'0 0 12px rgba(0,201,177,.2)',color:colors.teal}:{background:colors.s2,border:`1.5px solid ${colors.b2}`,color:colors.tx2})}}>{status==='completed'?'✓':stage.icon}</div>
+                    <div style={{width:26,height:26,borderRadius:7,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,position:'relative',zIndex:2,...(status==='completed'?{background:tint('teal','.12'),border:`1.5px solid ${tint('teal','.3')}`,color:colors.teal}:status==='active'||isSel?{background:tint('teal','.15'),border:`1.5px solid ${colors.teal}`,boxShadow:`0 0 12px ${tint('teal','.2')}`,color:colors.teal}:{background:colors.s2,border:`1.5px solid ${colors.b2}`,color:colors.tx2})}}>{status==='completed'?'✓':stage.icon}</div>
                     <span style={{fontSize:12,fontWeight:700,flex:1,color:isSel?colors.teal:status==='active'?colors.teal:status==='locked'?colors.tx2:colors.tx}}>{stage.label}</span>
                     <span style={{fontSize:9,color:colors.tx3,flexShrink:0,transition:'transform .2s',transform:isExp?'rotate(90deg)':'rotate(0deg)'}}>›</span>
                   </div>
                   <div style={{maxHeight:isExp?200:0,overflow:'hidden',transition:'max-height .25s ease',paddingLeft:44}}>
-                    {stage.subs.map((sub:any,si:number)=>(<div key={si} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 8px',borderRadius:5,background:sub.active?'rgba(0,201,177,.05)':'transparent'}}>
-                      <div style={{width:6,height:6,borderRadius:'50%',flexShrink:0,background:sub.done?colors.teal:sub.active?colors.teal:colors.tx3,boxShadow:sub.active?'0 0 6px rgba(0,201,177,.4)':'none'}} />
+                    {stage.subs.map((sub:any,si:number)=>(<div key={si} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 8px',borderRadius:5,background:sub.active?tint('teal','.05'):'transparent'}}>
+                      <div style={{width:6,height:6,borderRadius:'50%',flexShrink:0,background:sub.done?colors.teal:sub.active?colors.teal:colors.tx3,boxShadow:sub.active?`0 0 6px ${tint('teal','.4')}`:'none'}} />
                       <span style={{fontSize:10,color:sub.active?colors.teal:sub.done?colors.teal:colors.tx2,fontWeight:sub.active?600:400}}>{sub.label}</span>
                     </div>))}
                   </div>
@@ -252,7 +250,7 @@ export default function MigratePage() {
             <div style={{margin:'auto 8px 0',padding:12,background:colors.s2,border:`1px solid ${colors.b1}`,borderRadius:8}}>
               <div style={{fontSize:8,fontWeight:700,textTransform:'uppercase',letterSpacing:1,color:colors.tx3,marginBottom:8}}>Infrastructure</div>
               {[{label:'Tier',value:'3 · Ded. DB',color:colors.purple},{label:'Compute',value:'Shared VM',color:colors.tx},{label:'Region',value:'IN Central',color:colors.amber}].map((row,i)=>(
-                <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'4px 0',borderBottom:i<2?'1px solid rgba(28,45,69,.3)':'none'}}>
+                <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'4px 0',borderBottom:i<2?`1px solid ${tint('b1','.3')}`:'none'}}>
                   <span style={{fontSize:9,color:colors.tx3}}>{row.label}</span>
                   <span style={{fontSize:9,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",color:row.color}}>{row.value}</span>
                 </div>
@@ -269,7 +267,7 @@ export default function MigratePage() {
               {selectedStage === 0 && (
                 <div className="f1">
                   <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
-                    <div style={{width:30,height:30,borderRadius:7,background:'rgba(0,201,177,.1)',border:'1px solid rgba(0,201,177,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>✅</div>
+                    <div style={{width:30,height:30,borderRadius:7,background:tint('teal','.1'),border:`1px solid ${tint('teal','.2')}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>✅</div>
                     <div><h2 style={{fontSize:17,fontWeight:800,letterSpacing:-0.3}}>Explore — Completed</h2><p style={{fontSize:11,color:colors.tx2,marginTop:1}}>You've experienced the AI demo. Move to Try to test with your own IVR.</p></div>
                   </div>
                   <div style={{background:colors.s1,border:`1px solid ${colors.b1}`,borderRadius:12,padding:24,textAlign:'center'}}>
@@ -283,16 +281,16 @@ export default function MigratePage() {
               {/* ── TRY (active — Start Call hero) ── */}
               {selectedStage === 1 && (<>
                 <div className="f1" style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
-                  <div style={{width:30,height:30,borderRadius:7,background:'rgba(0,201,177,.1)',border:'1px solid rgba(0,201,177,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>🔬</div>
+                  <div style={{width:30,height:30,borderRadius:7,background:tint('teal','.1'),border:`1px solid ${tint('teal','.2')}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>🔬</div>
                   <div><h2 style={{fontSize:17,fontWeight:800,letterSpacing:-0.3}}>Try — Test with your IVR</h2><p style={{fontSize:11,color:colors.tx2,marginTop:1}}>Pre-UAT · Pre-firewall mode · Your flow is compiled and live.</p></div>
                 </div>
 
                 {/* ── My IVR / Experience Shop toggle ── */}
                 <div className="f1" style={{display:'flex',alignItems:'center',gap:0,marginBottom:14,borderRadius:9,overflow:'hidden',border:`1px solid ${colors.b1}`}}>
-                  <button onClick={()=>setIvrSource('my')} style={{flex:1,padding:'10px 16px',fontSize:12,fontWeight:700,cursor:'pointer',border:'none',transition:'all .15s',background:ivrSource==='my'?'rgba(0,201,177,.12)':colors.s1,color:ivrSource==='my'?colors.teal:colors.tx3,borderRight:`1px solid ${colors.b1}`}}>
+                  <button onClick={()=>setIvrSource('my')} style={{flex:1,padding:'10px 16px',fontSize:12,fontWeight:700,cursor:'pointer',border:'none',transition:'all .15s',background:ivrSource==='my'?tint('teal','.12'):colors.s1,color:ivrSource==='my'?colors.teal:colors.tx3,borderRight:`1px solid ${colors.b1}`}}>
                     My IVR {selectedIvrTenant && ivrSource==='my' ? `· ${ivrLabel(selectedIvrTenant)}` : ''}
                   </button>
-                  <button onClick={()=>setIvrSource('shop')} style={{flex:1,padding:'10px 16px',fontSize:12,fontWeight:700,cursor:'pointer',border:'none',transition:'all .15s',background:ivrSource==='shop'?'rgba(51,112,232,.12)':colors.s1,color:ivrSource==='shop'?colors.blue:colors.tx3}}>
+                  <button onClick={()=>setIvrSource('shop')} style={{flex:1,padding:'10px 16px',fontSize:12,fontWeight:700,cursor:'pointer',border:'none',transition:'all .15s',background:ivrSource==='shop'?tint('blue','.12'):colors.s1,color:ivrSource==='shop'?colors.blue:colors.tx3}}>
                     Experience shop
                   </button>
                 </div>
@@ -316,8 +314,8 @@ export default function MigratePage() {
                 <div className="f1" style={{fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:0.8,color:colors.tx3,marginBottom:8}}>Journeys</div>
                 <div className="f2" style={{display:'flex',alignItems:'center',padding:'10px 14px',marginBottom:14,background:colors.s1,border:`1px solid ${colors.b1}`,borderRadius:9}}>
                   {JOURNEYS.map((j,i)=>(<React.Fragment key={i}>
-                    <div onClick={()=>setSelectedJourney(i)} style={{display:'flex',alignItems:'center',gap:6,flex:1,cursor:'pointer',padding:'4px 6px',borderRadius:6,transition:'all .15s',background:selectedJourney===i?'rgba(0,201,177,.08)':'transparent'}}>
-                      <div style={{width:20,height:20,borderRadius:5,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:700,...(selectedJourney===i?{background:'rgba(0,201,177,.15)',border:'1.5px solid rgba(0,201,177,.4)',color:colors.teal}:{background:colors.s2,color:colors.tx3})}}>{selectedJourney===i?'✓':i+1}</div>
+                    <div onClick={()=>setSelectedJourney(i)} style={{display:'flex',alignItems:'center',gap:6,flex:1,cursor:'pointer',padding:'4px 6px',borderRadius:6,transition:'all .15s',background:selectedJourney===i?tint('teal','.08'):'transparent'}}>
+                      <div style={{width:20,height:20,borderRadius:5,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:700,...(selectedJourney===i?{background:tint('teal','.15'),border:`1.5px solid ${tint('teal','.4')}`,color:colors.teal}:{background:colors.s2,color:colors.tx3})}}>{selectedJourney===i?'✓':i+1}</div>
                       <span style={{fontSize:9,fontWeight:600,whiteSpace:'nowrap',color:selectedJourney===i?colors.teal:colors.tx3}}>{j.label}</span>
                     </div>
                     {i<JOURNEYS.length-1 && <div style={{flex:1,height:1,margin:'0 6px',background:selectedJourney>i?colors.teal:colors.b1}} />}
@@ -325,9 +323,9 @@ export default function MigratePage() {
                 </div>
 
                 <div className="f2" style={{background:colors.s1,border:`1px solid ${colors.b1}`,borderRadius:14,padding:22,display:'flex',alignItems:'center',gap:20,marginBottom:14,position:'relative',overflow:'hidden'}}>
-                  <div style={{position:'absolute',inset:0,background:'radial-gradient(ellipse at 25% 50%,rgba(0,201,177,.04) 0%,transparent 60%)',pointerEvents:'none'}} />
-                  <div style={{width:74,height:74,borderRadius:'50%',flexShrink:0,background:'radial-gradient(circle,rgba(0,201,177,.1),transparent 70%)',border:'2px solid rgba(0,201,177,.15)',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',zIndex:1}}>
-                    <div style={{width:46,height:46,borderRadius:'50%',background:'linear-gradient(135deg,rgba(0,201,177,.18),rgba(51,112,232,.12))',border:'1.5px solid rgba(0,201,177,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,animation:'mic-pulse 2.5s ease-in-out infinite'}}>🎙</div>
+                  <div style={{position:'absolute',inset:0,background:`radial-gradient(ellipse at 25% 50%,${tint('teal','.04')} 0%,transparent 60%)`,pointerEvents:'none'}} />
+                  <div style={{width:74,height:74,borderRadius:'50%',flexShrink:0,background:`radial-gradient(circle,${tint('teal','.1')},transparent 70%)`,border:`2px solid ${tint('teal','.15')}`,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',zIndex:1}}>
+                    <div style={{width:46,height:46,borderRadius:'50%',background:`linear-gradient(135deg,${tint('teal','.18')},${tint('blue','.12')})`,border:`1.5px solid ${tint('teal','.25')}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,animation:'mic-pulse 2.5s ease-in-out infinite'}}>🎙</div>
                   </div>
                   <div style={{flex:1,position:'relative',zIndex:1}}>
                     <h3 style={{fontSize:16,fontWeight:800,marginBottom:3,letterSpacing:-0.3}}>Start a call. <span style={{color:ivrSource==='my'?colors.teal:colors.blue}}>{ivrSource==='my'?'Hear your AI IVR.':'Experience shop demo.'}</span></h3>
@@ -337,7 +335,7 @@ export default function MigratePage() {
                       const ik = ivrSource==='my' ? 'retail' : 'global_banking';
                       const rm = JOURNEYS[selectedJourney].routing_mode;
                       window.location.href=`/experience?autostart=true&tenant_key=${tk}&ivr_key=${ik}${rm?'&routing_mode='+rm:''}&journey=${selectedJourney}`;
-                    }} style={{display:'inline-flex',alignItems:'center',gap:7,padding:'10px 24px',borderRadius:9,border:'none',background:ivrSource==='my'?colors.teal:colors.blue,color:'#000',fontSize:13,fontWeight:800,fontFamily:"'DM Sans','Inter',sans-serif",cursor:'pointer',transition:'all .2s',boxShadow:ivrSource==='my'?'0 4px 16px rgba(0,201,177,.2)':'0 4px 16px rgba(51,112,232,.2)'}}>📞 Start {JOURNEYS[selectedJourney].label} Call</button>
+                    }} style={{display:'inline-flex',alignItems:'center',gap:7,padding:'10px 24px',borderRadius:9,border:'none',background:ivrSource==='my'?colors.teal:colors.blue,color:T.onColor,fontSize:13,fontWeight:800,fontFamily:"'DM Sans','Inter',sans-serif",cursor:'pointer',transition:'all .2s',boxShadow:ivrSource==='my'?`0 4px 16px ${tint('teal','.2')}`:`0 4px 16px ${tint('blue','.2')}`}}>📞 Start {JOURNEYS[selectedJourney].label} Call</button>
                     <div style={{display:'flex',gap:12,marginTop:7}}>
                       {['136 intents','3-level DTMF','Pre-firewall'].map((m,i)=>(<span key={i} style={{fontSize:9,color:colors.tx3,display:'flex',alignItems:'center',gap:4}}><span style={{width:4,height:4,borderRadius:'50%',background:colors.teal}} />{m}</span>))}
                     </div>
@@ -352,11 +350,11 @@ export default function MigratePage() {
 
                 <div className="f3" style={{fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:0.8,color:colors.tx3,marginBottom:8}}>Routing Modes</div>
                 <div className="f4" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:14}}>
-                  {MODES.map(m=>(<div key={m.key} onClick={()=>setActiveMode(m.key)} style={{padding:12,borderRadius:9,background:colors.s1,border:`1px solid ${activeMode===m.key?'rgba(0,201,177,.25)':colors.b1}`,cursor:'pointer',transition:'all .15s',position:'relative'}}>
-                    {activeMode===m.key && <div style={{position:'absolute',top:6,right:6,padding:'1px 5px',borderRadius:3,fontSize:7,fontWeight:800,letterSpacing:0.4,background:'rgba(0,201,177,.1)',color:colors.teal,border:'1px solid rgba(0,201,177,.15)'}}>ACTIVE</div>}
+                  {MODES.map(m=>(<div key={m.key} onClick={()=>setActiveMode(m.key)} style={{padding:12,borderRadius:9,background:colors.s1,border:`1px solid ${activeMode===m.key?tint('teal','.25'):colors.b1}`,cursor:'pointer',transition:'all .15s',position:'relative'}}>
+                    {activeMode===m.key && <div style={{position:'absolute',top:6,right:6,padding:'1px 5px',borderRadius:3,fontSize:7,fontWeight:800,letterSpacing:0.4,background:tint('teal','.1'),color:colors.teal,border:`1px solid ${tint('teal','.15')}`}}>ACTIVE</div>}
                     <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}><div style={{width:8,height:8,borderRadius:3,background:m.color}} /><span style={{fontSize:11,fontWeight:700}}>{m.label}</span></div>
                     <div style={{fontSize:9,color:colors.tx3,lineHeight:1.4}}>{m.desc}</div>
-                    <div style={{display:'flex',alignItems:'baseline',gap:3,marginTop:6,paddingTop:6,borderTop:'1px solid rgba(28,45,69,.3)'}}>
+                    <div style={{display:'flex',alignItems:'baseline',gap:3,marginTop:6,paddingTop:6,borderTop:`1px solid ${tint('b1','.3')}`}}>
                       <span style={{fontSize:12,fontWeight:800,fontFamily:"'JetBrains Mono',monospace",color:m.color}}>{m.price}</span>
                       <span style={{fontSize:8,color:colors.tx3}}>{m.unit}</span>
                     </div>
@@ -378,7 +376,7 @@ export default function MigratePage() {
               {selectedStage >= 2 && (
                 <div className="f1">
                   <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20}}>
-                    <div style={{width:30,height:30,borderRadius:7,background:'rgba(0,201,177,.1)',border:'1px solid rgba(0,201,177,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>
+                    <div style={{width:30,height:30,borderRadius:7,background:tint('teal','.1'),border:`1px solid ${tint('teal','.2')}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>
                       {selectedStage===2?'🔬':selectedStage===3?'🚀':'✅'}
                     </div>
                     <div>
@@ -390,7 +388,7 @@ export default function MigratePage() {
                   {!contactSubmitted ? (
                     <div style={{background:colors.s1,border:`1px solid ${colors.b1}`,borderRadius:14,padding:32,maxWidth:480}}>
                       <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20}}>
-                        <div style={{width:40,height:40,borderRadius:10,background:'rgba(0,201,177,.08)',border:'1px solid rgba(0,201,177,.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>📞</div>
+                        <div style={{width:40,height:40,borderRadius:10,background:tint('teal','.08'),border:`1px solid ${tint('teal','.15')}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>📞</div>
                         <div>
                           <h3 style={{fontSize:15,fontWeight:700}}>Connect with our team</h3>
                           <p style={{fontSize:11,color:colors.tx2}}>5-minute setup · We'll get you running</p>
@@ -421,7 +419,7 @@ export default function MigratePage() {
                         style={{
                           width:'100%',padding:'12px 0',borderRadius:9,border:'none',
                           background:contactName.trim()&&contactEmail.trim()?colors.teal:colors.b2,
-                          color:contactName.trim()&&contactEmail.trim()?'#000':colors.tx3,
+                          color:contactName.trim()&&contactEmail.trim()?T.onTeal:colors.tx3,
                           fontSize:14,fontWeight:800,fontFamily:"'DM Sans','Inter',sans-serif",
                           cursor:contactName.trim()&&contactEmail.trim()?'pointer':'default',
                           transition:'all .2s',
@@ -433,13 +431,13 @@ export default function MigratePage() {
                       </p>
                     </div>
                   ) : (
-                    <div style={{background:'rgba(0,222,122,.04)',border:'1px solid rgba(0,222,122,.15)',borderRadius:14,padding:32,textAlign:'center',maxWidth:480}}>
+                    <div style={{background:tint('green','.04'),border:`1px solid ${tint('green','.15')}`,borderRadius:14,padding:32,textAlign:'center',maxWidth:480}}>
                       <div style={{fontSize:40,marginBottom:12}}>🎉</div>
                       <h3 style={{fontSize:18,fontWeight:700,color:colors.green,marginBottom:6}}>We'll be in touch</h3>
                       <p style={{fontSize:13,color:colors.tx2,lineHeight:1.6,marginBottom:16}}>
                         Thanks, <strong style={{color:colors.tx}}>{contactName}</strong>. Our team will contact you at <span style={{fontFamily:"'JetBrains Mono',monospace",color:colors.teal,fontWeight:600}}>{contactEmail}</span> to set up your {selectedStageData?.label?.toLowerCase()} environment.
                       </p>
-                      <div style={{display:'inline-flex',padding:'8px 20px',borderRadius:8,background:'rgba(0,201,177,.08)',border:'1px solid rgba(0,201,177,.12)',fontSize:12,fontWeight:600,color:colors.teal,fontFamily:"'JetBrains Mono',monospace"}}>
+                      <div style={{display:'inline-flex',padding:'8px 20px',borderRadius:8,background:tint('teal','.08'),border:`1px solid ${tint('teal','.12')}`,fontSize:12,fontWeight:600,color:colors.teal,fontFamily:"'JetBrains Mono',monospace"}}>
                         Typically within 24 hours
                       </div>
                     </div>
@@ -467,10 +465,10 @@ export default function MigratePage() {
         <div style={{textAlign:'center',marginBottom:32}}>
           <h1 style={{fontSize:32,fontWeight:800,letterSpacing:-0.5,marginBottom:6,fontFamily:"'DM Sans','Inter',sans-serif"}}>Migrate your IVR to AI</h1>
           <p style={{fontSize:15,color:colors.tx2,marginBottom:14}}>Go live in under 17 minutes. Here's exactly what happens.</p>
-          <span style={{display:'inline-flex',padding:'6px 18px',borderRadius:20,fontSize:12,fontWeight:600,background:'rgba(0,222,122,.06)',border:'1px solid rgba(0,222,122,.12)',color:colors.green,fontFamily:"'JetBrains Mono',monospace"}}>Test free for up to 3 months — at any stage or all stages</span>
+          <span style={{display:'inline-flex',padding:'6px 18px',borderRadius:20,fontSize:12,fontWeight:600,background:tint('green','.06'),border:`1px solid ${tint('green','.12')}`,color:colors.green,fontFamily:"'JetBrains Mono',monospace"}}>Test free for up to 3 months — at any stage or all stages</span>
         </div>
 
-        {error && (<div style={{padding:'12px 16px',borderRadius:10,marginBottom:20,background:'rgba(240,48,96,.08)',border:'1px solid rgba(240,48,96,.15)',color:colors.red,fontSize:13}}>{error}<span style={{float:'right',display:'flex',gap:10,alignItems:'center'}}>{showReset && (<button onClick={handleReset} style={{padding:'3px 10px',borderRadius:5,border:`1px solid rgba(240,48,96,.2)`,background:'transparent',color:colors.red,fontSize:11,fontWeight:600,cursor:'pointer'}}>↩ Reset</button>)}<span onClick={()=>setError('')} style={{cursor:'pointer',fontWeight:700}}>✕</span></span></div>)}
+        {error && (<div style={{padding:'12px 16px',borderRadius:10,marginBottom:20,background:tint('red','.08'),border:`1px solid ${tint('red','.15')}`,color:colors.red,fontSize:13}}>{error}<span style={{float:'right',display:'flex',gap:10,alignItems:'center'}}>{showReset && (<button onClick={handleReset} style={{padding:'3px 10px',borderRadius:5,border:`1px solid ${tint('red','.2')}`,background:'transparent',color:colors.red,fontSize:11,fontWeight:600,cursor:'pointer'}}>↩ Reset</button>)}<span onClick={()=>setError('')} style={{cursor:'pointer',fontWeight:700}}>✕</span></span></div>)}
 
         <div style={{position:'relative',paddingLeft:52}}>
           <div style={{position:'absolute',left:19,top:0,bottom:0,width:3,background:colors.b1,borderRadius:2}} />
@@ -478,10 +476,10 @@ export default function MigratePage() {
 
           {/* STAGE 1: Explore & Try */}
           <div style={{position:'relative',paddingBottom:40}}>
-            <div style={{position:'absolute',left:-52,top:0,width:40,height:40,borderRadius:'50%',background:colors.teal,boxShadow:'0 0 20px rgba(0,201,177,.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,zIndex:2}}>🔍</div>
+            <div style={{position:'absolute',left:-52,top:0,width:40,height:40,borderRadius:'50%',background:colors.teal,boxShadow:`0 0 20px ${tint('teal','.3')}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,zIndex:2}}>🔍</div>
             <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
               <h2 style={{fontSize:20,fontWeight:700}}>Explore & Try</h2>
-              <span style={{padding:'3px 10px',borderRadius:5,fontSize:12,fontWeight:600,background:'rgba(0,201,177,.08)',color:colors.teal,fontFamily:"'JetBrains Mono',monospace"}}>5 min</span>
+              <span style={{padding:'3px 10px',borderRadius:5,fontSize:12,fontWeight:600,background:tint('teal','.08'),color:colors.teal,fontFamily:"'JetBrains Mono',monospace"}}>5 min</span>
             </div>
             <p style={{fontSize:13,color:colors.tx3,marginBottom:16,lineHeight:1.5}}>Start by connecting your IVR. Choose the method that works for you.</p>
 
@@ -490,13 +488,13 @@ export default function MigratePage() {
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
                 {/* Card A: IVR Number */}
                 <div style={{background:colors.s1,border:`1px solid ${colors.b1}`,borderRadius:14,padding:24,position:'relative'}}>
-                  <div style={{position:'absolute',top:12,right:12,padding:'3px 8px',borderRadius:4,fontSize:9,fontWeight:700,textTransform:'uppercase' as const,letterSpacing:0.4,background:'rgba(0,201,177,.08)',color:colors.teal}}>Hands-off</div>
+                  <div style={{position:'absolute',top:12,right:12,padding:'3px 8px',borderRadius:4,fontSize:9,fontWeight:700,textTransform:'uppercase' as const,letterSpacing:0.4,background:tint('teal','.08'),color:colors.teal}}>Hands-off</div>
                   <div style={{fontSize:28,marginBottom:10}}>📞</div>
                   <h3 style={{fontSize:16,fontWeight:700,marginBottom:6}}>IVR Number</h3>
                   <p style={{fontSize:12,color:colors.tx2,lineHeight:1.5,marginBottom:14}}>Give us the number your customers dial. We call it, map every menu branch, and connect AI.</p>
                   <div style={{display:'flex',gap:6,marginBottom:14}}>
                     <input type="tel" placeholder="+91 800 123 4567" value={ivrPhone} onChange={e=>setIvrPhone(e.target.value)} style={{flex:1,padding:'10px 14px',borderRadius:9,background:colors.s2,border:`1px solid ${colors.b1}`,color:colors.tx,fontSize:13,fontFamily:"'JetBrains Mono',monospace",outline:'none'}} />
-                    <button onClick={handleIvrSubmit} disabled={!ivrPhone.trim()||ivrSubmitting} style={{padding:'10px 18px',borderRadius:9,border:'none',background:ivrPhone.trim()?colors.teal:colors.b2,color:ivrPhone.trim()?'#000':colors.tx3,fontSize:12,fontWeight:700,cursor:ivrPhone.trim()?'pointer':'default',flexShrink:0,transition:'all .2s'}}>{ivrSubmitting?'...':'Submit'}</button>
+                    <button onClick={handleIvrSubmit} disabled={!ivrPhone.trim()||ivrSubmitting} style={{padding:'10px 18px',borderRadius:9,border:'none',background:ivrPhone.trim()?colors.teal:colors.b2,color:ivrPhone.trim()?T.onTeal:colors.tx3,fontSize:12,fontWeight:700,cursor:ivrPhone.trim()?'pointer':'default',flexShrink:0,transition:'all .2s'}}>{ivrSubmitting?'...':'Submit'}</button>
                   </div>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:10}}>
                     <div style={{background:colors.s2,borderRadius:7,padding:'8px 10px'}}><div style={{fontSize:9,color:colors.tx3,textTransform:'uppercase' as const,fontWeight:600}}>Timeline</div><div style={{fontSize:14,fontWeight:700,color:colors.teal,fontFamily:"'JetBrains Mono',monospace"}}>~24 hrs</div></div>
@@ -506,12 +504,12 @@ export default function MigratePage() {
                 </div>
 
                 {/* Card B: Upload IVR Flow */}
-                <div style={{background:colors.s1,border:'1px solid rgba(139,92,246,.2)',borderRadius:14,padding:24,position:'relative'}}>
-                  <div style={{position:'absolute',top:12,right:12,padding:'3px 8px',borderRadius:4,fontSize:9,fontWeight:700,textTransform:'uppercase' as const,letterSpacing:0.4,background:colors.green,color:'#000'}}>Fastest</div>
+                <div style={{background:colors.s1,border:`1px solid ${tint('purple','.2')}`,borderRadius:14,padding:24,position:'relative'}}>
+                  <div style={{position:'absolute',top:12,right:12,padding:'3px 8px',borderRadius:4,fontSize:9,fontWeight:700,textTransform:'uppercase' as const,letterSpacing:0.4,background:colors.green,color:T.onColor}}>Fastest</div>
                   <div style={{fontSize:28,marginBottom:10}}>📄</div>
                   <h3 style={{fontSize:16,fontWeight:700,marginBottom:6}}>Upload IVR Flow</h3>
                   <p style={{fontSize:12,color:colors.tx2,lineHeight:1.5,marginBottom:14}}>Upload your IVR config file. AI parses every branch and intent, generates flows automatically.</p>
-                  <div onDragOver={e=>{e.preventDefault();setDragOver(true)}} onDragLeave={()=>setDragOver(false)} onDrop={handleDrop} onClick={()=>fileInputRef.current?.click()} style={{border:`2px dashed ${dragOver?colors.purple:colors.b2}`,borderRadius:12,padding:selectedFiles.length>0?'12px':'22px',textAlign:'center',cursor:'pointer',background:dragOver?'rgba(139,92,246,.06)':colors.s2,transition:'all .2s',marginBottom:8}}>
+                  <div onDragOver={e=>{e.preventDefault();setDragOver(true)}} onDragLeave={()=>setDragOver(false)} onDrop={handleDrop} onClick={()=>fileInputRef.current?.click()} style={{border:`2px dashed ${dragOver?colors.purple:colors.b2}`,borderRadius:12,padding:selectedFiles.length>0?'12px':'22px',textAlign:'center',cursor:'pointer',background:dragOver?tint('purple','.06'):colors.s2,transition:'all .2s',marginBottom:8}}>
                     <input ref={fileInputRef} type="file" multiple accept={ALLOWED_EXTENSIONS.join(',')} onChange={e=>{if(e.target.files)addFiles(Array.from(e.target.files))}} style={{display:'none'}} />
                     {selectedFiles.length===0 ? (<><div style={{fontSize:22,marginBottom:4}}>📁</div><div style={{fontSize:12,fontWeight:600}}>Drop files here or click</div><div style={{fontSize:9,color:colors.tx3,marginTop:2}}>Max 10 files, 50MB each</div></>) : (
                       <div style={{textAlign:'left'}}>
@@ -524,10 +522,10 @@ export default function MigratePage() {
                       </div>
                     )}
                   </div>
-                  {selectedFiles.length===0 && (<div style={{display:'flex',gap:3,flexWrap:'wrap',marginBottom:10}}>{ALLOWED_EXTENSIONS.map(ext=>(<span key={ext} style={{padding:'2px 6px',borderRadius:3,fontSize:9,fontWeight:600,background:'rgba(139,92,246,.1)',color:colors.purple,fontFamily:"'JetBrains Mono',monospace"}}>{ext}</span>))}</div>)}
-                  <input type="text" placeholder="IVR name (e.g. Retail Banking)" value={ivrName} onChange={e=>setIvrName(e.target.value)} style={{width:'100%',padding:'8px 12px',borderRadius:7,background:colors.s2,border:`1px solid ${ivrName.trim()?'rgba(0,201,177,.3)':colors.b1}`,color:colors.tx,fontSize:11,marginBottom:10,fontFamily:"'DM Sans','Inter',sans-serif",outline:'none'}} />
+                  {selectedFiles.length===0 && (<div style={{display:'flex',gap:3,flexWrap:'wrap',marginBottom:10}}>{ALLOWED_EXTENSIONS.map(ext=>(<span key={ext} style={{padding:'2px 6px',borderRadius:3,fontSize:9,fontWeight:600,background:tint('purple','.1'),color:colors.purple,fontFamily:"'JetBrains Mono',monospace"}}>{ext}</span>))}</div>)}
+                  <input type="text" placeholder="IVR name (e.g. Retail Banking)" value={ivrName} onChange={e=>setIvrName(e.target.value)} style={{width:'100%',padding:'8px 12px',borderRadius:7,background:colors.s2,border:`1px solid ${ivrName.trim()?tint('teal','.3'):colors.b1}`,color:colors.tx,fontSize:11,marginBottom:10,fontFamily:"'DM Sans','Inter',sans-serif",outline:'none'}} />
                   <input type="tel" placeholder="IVR number (optional)" value={optionalPhone} onChange={e=>setOptionalPhone(e.target.value)} style={{width:'100%',padding:'8px 12px',borderRadius:7,background:colors.s2,border:`1px solid ${colors.b1}`,color:colors.tx,fontSize:11,marginBottom:10,fontFamily:"'JetBrains Mono',monospace",outline:'none'}} />
-                  {selectedFiles.length>0 && (<button onClick={handleFileUpload} disabled={uploading} style={{width:'100%',padding:'10px 0',borderRadius:9,border:'none',background:uploading?colors.b2:colors.purple,color:'#fff',fontSize:13,fontWeight:700,cursor:uploading?'default':'pointer',marginBottom:10,transition:'all .2s'}}>{uploading?'Uploading...':`Upload ${selectedFiles.length} file${selectedFiles.length>1?'s':''}`}</button>)}
+                  {selectedFiles.length>0 && (<button onClick={handleFileUpload} disabled={uploading} style={{width:'100%',padding:'10px 0',borderRadius:9,border:'none',background:uploading?colors.b2:colors.purple,color:T.white,fontSize:13,fontWeight:700,cursor:uploading?'default':'pointer',marginBottom:10,transition:'all .2s'}}>{uploading?'Uploading...':`Upload ${selectedFiles.length} file${selectedFiles.length>1?'s':''}`}</button>)}
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
                     <div style={{background:colors.s2,borderRadius:7,padding:'8px 10px'}}><div style={{fontSize:9,color:colors.tx3,textTransform:'uppercase' as const,fontWeight:600}}>AI Parsing</div><div style={{fontSize:14,fontWeight:700,color:colors.purple,fontFamily:"'JetBrains Mono',monospace"}}>~4 min</div></div>
                     <div style={{background:colors.s2,borderRadius:7,padding:'8px 10px'}}><div style={{fontSize:9,color:colors.tx3,textTransform:'uppercase' as const,fontWeight:600}}>Data Residency</div><div style={{fontSize:14,fontWeight:700,color:colors.purple,fontFamily:"'JetBrains Mono',monospace"}}>India 🇮🇳</div></div>
@@ -542,7 +540,7 @@ export default function MigratePage() {
                 <div style={{fontSize:40,marginBottom:12}}>📞</div>
                 <h3 style={{fontSize:18,fontWeight:700,marginBottom:6}}>We've got your number</h3>
                 <p style={{fontSize:13,color:colors.tx2,lineHeight:1.6,marginBottom:16}}>Our team will call <span style={{fontFamily:"'JetBrains Mono',monospace",color:colors.teal,fontWeight:600}}>{migrationStatus?.ivr_phone||ivrPhone}</span>, map every menu branch, and set up your AI IVR.</p>
-                <div style={{display:'inline-flex',padding:'8px 20px',borderRadius:8,background:'rgba(0,201,177,.08)',border:'1px solid rgba(0,201,177,.12)',fontSize:12,fontWeight:600,color:colors.teal,fontFamily:"'JetBrains Mono',monospace"}}>We'll email you when it's ready — typically ~24 hours</div>
+                <div style={{display:'inline-flex',padding:'8px 20px',borderRadius:8,background:tint('teal','.08'),border:`1px solid ${tint('teal','.12')}`,fontSize:12,fontWeight:600,color:colors.teal,fontFamily:"'JetBrains Mono',monospace"}}>We'll email you when it's ready — typically ~24 hours</div>
               </div>
             )}
 
@@ -585,10 +583,10 @@ export default function MigratePage() {
             <div style={{position:'absolute',left:-52,top:0,width:40,height:40,borderRadius:'50%',background:colors.s2,border:`2px solid ${colors.b2}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,zIndex:2}}>✅</div>
             <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}><h2 style={{fontSize:20,fontWeight:700}}>Production Live</h2><span style={{padding:'3px 10px',borderRadius:5,fontSize:12,fontWeight:600,background:colors.s2,color:colors.tx3,fontFamily:"'JetBrains Mono',monospace"}}>2 min</span></div>
             <p style={{fontSize:13,color:colors.tx3,marginBottom:14,lineHeight:1.5}}>Dashboards, compliance, multilingual, agent handoff — all running. Fully AI-powered.</p>
-            <div style={{display:'flex',alignItems:'center',gap:12,padding:'14px 18px',borderRadius:12,background:'rgba(0,222,122,.03)',border:'1px solid rgba(0,222,122,.15)'}}>
-              <div style={{width:40,height:40,borderRadius:9,flexShrink:0,background:'rgba(0,222,122,.08)',border:'1px solid rgba(0,222,122,.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>✅</div>
+            <div style={{display:'flex',alignItems:'center',gap:12,padding:'14px 18px',borderRadius:12,background:tint('green','.03'),border:`1px solid ${tint('green','.15')}`}}>
+              <div style={{width:40,height:40,borderRadius:9,flexShrink:0,background:tint('green','.08'),border:`1px solid ${tint('green','.15')}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>✅</div>
               <div style={{flex:1}}><div style={{fontSize:13,fontWeight:700,color:colors.green}}>Go fully live</div><div style={{fontSize:11,color:colors.tx3}}>Final switch. Full volume. CSAT tracking + per-intent billing active.</div></div>
-              <button style={{padding:'8px 16px',borderRadius:7,border:'none',background:colors.green,color:'#000',fontSize:11,fontWeight:700,cursor:'pointer'}}>Contact Us</button>
+              <button style={{padding:'8px 16px',borderRadius:7,border:'none',background:colors.green,color:T.onColor,fontSize:11,fontWeight:700,cursor:'pointer'}}>Contact Us</button>
             </div>
           </div>
         </div>
@@ -602,8 +600,8 @@ export default function MigratePage() {
 
 function ProcessingStep({label,sublabel,done,active,number}:{label:string;sublabel:string;done:boolean;active:boolean;number:number}) {
   return (
-    <div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 0',borderBottom:number<4?'1px solid rgba(28,45,69,.4)':'none'}}>
-      <div style={{width:28,height:28,borderRadius:7,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',background:done?'rgba(0,222,122,.12)':active?'rgba(0,201,177,.12)':colors.s2}}>
+    <div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 0',borderBottom:number<4?`1px solid ${tint('b1','.4')}`:'none'}}>
+      <div style={{width:28,height:28,borderRadius:7,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',background:done?tint('green','.12'):active?tint('teal','.12'):colors.s2}}>
         {done?<span style={{fontSize:12,color:colors.green}}>✓</span>:active?<div style={{width:14,height:14,border:`2px solid ${colors.b2}`,borderTopColor:colors.teal,borderRadius:'50%',animation:'migrate-spin 1s linear infinite'}} />:<span style={{fontSize:11,color:colors.tx3}}>{number}</span>}
       </div>
       <div style={{flex:1}}>

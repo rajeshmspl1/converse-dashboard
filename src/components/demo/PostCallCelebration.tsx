@@ -4,6 +4,7 @@ import { DEMO_SCENARIOS, CURRENCY_CONFIG, INFRA_CONFIG, DEPLOY_CONFIG } from '@/
 import type { Currency } from '@/types'
 import { useBranding } from '@/components/branding/BrandingProvider'
 import { brandCopy } from '@/lib/branding'
+import { T, tint } from '@/lib/theme'
 
 interface LiveIntent {
   key: string
@@ -49,27 +50,27 @@ export default function PostCallCelebration({ demoStep, intents, totalCost, curr
 
       {/* PHASE 0: Summary */}
       <div className="rounded-xl border p-3 md:p-4" style={{
-        borderColor: 'rgba(34,197,94,.3)',
-        background: 'linear-gradient(135deg, rgba(34,197,94,.06), rgba(139,92,246,.04))',
+        borderColor: tint('ok', '.3'),
+        background: `linear-gradient(135deg, ${tint('ok', '.06')}, ${tint('purple', '.04')})`,
         animation: 'fadeSlideIn 0.6s ease-out',
       }}>
-        <div className="text-[9px] md:text-[10px] font-bold uppercase tracking-[.2em] text-center mb-3" style={{ color: '#22c55e' }}>
+        <div className="text-[9px] md:text-[10px] font-bold uppercase tracking-[.2em] text-center mb-3" style={{ color: T.ok }}>
           Call Summary
         </div>
         <div className="flex items-center justify-around mb-3 flex-wrap gap-2">
           <div className="flex flex-col items-center">
-            <div className="font-mono text-[24px] md:text-[32px] font-bold leading-none" style={{ color: '#a78bfa' }}>{intents.length}</div>
+            <div className="font-mono text-[24px] md:text-[32px] font-bold leading-none" style={{ color: T.violet }}>{intents.length}</div>
             <div className="text-[8px] md:text-[9px] uppercase mt-1" style={{ color: 'var(--dim)' }}>
               Intent{intents.length !== 1 ? 's' : ''}
             </div>
           </div>
           <div className="flex flex-col items-center">
-            <div className="font-mono text-[24px] md:text-[32px] font-bold leading-none" style={{ color: '#34d399' }}>{fmt(totalCost)}</div>
+            <div className="font-mono text-[24px] md:text-[32px] font-bold leading-none" style={{ color: T.jade }}>{fmt(totalCost)}</div>
             <div className="text-[8px] md:text-[9px] uppercase mt-1" style={{ color: 'var(--dim)' }}>Total cost</div>
           </div>
           {intents.length > 0 && (
             <div className="flex flex-col items-center">
-              <div className="font-mono text-[24px] md:text-[32px] font-bold leading-none" style={{ color: '#fbbf24' }}>{fmt(totalCost / intents.length)}</div>
+              <div className="font-mono text-[24px] md:text-[32px] font-bold leading-none" style={{ color: T.gold }}>{fmt(totalCost / intents.length)}</div>
               <div className="text-[8px] md:text-[9px] uppercase mt-1" style={{ color: 'var(--dim)' }}>Avg/intent</div>
             </div>
           )}
@@ -77,10 +78,10 @@ export default function PostCallCelebration({ demoStep, intents, totalCost, curr
 
         {intents.map((intent, i) => (
           <div key={intent.key + i} className="flex items-center justify-between px-2 md:px-3 py-1.5 rounded mb-1 text-[10px] md:text-[11px] font-mono"
-            style={{ background: 'rgba(255,255,255,.03)' }}>
+            style={{ background: tint('veil', '.03') }}>
             <span className="font-bold" style={{ color: 'var(--text)' }}>Intent {i + 1}</span>
-            <span className="px-1.5 py-0.5 rounded text-[8px] md:text-[9px] font-bold" style={{ background: 'rgba(251,191,36,.1)', color: '#fbbf24' }}>Exp {intent.exp}</span>
-            <span className="font-bold" style={{ color: '#34d399' }}>{fmt(intent.cost)}</span>
+            <span className="px-1.5 py-0.5 rounded text-[8px] md:text-[9px] font-bold" style={{ background: tint('gold', '.1'), color: T.gold }}>Exp {intent.exp}</span>
+            <span className="font-bold" style={{ color: T.jade }}>{fmt(intent.cost)}</span>
             <span style={{ color: 'var(--dim)' }}>{intent.latencyMs ? `${(intent.latencyMs / 1000).toFixed(1)}s` : ''}</span>
           </div>
         ))}
@@ -89,14 +90,14 @@ export default function PostCallCelebration({ demoStep, intents, totalCost, curr
       {/* PHASE 1: Industry First Badge + Infra context */}
       {phase >= 1 && (
         <div className="rounded-xl border p-3 md:p-4" style={{
-          borderColor: 'rgba(245,158,11,.3)',
-          background: 'linear-gradient(135deg, rgba(245,158,11,.06), rgba(236,72,153,.04))',
+          borderColor: tint('warn', '.3'),
+          background: `linear-gradient(135deg, ${tint('warn', '.06')}, ${tint('pink', '.04')})`,
           animation: 'fadeSlideIn 0.5s ease-out',
         }}>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-[18px] md:text-[20px]">{scenario.icon}</span>
             <div>
-              <div className="text-[7px] md:text-[8px] font-bold uppercase tracking-[.25em] mb-0.5" style={{ color: '#f59e0b' }}>
+              <div className="text-[7px] md:text-[8px] font-bold uppercase tracking-[.25em] mb-0.5" style={{ color: T.warn }}>
                 {scenario.industryFirst}
               </div>
               <div className="text-[14px] md:text-[16px] font-bold" style={{ color: 'var(--bright)' }}>
@@ -110,7 +111,7 @@ export default function PostCallCelebration({ demoStep, intents, totalCost, curr
 
           {/* Infra context badge */}
           <div className="flex items-center gap-2 mt-2 px-2 py-1.5 rounded-lg text-[9px] md:text-[10px]"
-            style={{ background: 'rgba(255,255,255,.03)', border: '1px solid var(--b1)' }}>
+            style={{ background: tint('veil', '.03'), border: '1px solid var(--b1)' }}>
             <span>{infraCfg.icon}</span>
             <span style={{ color: infraCfg.color }}>{infraCfg.label}</span>
             <span style={{ color: 'var(--dim)' }}>·</span>
@@ -121,7 +122,7 @@ export default function PostCallCelebration({ demoStep, intents, totalCost, curr
           </div>
 
           {scenario.isSimulated && !scenario.isInfraDemo && (
-            <div className="text-[8px] md:text-[9px] mt-2 px-2 py-1 rounded" style={{ background: 'rgba(255,255,255,.04)', color: 'var(--dim)' }}>
+            <div className="text-[8px] md:text-[9px] mt-2 px-2 py-1 rounded" style={{ background: tint('veil', '.04'), color: 'var(--dim)' }}>
               Sales routing powered by CRM integration (Salesforce). Full version available in production.
             </div>
           )}
@@ -131,25 +132,25 @@ export default function PostCallCelebration({ demoStep, intents, totalCost, curr
       {/* PHASE 2: Cost Comparison */}
       {phase >= 2 && (
         <div className="rounded-xl border p-3 md:p-4" style={{
-          borderColor: 'rgba(34,211,153,.2)',
-          background: 'rgba(0,0,0,.15)',
+          borderColor: tint('jadeB', '.2'),
+          background: tint('shade', '.15'),
           animation: 'fadeSlideIn 0.5s ease-out',
         }}>
           <div className="text-[7px] md:text-[8px] font-bold uppercase tracking-[.2em] mb-2" style={{ color: 'var(--dim)' }}>
             Cost Comparison
           </div>
           <div className="flex items-center gap-2 md:gap-3 mb-2">
-            <div className="flex-1 rounded-lg p-2 md:p-2.5" style={{ background: 'rgba(220,38,38,.08)', border: '1px solid rgba(220,38,38,.2)' }}>
-              <div className="text-[8px] md:text-[9px] font-bold uppercase mb-1" style={{ color: '#f87171' }}>Traditional IVR</div>
-              <div className="font-mono text-[12px] md:text-[14px] font-bold" style={{ color: '#f87171' }}>
+            <div className="flex-1 rounded-lg p-2 md:p-2.5" style={{ background: tint('crimson', '.08'), border: `1px solid ${tint('crimson', '.2')}` }}>
+              <div className="text-[8px] md:text-[9px] font-bold uppercase mb-1" style={{ color: T.danger }}>Traditional IVR</div>
+              <div className="font-mono text-[12px] md:text-[14px] font-bold" style={{ color: T.danger }}>
                 {fmt(2.50 / 60 * 35)}
               </div>
               <div className="text-[7px] md:text-[8px]" style={{ color: 'var(--dim)' }}>~₹2.50/min × 35s</div>
             </div>
             <div className="text-[14px] md:text-[16px]" style={{ color: 'var(--dim)' }}>→</div>
-            <div className="flex-1 rounded-lg p-2 md:p-2.5" style={{ background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.2)' }}>
-              <div className="text-[8px] md:text-[9px] font-bold uppercase mb-1" style={{ color: '#22c55e' }}>Converse AI</div>
-              <div className="font-mono text-[12px] md:text-[14px] font-bold" style={{ color: '#22c55e' }}>
+            <div className="flex-1 rounded-lg p-2 md:p-2.5" style={{ background: tint('ok', '.08'), border: `1px solid ${tint('ok', '.2')}` }}>
+              <div className="text-[8px] md:text-[9px] font-bold uppercase mb-1" style={{ color: T.ok }}>{brandCopy('Converse AI', brand.partnerName, brand.displayName)}</div>
+              <div className="font-mono text-[12px] md:text-[14px] font-bold" style={{ color: T.ok }}>
                 {fmt(totalCost)}
               </div>
               <div className="text-[7px] md:text-[8px]" style={{ color: 'var(--dim)' }}>
@@ -158,7 +159,7 @@ export default function PostCallCelebration({ demoStep, intents, totalCost, curr
             </div>
           </div>
           {totalCost > 0 && totalCost < (2.50 / 60 * 35) && (
-            <div className="text-center text-[12px] md:text-[14px] font-bold" style={{ color: '#22c55e' }}>
+            <div className="text-center text-[12px] md:text-[14px] font-bold" style={{ color: T.ok }}>
               ▼ {Math.round((1 - totalCost / (2.50 / 60 * 35)) * 100)}% savings
             </div>
           )}
@@ -168,8 +169,8 @@ export default function PostCallCelebration({ demoStep, intents, totalCost, curr
       {/* PHASE 3: Try Next nudge (non-last scenarios only) */}
       {phase >= 3 && !isLast && (
         <div className="rounded-xl border p-3 md:p-4" style={{
-          borderColor: 'rgba(99,102,241,.3)',
-          background: 'linear-gradient(135deg, rgba(99,102,241,.06), rgba(6,182,212,.04))',
+          borderColor: tint('indigo', '.3'),
+          background: `linear-gradient(135deg, ${tint('indigo', '.06')}, ${tint('cyan', '.04')})`,
           animation: 'fadeSlideIn 0.5s ease-out',
         }}>
           {scenario.nextPrompt.map((p, i) => (
@@ -180,9 +181,9 @@ export default function PostCallCelebration({ demoStep, intents, totalCost, curr
           <button onClick={onTryNext}
             className="w-full mt-2 py-2.5 md:py-3 rounded-lg font-bold text-[13px] md:text-[14px] transition-all hover:opacity-90 hover:scale-[1.01]"
             style={{
-              background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
-              color: '#fff',
-              boxShadow: '0 4px 20px rgba(99,102,241,.3)',
+              background: `linear-gradient(135deg, ${T.indigo}, ${T.cyan})`,
+              color: T.white,
+              boxShadow: `0 4px 20px ${tint('indigo', '.3')}`,
             }}>
             {scenario.nextButtonLabel}
           </button>
@@ -192,8 +193,8 @@ export default function PostCallCelebration({ demoStep, intents, totalCost, curr
       {/* PHASE 3: Sign-up CTA — EVERY scenario, always visible */}
       {phase >= 3 && (
         <div className="rounded-xl border p-3 md:p-4" style={{
-          borderColor: 'rgba(24,196,138,.25)',
-          background: 'linear-gradient(135deg, rgba(24,196,138,.04), rgba(51,112,232,.04))',
+          borderColor: tint('xGreen', '.25'),
+          background: `linear-gradient(135deg, ${tint('xGreen', '.04')}, ${tint('blue', '.04')})`,
           animation: 'fadeSlideIn 0.5s ease-out',
         }}>
           <div className="text-[11px] md:text-[13px] leading-relaxed text-center mb-3" style={{ color: 'var(--text)' }}>
@@ -201,7 +202,7 @@ export default function PostCallCelebration({ demoStep, intents, totalCost, curr
           </div>
           <button onClick={() => alert('Coming soon — Import My IVR')}
             className="w-full py-2.5 md:py-3 rounded-lg font-bold text-[13px] md:text-[14px] transition-all hover:opacity-90 hover:scale-[1.01]"
-            style={{ background: '#18c48a', color: '#050e1a' }}>
+            style={{ background: T.xGreen, color: T.onGreen }}>
             Import My IVR — Free →
           </button>
           <div className="flex items-center justify-center gap-2 md:gap-3 mt-2 flex-wrap">
@@ -220,7 +221,7 @@ export default function PostCallCelebration({ demoStep, intents, totalCost, curr
           <div className="flex items-center justify-center gap-1.5 md:gap-2 mt-2 flex-wrap">
             {['FREE', 'Zero migration cost', 'Zero integration', 'Under 30 minutes'].map(tag => (
               <span key={tag} className="text-[6px] md:text-[7px] font-bold px-1.5 py-0.5 rounded"
-                style={{ background: tag === 'FREE' ? '#f59e0b' : 'rgba(255,255,255,.06)', color: tag === 'FREE' ? '#000' : 'var(--dim)' }}>
+                style={{ background: tag === 'FREE' ? T.warn : tint('veil', '.06'), color: tag === 'FREE' ? T.onColor : 'var(--dim)' }}>
                 {tag}
               </span>
             ))}

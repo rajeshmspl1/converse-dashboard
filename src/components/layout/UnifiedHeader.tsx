@@ -363,7 +363,7 @@ export default function UnifiedHeader({
                 style={{
                   width: HEADER.avatar, height: HEADER.avatar,
                   background: brand.branded ? brand.accent : `linear-gradient(135deg, ${BRAND.blue}, ${BRAND.teal})`,
-                  color: brand.branded ? brand.onAccent : '#fff',
+                  color: brand.branded ? brand.onAccent : T.white,
                 }}
               >
                 {(user?.full_name || user?.email || '?')[0].toUpperCase()}

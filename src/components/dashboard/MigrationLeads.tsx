@@ -2,6 +2,7 @@
 import { getEnv } from '@/lib/env';
 
 import React, { useState, useEffect } from 'react';
+import { T, alpha, tint } from '@/lib/theme';
 
 /* ────────────────────────────────────────────────────────────
    MigrationLeads — Super Admin dashboard panel
@@ -30,13 +31,8 @@ async function fetchB(path: string): Promise<any> {
   return res.json();
 }
 
-const colors = {
-  bg: '#080D18', s1: '#0D1526', s2: '#111D30',
-  b1: '#1C2D45', b2: '#243558',
-  tx: '#DDE6F5', tx2: '#7A90B5', tx3: '#4A5F80',
-  blue: '#3370E8', teal: '#00C9B1', amber: '#F5A623',
-  red: '#F03060', green: '#00DE7A', purple: '#8B5CF6',
-};
+// Same values as theme.ts T (merged — R90).
+const colors = T;
 
 interface Lead {
   id: string;
@@ -122,7 +118,7 @@ export default function MigrationLeads() {
           <h3 style={{ fontSize: 15, fontWeight: 700 }}>Migration Leads</h3>
           <span style={{
             padding: '2px 8px', borderRadius: 4,
-            background: 'rgba(51,112,232,.1)', color: colors.blue,
+            background: tint('blue', '.1'), color: colors.blue,
             fontSize: 11, fontWeight: 600,
             fontFamily: "'JetBrains Mono', monospace",
           }}>
@@ -137,7 +133,7 @@ export default function MigrationLeads() {
               style={{
                 padding: '4px 10px', borderRadius: 5, border: 'none',
                 background: filter === f ? colors.blue : 'transparent',
-                color: filter === f ? '#fff' : colors.tx3,
+                color: filter === f ? T.onBlue : colors.tx3,
                 fontSize: 10, fontWeight: 600, cursor: 'pointer',
                 textTransform: 'capitalize' as const,
               }}
@@ -179,7 +175,7 @@ export default function MigrationLeads() {
               {filtered.map(lead => (
                 <tr
                   key={lead.id}
-                  style={{ borderBottom: `1px solid rgba(28,45,69,.4)` }}
+                  style={{ borderBottom: `1px solid ${tint('b1', '.4')}` }}
                 >
                   <td style={{ padding: '10px 14px', fontWeight: 600 }}>
                     {lead.company_name || '—'}
@@ -207,7 +203,7 @@ export default function MigrationLeads() {
                     <span style={{
                       padding: '2px 6px', borderRadius: 3,
                       fontSize: 9, fontWeight: 600,
-                      background: lead.tier === 3 ? 'rgba(139,92,246,.1)' : 'rgba(0,201,177,.1)',
+                      background: lead.tier === 3 ? tint('purple', '.1') : tint('teal', '.1'),
                       color: lead.tier === 3 ? colors.purple : colors.teal,
                       fontFamily: "'JetBrains Mono', monospace",
                     }}>
@@ -218,7 +214,7 @@ export default function MigrationLeads() {
                     <span style={{
                       padding: '3px 8px', borderRadius: 4,
                       fontSize: 10, fontWeight: 600,
-                      background: `${statusColor(lead.status)}15`,
+                      background: alpha(statusColor(lead.status), '15'),
                       color: statusColor(lead.status),
                       textTransform: 'capitalize' as const,
                     }}>

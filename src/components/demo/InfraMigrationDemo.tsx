@@ -4,6 +4,7 @@ import { INFRA_CONFIG, DEPLOY_CONFIG, DEMO_SCENARIOS } from '@/lib/data'
 import type { InfraLevel, DeployModel } from '@/types'
 import { useBranding } from '@/components/branding/BrandingProvider'
 import { brandCopy } from '@/lib/branding'
+import { T, alpha, tint } from '@/lib/theme'
 
 interface Props {
   onComplete: () => void
@@ -78,7 +79,7 @@ export default function InfraMigrationDemo({ onComplete }: Props) {
       </div>
 
       {/* Current status */}
-      <div className="rounded-xl border p-3" style={{ borderColor: 'var(--b1)', background: 'rgba(255,255,255,.02)' }}>
+      <div className="rounded-xl border p-3" style={{ borderColor: 'var(--b1)', background: tint('veil', '.02') }}>
         <div className="text-[8px] font-bold uppercase tracking-[.2em] mb-2" style={{ color: 'var(--dim)' }}>Current</div>
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-1.5">
@@ -102,19 +103,19 @@ export default function InfraMigrationDemo({ onComplete }: Props) {
       {/* Migration progress */}
       {migrating && (
         <div className="rounded-lg border p-3" style={{
-          borderColor: 'rgba(245,158,11,.3)',
-          background: 'rgba(245,158,11,.05)',
+          borderColor: tint('warn', '.3'),
+          background: tint('warn', '.05'),
           animation: 'fadeSlideIn 0.3s ease-out',
         }}>
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] font-bold" style={{ color: '#f59e0b' }}>
+            <span className="text-[10px] font-bold" style={{ color: T.warn }}>
               Migrating {migrating.startsWith('infra') ? 'data infrastructure' : 'deployment model'}…
             </span>
-            <span className="text-[10px] font-mono" style={{ color: '#f59e0b' }}>{Math.round(progress)}%</span>
+            <span className="text-[10px] font-mono" style={{ color: T.warn }}>{Math.round(progress)}%</span>
           </div>
-          <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,.06)' }}>
+          <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: tint('veil', '.06') }}>
             <div className="h-full rounded-full transition-all duration-100"
-              style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #f59e0b, #22c55e)' }} />
+              style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${T.warn}, ${T.ok})` }} />
           </div>
           <div className="text-[8px] mt-1" style={{ color: 'var(--dim)' }}>
             Zero downtime · {migrating.startsWith('infra') ? 'Simulating 15 min' : 'Simulating 2 hrs'}
@@ -138,7 +139,7 @@ export default function InfraMigrationDemo({ onComplete }: Props) {
                 className="rounded-lg border p-2.5 text-left transition-all hover:scale-[1.02] disabled:hover:scale-100"
                 style={{
                   borderColor: isCurrent ? cfg.color : 'var(--b2)',
-                  background: isCurrent ? `${cfg.color}15` : 'transparent',
+                  background: isCurrent ? `${alpha(cfg.color, '15')}` : 'transparent',
                   opacity: migrating && !isCurrent ? 0.4 : 1,
                 }}>
                 <div className="flex items-center gap-1.5 mb-1">
@@ -149,7 +150,7 @@ export default function InfraMigrationDemo({ onComplete }: Props) {
                   {copy(DATA_LOCATIONS[tier].split('—')[0].trim())}
                 </div>
                 {isCurrent
-                  ? <div className="text-[7px] font-bold mt-1 px-1.5 py-0.5 rounded inline-block" style={{ background: `${cfg.color}22`, color: cfg.color }}>Current</div>
+                  ? <div className="text-[7px] font-bold mt-1 px-1.5 py-0.5 rounded inline-block" style={{ background: `${alpha(cfg.color, '22')}`, color: cfg.color }}>Current</div>
                   : !migrating && <div className="text-[7px] mt-1" style={{ color: 'var(--dim)' }}>Upgrade — 15 min</div>
                 }
               </button>
@@ -174,7 +175,7 @@ export default function InfraMigrationDemo({ onComplete }: Props) {
                 className="rounded-lg border p-2.5 text-left transition-all hover:scale-[1.02] disabled:hover:scale-100"
                 style={{
                   borderColor: isCurrent ? cfg.color : 'var(--b2)',
-                  background: isCurrent ? `${cfg.color}15` : 'transparent',
+                  background: isCurrent ? `${alpha(cfg.color, '15')}` : 'transparent',
                   opacity: migrating && !isCurrent ? 0.4 : 1,
                 }}>
                 <div className="flex items-center gap-1.5 mb-1">
@@ -183,7 +184,7 @@ export default function InfraMigrationDemo({ onComplete }: Props) {
                 </div>
                 <div className="text-[7px] leading-snug" style={{ color: 'var(--dim)' }}>{copy(DEPLOY_DETAILS[model].split(',')[0])}</div>
                 {isCurrent
-                  ? <div className="text-[7px] font-bold mt-1 px-1.5 py-0.5 rounded inline-block" style={{ background: `${cfg.color}22`, color: cfg.color }}>Current</div>
+                  ? <div className="text-[7px] font-bold mt-1 px-1.5 py-0.5 rounded inline-block" style={{ background: `${alpha(cfg.color, '22')}`, color: cfg.color }}>Current</div>
                   : !migrating && <div className="text-[7px] mt-1" style={{ color: 'var(--dim)' }}>Switch — 2 hrs</div>
                 }
               </button>
@@ -194,11 +195,11 @@ export default function InfraMigrationDemo({ onComplete }: Props) {
 
       {/* Migration log */}
       {migrations.length > 0 && (
-        <div className="rounded-lg border p-3" style={{ borderColor: 'var(--b1)', background: 'rgba(0,0,0,.15)' }}>
+        <div className="rounded-lg border p-3" style={{ borderColor: 'var(--b1)', background: tint('shade', '.15') }}>
           <div className="text-[8px] font-bold uppercase tracking-wide mb-1.5" style={{ color: 'var(--dim)' }}>Migration Log</div>
           {migrations.map((m, i) => (
             <div key={i} className="flex items-center gap-2 text-[9px] py-0.5">
-              <span style={{ color: '#22c55e' }}>✓</span>
+              <span style={{ color: T.ok }}>✓</span>
               <span style={{ color: 'var(--text)' }}>{m}</span>
               <span style={{ color: 'var(--dim)' }}>· Zero downtime</span>
             </div>
@@ -207,8 +208,8 @@ export default function InfraMigrationDemo({ onComplete }: Props) {
       )}
 
       {/* Journey recap */}
-      <div className="rounded-xl border p-3" style={{ borderColor: 'rgba(34,197,94,.2)', background: 'rgba(34,197,94,.03)' }}>
-        <div className="text-[8px] font-bold uppercase tracking-[.2em] mb-2" style={{ color: '#22c55e' }}>Your Infrastructure Journey</div>
+      <div className="rounded-xl border p-3" style={{ borderColor: tint('ok', '.2'), background: tint('ok', '.03') }}>
+        <div className="text-[8px] font-bold uppercase tracking-[.2em] mb-2" style={{ color: T.ok }}>Your Infrastructure Journey</div>
         {DEMO_SCENARIOS.slice(0, 5).map((sc, i) => (
           <div key={sc.id} className="flex items-center gap-2 text-[9px] py-0.5 font-mono">
             <span>{sc.icon}</span>
@@ -225,9 +226,9 @@ export default function InfraMigrationDemo({ onComplete }: Props) {
         <button onClick={onComplete}
           className="w-full py-3 rounded-xl font-bold text-[13px] transition-all hover:opacity-90"
           style={{
-            background: 'linear-gradient(135deg, #22c55e, #06b6d4)',
-            color: '#fff',
-            boxShadow: '0 4px 20px rgba(34,197,94,.3)',
+            background: `linear-gradient(135deg, ${T.ok}, ${T.cyan})`,
+            color: T.white,
+            boxShadow: `0 4px 20px ${tint('ok', '.3')}`,
             animation: 'fadeSlideIn 0.5s ease-out',
           }}>
           Complete Journey — See What's Next →

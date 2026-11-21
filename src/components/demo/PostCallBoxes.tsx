@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { JOURNEY_CONFIGS, INDUSTRIES, CHIP_DATA } from '@/lib/journeyData'
 import { DEMO_SCENARIOS, CURRENCY_CONFIG } from '@/lib/data'
 import type { Currency } from '@/types'
+import { T, tint } from '@/lib/theme'
 
 interface LiveIntent {
   key: string
@@ -50,17 +51,17 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
       <div className="mt-3" style={{ animation: 'fadeSlideIn 0.6s ease-out' }}>
         {/* ═══ SUMMARY LINER ═══ */}
         <div className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-[10px] mb-4 flex-wrap"
-          style={{ background: 'rgba(0,201,177,.04)', border: '1px solid rgba(0,201,177,.1)' }}>
+          style={{ background: tint('teal', '.04'), border: `1px solid ${tint('teal', '.1')}` }}>
           <div className="flex items-center gap-2 text-[12px]" style={{ color: 'var(--text, #a8c0e0)' }}>
-            ✅ Call complete · <strong style={{ color: '#00c9b1' }}>{durStr}</strong> ·{' '}
-            <strong style={{ color: '#00c9b1' }}>{intents.length} intent{intents.length !== 1 ? 's' : ''}</strong> ·{' '}
-            <strong className="font-mono" style={{ color: '#00c9b1' }}>{fmt(totalCost)}</strong>
+            ✅ Call complete · <strong style={{ color: T.teal }}>{durStr}</strong> ·{' '}
+            <strong style={{ color: T.teal }}>{intents.length} intent{intents.length !== 1 ? 's' : ''}</strong> ·{' '}
+            <strong className="font-mono" style={{ color: T.teal }}>{fmt(totalCost)}</strong>
           </div>
           <div className="flex gap-1.5">
             <button onClick={() => { if (sessionDisplayId) window.location.href = `/dashboard/session/${sessionDisplayId}` }} className="text-[9px] font-semibold px-2.5 py-1 rounded border transition-all hover:bg-white/5"
-              style={{ color: '#00c9b1', borderColor: 'rgba(0,201,177,.2)', background: 'transparent' }}>📊 Dashboard</button>
+              style={{ color: T.teal, borderColor: tint('teal', '.2'), background: 'transparent' }}>📊 Dashboard</button>
             <button onClick={() => onSignUp?.()} className="text-[9px] font-semibold px-2.5 py-1 rounded border transition-all hover:bg-white/5"
-              style={{ color: '#00c9b1', borderColor: 'rgba(0,201,177,.2)', background: 'transparent' }}>📱 Migrate Your IVR</button>
+              style={{ color: T.teal, borderColor: tint('teal', '.2'), background: 'transparent' }}>📱 Migrate Your IVR</button>
           </div>
         </div>
 
@@ -74,10 +75,10 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
                 onSelectIndustry?.(ivrKey)
                 onStartCall()
               }}
-              className={`py-2.5 px-2 rounded-[10px] border text-center cursor-pointer transition-all hover:-translate-y-0.5 ${isActive ? 'border-[#00c9b1]' : ''}`}
+              className={`py-2.5 px-2 rounded-[10px] border text-center cursor-pointer transition-all hover:-translate-y-0.5 ${isActive ? 'border-[var(--brand-teal,#00c9b1)]' : ''}`}
               style={{
-                background: isActive ? 'rgba(0,201,177,.1)' : 'var(--card, #0f1824)',
-                borderColor: isActive ? '#00c9b1' : 'var(--b1)',
+                background: isActive ? tint('teal', '.1') : 'var(--card, #0f1824)',
+                borderColor: isActive ? T.teal : 'var(--b1)',
               }}>
               <div className="text-[20px] mb-1">{label.split(' ')[0]}</div>
               <div className="text-[10px] font-semibold">{label.split(' ').slice(1).join(' ')}</div>
@@ -92,10 +93,10 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
           {/* BOX 1: See Your AI Bill */}
           <div onClick={() => setPanelOpen(true)}
             className="rounded-[14px] border cursor-pointer transition-all hover:-translate-y-1 hover:shadow-xl overflow-hidden"
-            style={{ borderColor: 'rgba(0,201,177,.2)', background: 'var(--card, #0f1824)' }}>
+            style={{ borderColor: tint('teal', '.2'), background: 'var(--card, #0f1824)' }}>
             <div className="p-5 flex flex-col h-full">
               <span className="inline-block w-fit px-2.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide mb-2"
-                style={{ background: 'rgba(0,201,177,.1)', color: '#00c9b1' }}>📋 Your Bill</span>
+                style={{ background: tint('teal', '.1'), color: T.teal }}>📋 Your Bill</span>
               <div className="text-[28px] mb-2.5">📋</div>
               <h3 className="text-[15px] font-bold mb-1.5">See Your AI Bill</h3>
 
@@ -109,10 +110,10 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
                 ].map((row, i) => (
                   <div key={i} className="flex justify-between py-0.5 text-[9px]">
                     <span style={{ color: row.tested ? 'var(--text)' : 'var(--dim)' }}>{row.n}</span>
-                    <span className="font-mono font-semibold" style={{ color: row.tested ? '#00c9b1' : 'var(--dim)' }}>{row.val}</span>
+                    <span className="font-mono font-semibold" style={{ color: row.tested ? T.teal : 'var(--dim)' }}>{row.val}</span>
                   </div>
                 ))}
-                <div className="flex justify-between pt-1.5 mt-1 text-[10px] font-bold" style={{ borderTop: '1.5px solid var(--b1)', color: '#00c9b1' }}>
+                <div className="flex justify-between pt-1.5 mt-1 text-[10px] font-bold" style={{ borderTop: '1.5px solid var(--b1)', color: T.teal }}>
                   <span>Total</span>
                   <span className="font-mono">{fmt(totalCost)}</span>
                 </div>
@@ -120,7 +121,7 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
 
               <div className="mt-auto pt-2">
                 <div className="w-full py-2.5 rounded-[9px] text-center text-[12px] font-bold cursor-pointer"
-                  style={{ background: '#00c9b1', color: '#000' }}>
+                  style={{ background: T.teal, color: T.onTeal }}>
                   View Full Bill →
                 </div>
               </div>
@@ -131,10 +132,10 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
           {!isLast && nextConfig ? (
             <div onClick={onTryNext}
               className="rounded-[14px] border cursor-pointer transition-all hover:-translate-y-1 hover:shadow-xl overflow-hidden"
-              style={{ borderColor: 'rgba(245,166,35,.2)', background: 'var(--card, #0f1824)' }}>
+              style={{ borderColor: tint('amber', '.2'), background: 'var(--card, #0f1824)' }}>
               <div className="p-5 flex flex-col h-full">
                 <span className="inline-block w-fit px-2.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide mb-2"
-                  style={{ background: 'rgba(245,166,35,.12)', color: '#f5a623' }}>⏭ Next Journey</span>
+                  style={{ background: tint('amber', '.12'), color: T.amber }}>⏭ Next Journey</span>
                 <div className="text-[28px] mb-2.5">{nextConfig.icon}</div>
                 <h3 className="text-[15px] font-bold mb-1.5">{nextConfig.name}</h3>
                 <div className="text-[11px] leading-relaxed" style={{ color: 'var(--text)' }}>
@@ -142,7 +143,7 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
                 </div>
                 <div className="mt-auto pt-2">
                   <div className="w-full py-3 rounded-[9px] text-center text-[13px] font-bold cursor-pointer"
-                    style={{ background: '#f5a623', color: '#000' }}>
+                    style={{ background: T.amber, color: T.onColor }}>
                     {nextConfig.icon} Try {nextConfig.name} →
                   </div>
                 </div>
@@ -150,10 +151,10 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
             </div>
           ) : (
             <div className="rounded-[14px] border overflow-hidden"
-              style={{ borderColor: 'rgba(245,166,35,.2)', background: 'var(--card, #0f1824)' }}>
+              style={{ borderColor: tint('amber', '.2'), background: 'var(--card, #0f1824)' }}>
               <div className="p-5 flex flex-col h-full">
                 <span className="inline-block w-fit px-2.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide mb-2"
-                  style={{ background: 'rgba(245,166,35,.12)', color: '#f5a623' }}>🎉 All Done</span>
+                  style={{ background: tint('amber', '.12'), color: T.amber }}>🎉 All Done</span>
                 <div className="text-[28px] mb-2.5">🎉</div>
                 <h3 className="text-[15px] font-bold mb-1.5">All Journeys Complete</h3>
                 <div className="text-[11px] leading-relaxed" style={{ color: 'var(--text)' }}>
@@ -165,10 +166,10 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
 
           {/* BOX 3: Give Us Your IVR Number */}
           <div className="rounded-[14px] border overflow-hidden"
-            style={{ borderColor: 'rgba(139,92,246,.2)', background: 'var(--card, #0f1824)' }}>
+            style={{ borderColor: tint('purple', '.2'), background: 'var(--card, #0f1824)' }}>
             <div className="p-5 flex flex-col h-full">
               <span className="inline-block w-fit px-2.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide mb-2"
-                style={{ background: 'rgba(139,92,246,.1)', color: '#8b5cf6' }}>📱 Migrate IVR</span>
+                style={{ background: tint('purple', '.1'), color: T.purple }}>📱 Migrate IVR</span>
               <div className="text-[28px] mb-2.5">📱</div>
               <h3 className="text-[15px] font-bold mb-1.5">Migrate Your IVR</h3>
               <div className="text-[11px] leading-relaxed mb-3" style={{ color: 'var(--text)' }}>
@@ -181,14 +182,14 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
                   onClick={e => e.stopPropagation()} />
                 <button onClick={() => onSignUp?.()}
                   className="w-full py-3 rounded-lg border-none text-[12px] font-bold cursor-pointer"
-                  style={{ background: '#8b5cf6', color: '#fff' }}>
+                  style={{ background: T.purple, color: T.white }}>
                   📱 Migrate Your IVR →
                 </button>
                 <div className="text-[9px] text-center mt-1.5" style={{ color: 'var(--dim)' }}>
                   Zero integration · Zero cost · In 17 minutes
                 </div>
                 <div className="flex items-center justify-center gap-2 mt-1.5 text-[10px]" style={{ color: 'var(--dim)' }}>
-                  <button onClick={() => onSignUp?.()} className="font-semibold cursor-pointer border-none bg-transparent" style={{ color: '#8b5cf6', fontSize: '10px' }}>📅 Book a Call</button>
+                  <button onClick={() => onSignUp?.()} className="font-semibold cursor-pointer border-none bg-transparent" style={{ color: T.purple, fontSize: '10px' }}>📅 Book a Call</button>
                 </div>
               </div>
             </div>
@@ -197,12 +198,12 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
 
         {/* ═══ SIGN UP STRIP ═══ */}
         <div className="flex flex-col items-center gap-1 px-4 py-2.5 rounded-lg mb-2"
-          style={{ background: 'linear-gradient(135deg, rgba(0,201,177,.05), rgba(139,92,246,.03))', border: '1px solid rgba(0,201,177,.08)' }}>
+          style={{ background: `linear-gradient(135deg, ${tint('teal', '.05')}, ${tint('purple', '.03')})`, border: `1px solid ${tint('teal', '.08')}` }}>
           <div className="flex items-center gap-3">
             <span className="text-[10px]" style={{ color: 'var(--text)' }}>Ready to migrate?</span>
             <button onClick={() => onSignUp?.()}
               className="px-4 py-1.5 rounded-md border-none text-[10px] font-bold cursor-pointer"
-              style={{ background: '#00c9b1', color: '#000' }}>
+              style={{ background: T.teal, color: T.onTeal }}>
               📱 Migrate Your IVR
             </button>
           </div>
@@ -215,14 +216,14 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
         <>
           {/* Backdrop */}
           <div className="fixed inset-0 z-[99] transition-opacity duration-300"
-            style={{ background: 'rgba(0,0,0,.5)' }}
+            style={{ background: tint('shade', '.5') }}
             onClick={() => setPanelOpen(false)} />
 
           {/* Panel */}
           <div className="fixed top-0 right-0 h-screen z-[100] overflow-y-auto shadow-2xl"
             style={{
               width: 440, maxWidth: '90vw',
-              background: 'var(--s1, #0d1526)',
+              background: T.s1,
               borderLeft: '1px solid var(--b1)',
               animation: 'slideInRight .35s cubic-bezier(.4,0,.2,1)',
             }}>
@@ -230,7 +231,7 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
 
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b sticky top-0 z-[1]"
-              style={{ borderColor: 'var(--b1)', background: 'var(--s1, #0d1526)' }}>
+              style={{ borderColor: 'var(--b1)', background: T.s1 }}>
               <h3 className="text-[14px] font-bold">📋 AI Billing Statement</h3>
               <button onClick={() => setPanelOpen(false)}
                 className="w-7 h-7 rounded-md border flex items-center justify-center text-[14px] cursor-pointer hover:bg-red-500 hover:text-white transition-colors"
@@ -246,16 +247,16 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
               </div>
 
               {/* LLM Stack */}
-              <div className="text-[8px] font-bold uppercase tracking-wide py-2" style={{ color: '#00c9b1' }}>Multi-Modal LLM Stack</div>
+              <div className="text-[8px] font-bold uppercase tracking-wide py-2" style={{ color: T.teal }}>Multi-Modal LLM Stack</div>
               <div className="flex gap-1.5 flex-wrap mb-2.5">
                 {jConfig.stack.map(s => (
                   <span key={s} className="px-2 py-0.5 rounded text-[9px] font-semibold border"
-                    style={{ background: 'rgba(0,201,177,.08)', color: '#00c9b1', borderColor: 'var(--b1)' }}>{s}</span>
+                    style={{ background: tint('teal', '.08'), color: T.teal, borderColor: 'var(--b1)' }}>{s}</span>
                 ))}
               </div>
 
               {/* Billing by Journey */}
-              <div className="text-[8px] font-bold uppercase tracking-wide py-2" style={{ color: '#00c9b1' }}>Billing by Journey</div>
+              <div className="text-[8px] font-bold uppercase tracking-wide py-2" style={{ color: T.teal }}>Billing by Journey</div>
               <table className="w-full" style={{ borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
@@ -276,11 +277,11 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
                     return (
                       <tr key={row.j}
                         onClick={() => { if (!isCurrent) { setPanelOpen(false); onNavigateJourney(row.j) } }}
-                        style={{ color: isCurrent ? '#00c9b1' : 'var(--dim)', cursor: isCurrent ? 'default' : 'pointer' }}>
-                        <td className="py-1.5 text-[11px]" style={{ borderBottom: '1px solid rgba(28,45,69,.3)' }}>{row.n}</td>
-                        <td className="py-1.5 text-[8px]" style={{ borderBottom: '1px solid rgba(28,45,69,.3)' }}>{isCurrent ? '✅ Tested' : <span className="text-[#00c9b1] font-semibold">— Try →</span>}</td>
-                        <td className="py-1.5 text-[11px]" style={{ borderBottom: '1px solid rgba(28,45,69,.3)' }}>{isCurrent ? intents.length : 0}</td>
-                        <td className="py-1.5 text-[11px] font-bold" style={{ borderBottom: '1px solid rgba(28,45,69,.3)' }}>{isCurrent ? fmt(totalCost) : '₹0.00'}</td>
+                        style={{ color: isCurrent ? T.teal : 'var(--dim)', cursor: isCurrent ? 'default' : 'pointer' }}>
+                        <td className="py-1.5 text-[11px]" style={{ borderBottom: `1px solid ${tint('b1', '.3')}` }}>{row.n}</td>
+                        <td className="py-1.5 text-[8px]" style={{ borderBottom: `1px solid ${tint('b1', '.3')}` }}>{isCurrent ? '✅ Tested' : <span className="text-[var(--brand-teal,#00c9b1)] font-semibold">— Try →</span>}</td>
+                        <td className="py-1.5 text-[11px]" style={{ borderBottom: `1px solid ${tint('b1', '.3')}` }}>{isCurrent ? intents.length : 0}</td>
+                        <td className="py-1.5 text-[11px] font-bold" style={{ borderBottom: `1px solid ${tint('b1', '.3')}` }}>{isCurrent ? fmt(totalCost) : '₹0.00'}</td>
                       </tr>
                     )
                   })}
@@ -293,11 +294,11 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
               </table>
 
               {/* Resolution */}
-              <div className="text-[8px] font-bold uppercase tracking-wide py-2 mt-2" style={{ color: '#00c9b1' }}>Resolution</div>
-              <div className="flex justify-between py-1 text-[11px]" style={{ color: '#00de7a' }}>
+              <div className="text-[8px] font-bold uppercase tracking-wide py-2 mt-2" style={{ color: T.teal }}>Resolution</div>
+              <div className="flex justify-between py-1 text-[11px]" style={{ color: T.green }}>
                 <span>Resolved ✅</span><span className="font-mono">{intents.length} = {fmt(totalCost)}</span>
               </div>
-              <div className="flex justify-between py-1 text-[11px]" style={{ color: '#f03060' }}>
+              <div className="flex justify-between py-1 text-[11px]" style={{ color: T.red }}>
                 <span>Not Resolved ❌</span><span className="font-mono">0 = -₹0.00</span>
               </div>
               <div className="flex justify-between py-1.5 text-[11px] font-bold mt-1" style={{ borderTop: '1px solid var(--b1)', color: 'var(--bright)' }}>
@@ -305,7 +306,7 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
               </div>
 
               {/* Sales (Coming Soon) */}
-              <div className="text-[8px] font-bold uppercase tracking-wide py-2 mt-2" style={{ color: '#00c9b1' }}>
+              <div className="text-[8px] font-bold uppercase tracking-wide py-2 mt-2" style={{ color: T.teal }}>
                 Sales <span className="px-1.5 py-px rounded text-[6px]" style={{ background: 'var(--card2)', color: 'var(--dim)' }}>Coming Soon</span>
               </div>
               <div className="flex justify-between py-1 text-[11px] opacity-40" style={{ color: 'var(--dim)' }}>
@@ -317,7 +318,7 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
 
               {/* Grand Total */}
               <div className="flex justify-between py-3 text-[16px] font-bold mt-1.5"
-                style={{ borderTop: '3px solid #00c9b1', color: '#00c9b1' }}>
+                style={{ borderTop: `3px solid ${T.teal}`, color: T.teal }}>
                 <span>TOTAL</span><span className="font-mono">{fmt(totalCost)}</span>
               </div>
 
@@ -332,7 +333,7 @@ export default function PostCallBoxes({ demoStep, intents, totalCost, currency, 
                 <button onClick={() => alert('Email')} className="flex-1 py-2 rounded-md border text-[9px] font-semibold cursor-pointer"
                   style={{ borderColor: 'var(--b1)', background: 'var(--card2)', color: 'var(--text)' }}>📧 Email</button>
                 <button onClick={() => { if (sessionDisplayId) window.location.href = `/dashboard/session/${sessionDisplayId}` }} className="flex-1 py-2 rounded-md border-none text-[9px] font-semibold cursor-pointer"
-                  style={{ background: '#00c9b1', color: '#000' }}>📊 Dashboard</button>
+                  style={{ background: T.teal, color: T.onTeal }}>📊 Dashboard</button>
               </div>
             </div>
           </div>

@@ -8,10 +8,10 @@ import SettingsSidebar from '@/components/settings/SettingsSidebar'
 import { useBranding } from '@/components/branding/BrandingProvider'
 import { apiErrorMessage, fetchB, fetchI, getUser, isLoggedIn, signOut, type CxUser } from '@/lib/auth'
 import { fetchAssetBlobUrl } from '@/lib/branding'
-import { buttonTextColor } from '@/lib/color'
+import { buttonTextColor, isHex, readableAccent } from '@/lib/color'
 import { isSuperAdmin } from '@/lib/roles'
 import { T, BRAND, BRAND_HEX, DARK, FONTS, tint } from '@/lib/theme'
-import { LIGHT } from '@/lib/brandTheme'
+import { LIGHT, lightAccent } from '@/lib/brandTheme'
 import {
   EMPTY, FONT_ALLOWLIST, IMAGE_LIMITS, LOGO_PLATES, UPLOAD_TYPES, applySuggestions, buildPatch, canEditBranding, checkColor,
   formFrom, suggestionUsable, validate, valuesFromAdmin, valuesFromMerged,
@@ -225,6 +225,8 @@ export default function SettingsBrandingPage() {
     heading: shown('heading', 'heading'), body: shown('body', 'body'),
     plate: (isTenant && !form.override.logo_plate ? inherited?.logo_plate : form.logo_plate) || 'auto',
   }
+  // Accent as the header actually renders it (readable on the preview header surface), for text only.
+  const pvAccentText = isHex(pv.accent) ? (pv.theme === 'light' ? lightAccent(pv.accent) : readableAccent(pv.accent, DARK.s1)) : pv.accent
   const plateOn = pv.plate !== 'none'
   const previewLogo = (assetPreview.logo && !removeAsset.logo) ? assetPreview.logo : (isTenant ? inheritedAsset.logo : null)
   const tenantName = (key: string) => tenants.find(t => t.key === key)?.name || brand.displayName || 'Tenant'
@@ -399,7 +401,7 @@ export default function SettingsBrandingPage() {
                     <div className="flex items-center justify-between mb-1"><span className="text-[12px] font-medium" style={{ color: T.tx }}>Theme (logged-in pages)</span>{override('theme')}</div>
                     {(!isTenant || form.override.theme) && (
                       <select value={form.theme} onChange={e => set('theme', e.target.value as Values['theme'])} className="px-2 py-1.5 rounded text-[12px]" style={inputStyle} data-testid="theme-select">
-                        <option value="">Default (AiIVRs dark)</option>
+                        <option value="">Default (dark)</option>
                         <option value="dark">Dark</option>
                         <option value="light">Light</option>
                       </select>
@@ -457,7 +459,7 @@ export default function SettingsBrandingPage() {
                         {previewLogo
                           ? <span className="flex items-center rounded" style={plateOn ? { background: '#FFFFFF', height: 30, padding: '3px 8px' } : { height: 30 }}><img src={previewLogo} alt={pv.name} style={{ maxHeight: plateOn ? 24 : 30, maxWidth: 110 }} /></span>
                           : <span className="text-[12px] font-bold" style={{ color: pv.theme === 'light' ? LIGHT.tx : DARK.tx }}>{pv.name}</span>}
-                        <span className="text-[10px] px-2 py-0.5 rounded ml-1" style={{ color: pv.accent, border: `1px solid ${pv.accent}66`, background: `${pv.accent}1F` }}>Overview</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded ml-1" style={{ color: pvAccentText, border: `1px solid ${pv.accent}66`, background: `${pv.accent}1F` }}>Overview</span>
                       </div>
                       <div className="px-4 py-5" style={{ background: pv.gFrom && pv.gTo ? `linear-gradient(180deg, ${pv.gFrom}, ${pv.gTo})` : DARK.s2 }}>
                         <div className="text-[16px] font-extrabold mb-1" style={{ color: '#FFFFFF', fontFamily: pv.heading ? `'${pv.heading}', ${FONTS.ui}` : FONTS.ui }}>{pv.name}</div>

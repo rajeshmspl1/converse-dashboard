@@ -8,8 +8,8 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { usePathname } from 'next/navigation'
 import { AUTH_CLEARED_EVENT, getUser, isLoggedIn, type CxUser } from '@/lib/auth'
 import { displayNameFor, fetchAssetBlobUrl, fetchLogoBlobUrl, forgetBranding, loadBranding, wantsPlate, type Branding } from '@/lib/branding'
-import { LIGHT_SURFACES, brandFontsUrl, buildThemeVars, themeCacheKey, themeOf, type ThemeName } from '@/lib/brandTheme'
-import { buttonTextColor, readableAccent, readableOn } from '@/lib/color'
+import { brandFontsUrl, buildThemeVars, lightAccent, themeCacheKey, themeOf, type ThemeName } from '@/lib/brandTheme'
+import { buttonTextColor, readableAccent } from '@/lib/color'
 import { usePartnerConfig } from '@/lib/partner'
 import { BRAND_HEX } from '@/lib/theme'
 
@@ -50,8 +50,8 @@ function stateFrom(user: CxUser | null, b: Branding, partner: ReturnType<typeof 
     partnerName: b.partner_name || null,
     displayName: displayNameFor(user, b, partner),
     accent,
-    accentText: !b.colors?.accent ? (theme === 'light' ? readableOn(BRAND_HEX.teal, LIGHT_SURFACES) : BRAND_HEX.teal)
-      : theme === 'light' ? readableOn(accent, LIGHT_SURFACES) : readableAccent(accent),
+    accentText: !b.colors?.accent ? (theme === 'light' ? lightAccent(BRAND_HEX.teal) : BRAND_HEX.teal)
+      : theme === 'light' ? lightAccent(accent) : readableAccent(accent),
     onAccent: buttonTextColor(accent),
     logoSrc,
     logoPlate: !!logoSrc && wantsPlate(b.logo_plate),

@@ -4,24 +4,64 @@
 // computed, or an allow-listed font stack. No branding → {} (AiIVRs dark exactly as today: the CSS
 // fallbacks in theme.ts apply).
 import { DARK, TINTS, cssName, tintName, type Token } from './theme'
-import { buttonTextColor, contrastRatio, isHex, readableOn } from './color'
+import { buttonTextColor, contrastRatio, darken, isHex, readableOn } from './color'
 
 export const THEMES = ['dark', 'light'] as const
 export type ThemeName = typeof THEMES[number]
 
+const L_SURF = { bg: '#F4F5F7', s1: '#FFFFFF', s2: '#F8F9FB', s3: '#EEF0F3' }
+export const LIGHT_SURFACES = [L_SURF.bg, L_SURF.s1, L_SURF.s2, L_SURF.s3]
+export const DARK_SURFACES = [DARK.bg, DARK.s1, DARK.s2, DARK.s3]
+/** Strongest same-colour tint we design text-on-tint for (badges/chips: text in colour X on a fill of X at ≤ 20%). */
+export const TINT_CEILING = 0.2
+function mixHex(c: string, s: string, a: number): string {
+  const p = (h: string) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16))
+  const x = p(c), y = p(s)
+  return '#' + x.map((v, i) => Math.round(v * a + y[i] * (1 - a)).toString(16).padStart(2, '0')).join('').toUpperCase()
+}
+/**
+ * A colour for the LIGHT theme: >= 4.5:1 on every light surface AND on every light surface washed with itself at
+ * TINT_CEILING (so a badge "X text on X tint" stays readable). Darkens until both hold.
+ */
+export function lightAccent(hex: string): string {
+  let c = readableOn(hex, LIGHT_SURFACES)
+  for (let i = 0; i < 40; i++) {
+    if (LIGHT_SURFACES.every(s => contrastRatio(c, mixHex(c, s, TINT_CEILING)) >= 4.5)) return c
+    c = darken(c, 0.05)
+  }
+  return c
+}
+const onLight = lightAccent
+
 /** Light theme (new tokens; every text/surface pair >= 4.5:1 — see the tests). */
 export const LIGHT: Record<Token, string> = {
-  blue: '#1D4ED8', blueAlt: '#1D4ED8', teal: '#0F766E', amber: '#92400E', red: '#B91C1C', green: '#047857', purple: '#6D28D9',
-  tx: '#0F172A', tx2: '#475569', tx3: '#56606E', tx3Dim: '#56606E',
-  bg: '#F4F5F7', s1: '#FFFFFF', s2: '#F8F9FB', s3: '#EEF0F3', b1: '#E2E5EA', b2: '#CBD2DC',
-  danger: '#B42318', onTeal: '#FFFFFF', onBlue: '#FFFFFF', onDanger: '#FFFFFF', white: '#FFFFFF',
+  blue: onLight('#1D4ED8'), blueAlt: onLight('#1D4ED8'), teal: onLight('#0F766E'), amber: onLight('#92400E'),
+  red: onLight('#B91C1C'), green: onLight('#047857'), purple: onLight('#6D28D9'),
+  tx: '#0F172A', tx2: onLight('#475569'), tx3: onLight('#56606E'), tx3Dim: onLight('#56606E'),
+  ...L_SURF, b1: '#E2E5EA', b2: '#CBD2DC',
+  danger: onLight('#B42318'), onTeal: '#FFFFFF', onBlue: '#FFFFFF', onDanger: '#FFFFFF', white: '#FFFFFF',
   navText: '#475569', headerBg: 'rgba(255,255,255,0.96)', overlay: 'rgba(15,23,42,.45)',
   teal2: 'rgba(15,118,110,.12)', amber2: 'rgba(146,64,14,.12)', red2: 'rgba(185,28,28,.12)',
   green2: 'rgba(4,120,87,.12)', blue2: 'rgba(29,78,216,.12)', purple2: 'rgba(109,40,217,.12)',
+  // STEP 2
+  strong: '#0F172A', shade: '#0F172A', veil: '#0F172A',   // washes become faint ink on light
+  onColor: '#FFFFFF',                                      // every light accent is >= 4.5:1 against white
+  ok: onLight(DARK.ok), warn: onLight(DARK.warn), cyan: onLight(DARK.cyan), mint: onLight(DARK.mint),
+  emerald: onLight(DARK.emerald), indigo: onLight(DARK.indigo), azure: onLight(DARK.azure),
+  silver: onLight(DARK.silver), bronze: onLight(DARK.bronze), sky: onLight(DARK.sky), alarm: onLight(DARK.alarm),
+  muted: onLight(DARK.muted), steel: onLight(DARK.steel),
+  gold: onLight(DARK.gold), jade: onLight(DARK.jade), jadeB: onLight(DARK.jadeB), violet: onLight(DARK.violet),
+  crimson: onLight(DARK.crimson), pink: onLight(DARK.pink), onGreen: '#FFFFFF',
+  promoA: '#EEF2FB', promoB: '#EAF4F3', onAmber: '#FFFFFF',
+  padBg: '#F0FDF4', padKey: '#FFFFFF', padKeyHi: '#DCFCE7', padEdge: '#BBF7D0', padSub: '#ECFDF5',
+  padText: '#0F172A', padDim: onLight('#56606E'), padLit: onLight(DARK.padLit),
+  scrim: 'rgba(15,23,42,.45)', panel: 'rgba(255,255,255,.97)',
+  xBg: L_SURF.bg, xSurf: L_SURF.s2, xCard: L_SURF.s1, xCard2: L_SURF.s2, xB1: '#E2E5EA', xB2: '#CBD2DC',
+  xDim: onLight('#56606E'), xText: onLight('#334155'), xBright: '#0F172A',
+  xGreen: onLight(DARK.xGreen), xAmber: onLight(DARK.xAmber), xPurple: onLight(DARK.xPurple),
 }
-export const LIGHT_SURFACES = [LIGHT.bg, LIGHT.s1, LIGHT.s2, LIGHT.s3]
-export const DARK_SURFACES = [DARK.bg, DARK.s1, DARK.s2, DARK.s3]
-export const TEXT_TOKENS: Token[] = ['tx', 'tx2', 'tx3', 'tx3Dim', 'blue', 'blueAlt', 'teal', 'amber', 'red', 'green', 'purple', 'danger']
+export const TEXT_TOKENS: Token[] = ['tx', 'tx2', 'tx3', 'tx3Dim', 'blue', 'blueAlt', 'teal', 'amber', 'red', 'green', 'purple', 'danger',
+  'strong', 'ok', 'warn', 'cyan', 'mint', 'emerald', 'indigo', 'azure', 'silver', 'bronze', 'sky', 'alarm', 'muted', 'steel', 'padText', 'padDim', 'padLit', 'gold', 'jade', 'jadeB', 'violet', 'crimson', 'pink', 'xDim', 'xText', 'xBright', 'xGreen', 'xAmber', 'xPurple']
 
 // Allow-listed fonts (same list as service-b FONT_ALLOWLIST / brandingForm.ts).
 export const FONT_STACKS: Record<string, string> = {
@@ -65,8 +105,9 @@ export function buildThemeVars(b: ThemeInput): Record<string, string> {
   const accent = isHex(b.colors?.accent) ? b.colors!.accent! : null
   const primary = isHex(b.colors?.primary) ? b.colors!.primary! : null
   // Brand colours replace the AiIVRs interactive colours, adjusted to stay readable on this theme.
-  if (accent) base.teal = readableOn(accent, surfaces)
-  if (primary) { base.blue = readableOn(primary, surfaces); base.blueAlt = base.blue }
+  const fit = (hex: string) => (theme === 'light' ? lightAccent(hex) : readableOn(hex, surfaces))
+  if (accent) base.teal = fit(accent)
+  if (primary) { base.blue = fit(primary); base.blueAlt = base.blue }
   if (theme === 'light' || accent) base.onTeal = isHex(base.teal) ? buttonTextColor(base.teal) : base.onTeal
   if (theme === 'light' || primary) base.onBlue = isHex(base.blue) ? buttonTextColor(base.blue) : base.onBlue
   for (const k of ['teal', 'blue'] as const) if (isHex(base[k])) base[`${k}2` as Token] = rgba(base[k], 0.12)

@@ -31,6 +31,7 @@ import { resolveCrmIndustry, demoProfileUrl } from '@/lib/crmIndustry'
 import { tenantLabel, usePartnerConfig } from '@/lib/partner'
 import { useBranding } from '@/components/branding/BrandingProvider'
 import { brandCopy } from '@/lib/branding'
+import { T, alpha, tint } from '@/lib/theme'
 const SERVICE_B_URL = getEnv().serviceB
 const TENANT_KEY    = 'experience_shop'
 const DEFAULT_IVR_KEY = 'global_banking'
@@ -494,10 +495,10 @@ function HomeInner() {
       <style>{`
         @keyframes fadeSlideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
         @keyframes pulse       { 0%,100% { opacity:1; } 50% { opacity:.5; } }
-        @keyframes micPulse    { 0%,100% { box-shadow:0 0 0 0 rgba(24,196,138,.3); } 50% { box-shadow:0 0 18px 4px rgba(24,196,138,.2); } }
+        @keyframes micPulse    { 0%,100% { box-shadow:0 0 0 0 ${tint('xGreen','.3')}; } 50% { box-shadow:0 0 18px 4px ${tint('xGreen','.2')}; } }
         @keyframes wave        { 0% { transform:scale(1); opacity:.35; } 100% { transform:scale(1.4); opacity:0; } }
         @keyframes demoPulse   { 0% { transform:scale(1); opacity:1; } 14% { transform:scale(1.18); opacity:1; } 28% { transform:scale(1); opacity:.85; } 42% { transform:scale(1.12); opacity:1; } 70% { transform:scale(1); opacity:.75; } 100% { transform:scale(1); opacity:1; } }
-        @keyframes switchGlow  { 0% { box-shadow:0 0 0 0 rgba(245,158,11,.4); } 50% { box-shadow:0 0 16px 4px rgba(245,158,11,.2); } 100% { box-shadow:0 0 0 0 transparent; } }
+        @keyframes switchGlow  { 0% { box-shadow:0 0 0 0 ${tint('warn','.4')}; } 50% { box-shadow:0 0 16px 4px ${tint('warn','.2')}; } 100% { box-shadow:0 0 0 0 transparent; } }
         @keyframes blink       { 0%,100% { opacity:1; } 50% { opacity:.3; } }
       `}</style>
 
@@ -540,16 +541,16 @@ function HomeInner() {
                     style={{ cursor: (isCurrent && !showCelebration) ? 'default' : 'pointer' }}>
                     <div className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[9px] font-bold transition-all"
                       style={{
-                        background: isDone ? '#00c9b1' : 'transparent',
-                        border: isCurrent ? '2px solid #f5a623' : isDone ? '2px solid #00c9b1' : '2px solid var(--b2)',
-                        color: isDone ? '#000' : isCurrent ? '#f5a623' : 'var(--dim)',
-                        boxShadow: isCurrent ? '0 0 0 3px rgba(245,166,35,.1)' : 'none',
+                        background: isDone ? T.teal : 'transparent',
+                        border: isCurrent ? `2px solid ${T.amber}` : isDone ? `2px solid ${T.teal}` : '2px solid var(--b2)',
+                        color: isDone ? T.onTeal : isCurrent ? T.amber : 'var(--dim)',
+                        boxShadow: isCurrent ? `0 0 0 3px ${tint('amber','.1')}` : 'none',
                       }}>
                       {step.num}
                     </div>
                     <span className="text-[10px] hidden sm:inline"
                       style={{
-                        color: isDone ? '#00c9b1' : isCurrent ? '#f5a623' : 'var(--dim)',
+                        color: isDone ? T.teal : isCurrent ? T.amber : 'var(--dim)',
                         fontWeight: isCurrent ? 600 : 400,
                       }}>
                       {step.icon} {step.label}
@@ -557,7 +558,7 @@ function HomeInner() {
                   </div>
                   {i < JOURNEY_STEPS.length - 1 && (
                     <div className="h-[2px] mx-2 sm:mx-3 flex-1"
-                      style={{ background: isDone ? '#00c9b1' : 'var(--b1)' }} />
+                      style={{ background: isDone ? T.teal : 'var(--b1)' }} />
                   )}
                 </div>
               )
@@ -575,11 +576,11 @@ function HomeInner() {
               </span>
             )}
             <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded hidden sm:inline-flex"
-              style={{ background: `${ic.color}15`, color: ic.color, border: `1px solid ${ic.color}33` }}>
+              style={{ background: alpha(ic.color, '15'), color: ic.color, border: `1px solid ${alpha(ic.color, '33')}` }}>
               {scenario?.infraIcon} {ic.label}
             </span>
             <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded hidden sm:inline-flex"
-              style={{ background: `${dc.color}15`, color: dc.color, border: `1px solid ${dc.color}33` }}>
+              style={{ background: alpha(dc.color, '15'), color: dc.color, border: `1px solid ${alpha(dc.color, '33')}` }}>
               {scenario?.deployIcon} {dc.label}
             </span>
           </div>
@@ -660,15 +661,15 @@ function HomeInner() {
                   {demoStep === 3 && (
                     <div className="flex gap-3 justify-center mb-5">
                       {([
-                        { tier: 'gold' as const, label: '🥇 Gold', color: '#f5a623', desc: 'GPT-4o Realtime · Exp 2', disabled: false },
-                        { tier: 'silver' as const, label: '🥈 Silver', color: '#c0c0c0', desc: 'Gemini S2S · Exp 3', disabled: false },
-                        { tier: 'bronze' as const, label: '🥉 Bronze', color: '#cd7f32', desc: 'Pipeline · Exp 4/5', disabled: false },
+                        { tier: 'gold' as const, label: '🥇 Gold', color: T.amber, desc: 'GPT-4o Realtime · Exp 2', disabled: false },
+                        { tier: 'silver' as const, label: '🥈 Silver', color: T.silver, desc: 'Gemini S2S · Exp 3', disabled: false },
+                        { tier: 'bronze' as const, label: '🥉 Bronze', color: T.bronze, desc: 'Pipeline · Exp 4/5', disabled: false },
                       ]).map(t => (
                         <button key={t.tier}
                           onClick={() => !t.disabled && setValueTier(t.tier)}
                           className="px-5 py-3 rounded-xl border text-center min-w-[120px] transition-all"
                           style={{
-                            background: valueTier === t.tier ? `${t.color}15` : 'var(--card)',
+                            background: valueTier === t.tier ? alpha(t.color, '15') : 'var(--card)',
                             borderColor: valueTier === t.tier ? t.color : 'var(--b1)',
                             opacity: t.disabled ? 0.4 : 1,
                             cursor: t.disabled ? 'not-allowed' : 'pointer',
@@ -684,13 +685,13 @@ function HomeInner() {
                   {/* ── CRM Demo Profile Card (sales + value routing journeys) ── */}
                   {(scenario?.mode === 'sales' || demoStep === 3) && demoProfile && (
                     <div className="mx-auto mb-5 px-5 py-4 rounded-xl border text-left"
-                      style={{ maxWidth: 440, background: 'rgba(51,112,232,.06)', borderColor: 'rgba(51,112,232,.18)' }}>
-                      <div className="text-[9px] uppercase tracking-wide font-bold mb-2" style={{ color: '#3370E8' }}>
+                      style={{ maxWidth: 440, background: tint('blue','.06'), borderColor: tint('blue','.18') }}>
+                      <div className="text-[9px] uppercase tracking-wide font-bold mb-2" style={{ color: T.blue }}>
                         You are calling as
                       </div>
                       <div className="flex items-center gap-3 mb-2">
                         <div className="w-9 h-9 rounded-full flex items-center justify-center text-[14px] font-bold"
-                          style={{ background: 'rgba(51,112,232,.15)', color: '#3370E8' }}>
+                          style={{ background: tint('blue','.15'), color: T.blue }}>
                           {demoProfile.name.charAt(0)}
                         </div>
                         <div>
@@ -699,14 +700,14 @@ function HomeInner() {
                         </div>
                         <div className="ml-auto px-2 py-0.5 rounded text-[9px] font-bold uppercase"
                           style={{
-                            background: demoProfile.classification === 'HIGH_VALUE' ? 'rgba(0,222,122,.1)'
-                              : demoProfile.classification === 'AT_RISK' ? 'rgba(240,48,96,.1)'
-                              : demoProfile.classification === 'SALES_READY' ? 'rgba(245,166,35,.1)'
-                              : 'rgba(122,144,181,.1)',
-                            color: demoProfile.classification === 'HIGH_VALUE' ? '#00DE7A'
-                              : demoProfile.classification === 'AT_RISK' ? '#F03060'
-                              : demoProfile.classification === 'SALES_READY' ? '#F5A623'
-                              : '#7A90B5',
+                            background: demoProfile.classification === 'HIGH_VALUE' ? tint('green','.1')
+                              : demoProfile.classification === 'AT_RISK' ? tint('red','.1')
+                              : demoProfile.classification === 'SALES_READY' ? tint('amber','.1')
+                              : tint('tx2','.1'),
+                            color: demoProfile.classification === 'HIGH_VALUE' ? T.green
+                              : demoProfile.classification === 'AT_RISK' ? T.red
+                              : demoProfile.classification === 'SALES_READY' ? T.amber
+                              : T.tx2,
                           }}>
                           {demoProfile.classification?.replace('_', ' ')}
                         </div>
@@ -719,11 +720,11 @@ function HomeInner() {
                       </div>
                       {demoProfile.recommended_action && (
                         <div className="mt-2 px-2.5 py-1 rounded-md inline-block text-[9px] font-semibold"
-                          style={{ background: 'rgba(0,201,177,.08)', color: '#00C9B1' }}>
+                          style={{ background: tint('teal','.08'), color: T.teal }}>
                           Recommended: {demoProfile.recommended_action.replace(/_/g, ' ')}
                         </div>
                       )}
-                      <div className="mt-2 text-[9px]" style={{ color: '#3370E8', cursor: 'pointer' }}
+                      <div className="mt-2 text-[9px]" style={{ color: T.blue, cursor: 'pointer' }}
                         onClick={() => {
                           setDemoProfileLoading(true)
                           const cls = demoStep === 3
@@ -755,7 +756,7 @@ function HomeInner() {
                     style={{
                       background: jConfig?.color,
                       color: (jConfig?.color === '#f03060' ? '#fff' : '#000'),
-                      boxShadow: '0 4px 20px rgba(0,0,0,.3)',
+                      boxShadow: `0 4px 20px ${tint('shade','.3')}`,
                       cursor: 'pointer',
                     }}>
                     ▶ {demoStep === 0 ? 'Try routine intent demo' : demoStep === 1 ? 'Try revenue discovery demo' : demoStep === 2 ? 'Try frustration escalation demo' : `Try ${valueTier || 'value-based'} routing demo`}
@@ -767,18 +768,18 @@ function HomeInner() {
                   <div className="mb-3">
                     <div onClick={() => handleMigrate('journey_migrate')}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-full cursor-pointer transition-all hover:opacity-90"
-                      style={{ background: 'rgba(0,201,177,.08)', border: '1px solid rgba(0,201,177,.12)' }}>
-                      <span className="text-[10px] font-semibold" style={{ color: '#00c9b1' }}>📱 Migrate Your IVR</span>
-                      <span className="text-[9px]" style={{ color: '#4a5f80' }}>·</span>
-                      <span className="text-[9px]" style={{ color: '#7a90b5' }}>Zero integration · Zero cost · In 17 minutes</span>
-                      <span className="text-[10px]" style={{ color: '#00c9b1' }}>→</span>
+                      style={{ background: tint('teal','.08'), border: `1px solid ${tint('teal','.12')}` }}>
+                      <span className="text-[10px] font-semibold" style={{ color: T.teal }}>📱 Migrate Your IVR</span>
+                      <span className="text-[9px]" style={{ color: T.tx3 }}>·</span>
+                      <span className="text-[9px]" style={{ color: T.tx2 }}>Zero integration · Zero cost · In 17 minutes</span>
+                      <span className="text-[10px]" style={{ color: T.teal }}>→</span>
                     </div>
                   </div>
 
                   {qTenant && qTenant !== 'experience_shop' ? (
                     <div className="flex justify-center">
                       <span className="px-4 py-2 rounded-md border text-[11px] font-semibold"
-                        style={{ background: 'rgba(0,201,177,.12)', borderColor: '#00c9b1', color: '#00c9b1' }}>
+                        style={{ background: tint('teal','.12'), borderColor: T.teal, color: T.teal }}>
                         {ivrLabel(qTenant)}
                       </span>
                     </div>
@@ -794,10 +795,10 @@ function HomeInner() {
                           style={{
                             cursor: callActive ? 'not-allowed' : 'pointer',
                             opacity: callActive && selectedIvr !== ind.key ? 0.35 : 1,
-                            background: selectedIvr === ind.key ? 'rgba(0,201,177,.12)' : 'var(--card2)',
-                            borderColor: selectedIvr === ind.key ? '#00c9b1' : 'var(--b1)',
-                            color: selectedIvr === ind.key ? '#00c9b1' : 'var(--dim)',
-                            boxShadow: selectedIvr === ind.key ? '0 0 0 1px rgba(0,201,177,.2)' : 'none',
+                            background: selectedIvr === ind.key ? tint('teal','.12') : 'var(--card2)',
+                            borderColor: selectedIvr === ind.key ? T.teal : 'var(--b1)',
+                            color: selectedIvr === ind.key ? T.teal : 'var(--dim)',
+                            boxShadow: selectedIvr === ind.key ? `0 0 0 1px ${tint('teal','.2')}` : 'none',
                           }}>
                           {ind.icon} {ind.label}
                           {callActive && selectedIvr === ind.key && <span className="ml-1 text-[7px]">●</span>}
@@ -833,16 +834,16 @@ function HomeInner() {
 
                 {/* Status bar */}
                 <div className="flex items-center gap-1.5 px-3 py-1.5 mx-3 mt-2 rounded-md flex-shrink-0"
-                  style={{ background: 'rgba(0,201,177,.05)', border: '1px solid rgba(0,201,177,.1)' }}>
+                  style={{ background: tint('teal','.05'), border: `1px solid ${tint('teal','.1')}` }}>
                   <div className="w-[7px] h-[7px] rounded-full"
-                    style={{ background: '#00c9b1', animation: 'blink 1.2s infinite' }} />
+                    style={{ background: T.teal, animation: 'blink 1.2s infinite' }} />
                   <span className="text-[11px]" style={{ color: 'var(--text)' }}>
                     {elapsed < 3 ? 'Connecting you...' : qTenant && qTenant !== 'experience_shop' ? `Live · ${ivrLabel(qTenant)} · ${liveExpLabel}` : `Live · ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.icon || '🏦'} ${INDUSTRY_OPTIONS.find(i => i.key === selectedIvr)?.label || 'Banking'} · ${liveExpLabel}`}
                   </span>
                   <span className="ml-auto">
                     <span className="px-2 py-0.5 rounded text-[8px] font-bold"
                       style={{
-                        background: 'rgba(240,48,96,.15)', color: '#f03060',
+                        background: tint('red','.15'), color: T.red,
                         animation: 'demoPulse 1.5s ease-in-out infinite',
                       }}>
                       🔴 DEMO CALL
@@ -866,16 +867,16 @@ function HomeInner() {
                 {/* CRM caller identity — compact bar during active sales call */}
                 {scenario?.mode === 'sales' && demoProfile && callActive && (
                   <div className="mx-3 mt-1.5 px-3 py-2 rounded-lg flex items-center gap-2"
-                    style={{ background: 'rgba(51,112,232,.06)', border: '1px solid rgba(51,112,232,.12)' }}>
+                    style={{ background: tint('blue','.06'), border: `1px solid ${tint('blue','.12')}` }}>
                     <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
-                      style={{ background: 'rgba(51,112,232,.15)', color: '#3370E8' }}>
+                      style={{ background: tint('blue','.15'), color: T.blue }}>
                       {demoProfile.name.charAt(0)}
                     </div>
                     <span className="text-[10px] font-semibold" style={{ color: 'var(--bright)' }}>{demoProfile.name}</span>
                     <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase"
                       style={{
-                        background: demoProfile.classification === 'HIGH_VALUE' ? 'rgba(0,222,122,.1)' : 'rgba(245,166,35,.1)',
-                        color: demoProfile.classification === 'HIGH_VALUE' ? '#00DE7A' : '#F5A623',
+                        background: demoProfile.classification === 'HIGH_VALUE' ? tint('green','.1') : tint('amber','.1'),
+                        color: demoProfile.classification === 'HIGH_VALUE' ? T.green : T.amber,
                       }}>
                       {demoProfile.classification?.replace('_', ' ')}
                     </span>
@@ -918,15 +919,15 @@ function HomeInner() {
                         </div>
                         <div className="text-[7px] font-bold w-6 flex-shrink-0 mt-1 px-1 py-px rounded text-center"
                           style={{
-                            background: tx.who === 'user' ? 'rgba(51,112,232,.15)' : tx.who === 'ai' ? 'rgba(24,196,138,.12)' : 'rgba(255,255,255,.05)',
-                            color:      tx.who === 'user' ? '#80aaf4'                : tx.who === 'ai' ? 'var(--green)'         : 'var(--dim)',
+                            background: tx.who === 'user' ? tint('blue','.15') : tx.who === 'ai' ? tint('xGreen','.12') : tint('veil','.05'),
+                            color:      tx.who === 'user' ? T.sky                : tx.who === 'ai' ? 'var(--green)'         : 'var(--dim)',
                           }}>
                           {tx.who === 'user' ? 'YOU' : tx.who === 'ai' ? 'AI' : '···'}
                         </div>
                         <div className="flex-1 rounded-md border p-1.5"
                           style={{
-                            background:  tx.who === 'user' ? 'rgba(51,112,232,.07)' : 'var(--card2)',
-                            borderColor: tx.who === 'user' ? 'rgba(51,112,232,.15)' : 'var(--b1)',
+                            background:  tx.who === 'user' ? tint('blue','.07') : 'var(--card2)',
+                            borderColor: tx.who === 'user' ? tint('blue','.15') : 'var(--b1)',
                           }}>
                           <div className="text-[11px] sm:text-[12px] leading-snug" style={{ color: 'var(--text)' }}>{tx.text}</div>
                           {tx.meta && <div className="font-mono text-[8px] mt-0.5" style={{ color: 'var(--amber)' }}>{tx.meta}</div>}
@@ -942,7 +943,7 @@ function HomeInner() {
                     {[
                       { label: '⏱ Duration', val: formatDuration(elapsed),                 sub: 'Running…', color: 'var(--bright)' },
                       { label: '💰 Cost',     val: formatCost(liveCall.liveCost, currency), sub: 'This call', color: 'var(--green)' },
-                      { label: '🎯 Intents',  val: String(liveCall.liveIntents.length),     sub: 'Business',  color: '#8a4ee8' },
+                      { label: '🎯 Intents',  val: String(liveCall.liveIntents.length),     sub: 'Business',  color: T.xPurple },
                     ].map((m, i) => (
                       <div key={i} className="flex-1 p-2 border-r last:border-r-0"
                         style={{ borderColor: 'var(--b1)' }}>
@@ -959,8 +960,8 @@ function HomeInner() {
                       onClick={handleEndCall}
                       className="w-full py-2.5 rounded-lg font-bold text-[13px] flex items-center justify-center gap-2 transition-all hover:opacity-85"
                       style={hasIntents && nextJourneyConfig
-                        ? { background: 'linear-gradient(90deg, #d44444, #e09820)', color: '#fff', fontSize: '12px' }
-                        : { background: '#d44444', color: '#fff' }}>
+                        ? { background: `linear-gradient(90deg, ${T.alarm}, ${T.xAmber})`, color: T.white, fontSize: '12px' }
+                        : { background: T.alarm, color: T.white }}>
                       {hasIntents && nextJourneyConfig
                         ? `🔴 End Call & Try ${nextJourneyConfig.icon} ${nextJourneyConfig.name} Journey →`
                         : '📵 End Call'}
@@ -972,14 +973,14 @@ function HomeInner() {
                       <button
                         onClick={() => openSignUp('active_call_book')}
                         className="font-bold transition-colors hover:underline"
-                        style={{ background: 'none', border: 'none', color: '#18c48a', cursor: 'pointer', fontSize: '9px' }}>
+                        style={{ background: 'none', border: 'none', color: T.xGreen, cursor: 'pointer', fontSize: '9px' }}>
                         📅 Book a call →
                       </button>
                       <span style={{ color: 'var(--b2)' }}>|</span>
                       <button
                         onClick={() => setShowIVRBar(true)}
                         className="font-bold transition-colors hover:underline"
-                        style={{ background: 'none', border: 'none', color: '#06b6d4', cursor: 'pointer', fontSize: '9px' }}>
+                        style={{ background: 'none', border: 'none', color: T.cyan, cursor: 'pointer', fontSize: '9px' }}>
                         Give us your IVR #
                       </button>
                     </div>
@@ -990,10 +991,10 @@ function HomeInner() {
 
             {/* Promo strip */}
             <div className="flex items-center gap-1.5 px-3 py-1 border-t flex-shrink-0"
-              style={{ borderColor: 'rgba(51,112,232,.18)', background: 'linear-gradient(90deg,#0f2050,#0c3040)' }}>
+              style={{ borderColor: tint('blue','.18'), background: `linear-gradient(90deg,${T.promoA},${T.promoB})` }}>
               <span className="text-[7px] font-extrabold px-1 py-px rounded"
-                style={{ background: 'var(--amber)', color: '#080d18' }}>FREE</span>
-              <span className="text-[8px]" style={{ color: '#6090b0' }}>
+                style={{ background: 'var(--amber)', color: T.onAmber }}>FREE</span>
+              <span className="text-[8px]" style={{ color: T.steel }}>
                 Real AI · No credit card · Migrate your IVR in 17 minutes
               </span>
             </div>
@@ -1022,16 +1023,16 @@ function HomeInner() {
 
               {/* Connection status strip */}
               <div className="mt-auto px-3 py-1.5 border-t flex items-center gap-1.5 flex-shrink-0"
-                style={{ borderColor: 'var(--b1)', background: 'rgba(0,0,0,.12)' }}>
+                style={{ borderColor: 'var(--b1)', background: tint('shade','.12') }}>
                 <div
                   className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                   style={{
                     background:
                       liveCall.state.status === 'connected'
-                        ? '#22c55e'
+                        ? T.ok
                         : liveCall.state.status === 'connecting'
-                        ? '#3b82f6'
-                        : '#6b7280',
+                        ? T.azure
+                        : T.muted,
                     animation: liveCall.state.status === 'connected' ? 'pulse 2s infinite' : 'none',
                   }}
                 />
@@ -1056,7 +1057,7 @@ function HomeInner() {
       {/* ══ MIC GATE OVERLAY — never leave the caller silently connected with mic off ══ */}
       {(micGate || micBlockedInCall) && (
         <div data-testid="mic-gate" className="fixed inset-0 z-[60] flex items-center justify-center px-4"
-          style={{ background: 'rgba(5,10,18,.82)', backdropFilter: 'blur(3px)' }}>
+          style={{ background: T.scrim, backdropFilter: 'blur(3px)' }}>
           <div className="w-full max-w-sm rounded-xl p-5 text-center shadow-2xl"
             style={{ background: 'var(--card, #0e1826)', border: '1px solid var(--b2, #22364f)' }}>
             <div className="text-[34px] mb-2">🎙️</div>
@@ -1073,7 +1074,7 @@ function HomeInner() {
             </div>
             <button data-testid="mic-gate-allow" onClick={handleMicRetry}
               className="w-full px-5 py-3 rounded-lg text-[14px] font-bold border-none cursor-pointer mb-2"
-              style={{ background: '#00c9b1', color: '#000' }}>
+              style={{ background: T.teal, color: T.onTeal }}>
               {micBlockedInCall ? 'Tap to allow microphone' : 'Try again'}
             </button>
             <button onClick={() => { setMicGate(null); if (micBlockedInCall) handleEndCall() }}
@@ -1104,7 +1105,7 @@ function HomeInner() {
       <div
         className="fixed bottom-4 left-1/2 -translate-x-1/2 rounded-lg px-4 py-2.5 z-50 max-w-[90vw] sm:max-w-md text-center text-[10px] leading-relaxed shadow-2xl pointer-events-none transition-all duration-300"
         style={{
-          background: 'rgba(11,19,32,.97)', border: '1px solid var(--b2)',
+          background: T.panel, border: '1px solid var(--b2)',
           opacity: toastOn ? 1 : 0, transform: `translateX(-50%) translateY(${toastOn ? 0 : 8}px)`,
         }}
         dangerouslySetInnerHTML={{ __html: toast }} />

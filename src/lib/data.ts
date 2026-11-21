@@ -1,4 +1,5 @@
 import type { Experience, Intent, IntentKey, RoutingMode, ExpLevel, DemoScenario, RotatingCTA, JourneyStage, Currency } from '@/types'
+import { T } from './theme'
 
 export const EXPERIENCES: Experience[] = [
   {
@@ -105,17 +106,18 @@ export const JOURNEY_STAGES: JourneyStage[] = [
 
 // ── Infra display config ───────────────────────────────────────────────────
 
+// Colours are theme tokens (B4): var(--brand-*, <same hex as before>) — alpha variants via alpha().
 export const INFRA_CONFIG: Record<string, { icon: string; label: string; color: string }> = {
-  shared:  { icon: '🔒', label: 'Shared',       color: '#6366f1' },
-  secure:  { icon: '🔒', label: 'Secure',       color: '#06b6d4' },
-  premium: { icon: '🛡', label: 'Premium',      color: '#f59e0b' },
-  owned:   { icon: '🏛', label: 'Fully Owned',  color: '#22c55e' },
+  shared:  { icon: '🔒', label: 'Shared',       color: T.indigo },
+  secure:  { icon: '🔒', label: 'Secure',       color: T.cyan },
+  premium: { icon: '🛡', label: 'Premium',      color: T.warn },
+  owned:   { icon: '🏛', label: 'Fully Owned',  color: T.ok },
 }
 
 export const DEPLOY_CONFIG: Record<string, { icon: string; label: string; color: string }> = {
-  cloud:  { icon: '☁',  label: 'Cloud',    color: '#6366f1' },
-  hybrid: { icon: '🔄', label: 'Hybrid',   color: '#06b6d4' },
-  onprem: { icon: '🏢', label: 'On-Prem',  color: '#f59e0b' },
+  cloud:  { icon: '☁',  label: 'Cloud',    color: T.indigo },
+  hybrid: { icon: '🔄', label: 'Hybrid',   color: T.cyan },
+  onprem: { icon: '🏢', label: 'On-Prem',  color: T.warn },
 }
 
 // ── Currency Rates (relative to INR) ───────────────────────────────────────

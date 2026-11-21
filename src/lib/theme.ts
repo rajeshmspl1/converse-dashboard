@@ -48,6 +48,24 @@ export const DARK = {
   overlay: 'rgba(4,8,18,.85)',
   teal2: 'rgba(0,201,177,.12)', amber2: 'rgba(245,166,35,.12)', red2: 'rgba(240,48,96,.12)',
   green2: 'rgba(0,222,122,.12)', blue2: 'rgba(61,133,224,.12)', purple2: 'rgba(139,92,246,.12)',
+  // ── B4 STEP 2 (values exactly as the pages use them today) ──
+  strong: '#fff',               // high-emphasis text on dark surfaces (headings, KPI values)
+  shade: '#000',                // black shadows / dimming layers
+  onColor: '#000',              // text on an accent-coloured fill (dynamic colours); light: white
+  veil: '#FFFFFF',              // white washes on dark: rgba(255,255,255,.03–.1) → tint('veil', …)
+  ok: '#22C55E', warn: '#F59E0B', cyan: '#06B6D4', mint: '#6EE7B7', emerald: '#50C878', indigo: '#6366F1', azure: '#3B82F6',
+  silver: '#C0C0C0', bronze: '#CD7F32', sky: '#80AAF4', alarm: '#D44444', muted: '#6B7280', steel: '#6090B0',
+  gold: '#FBBF24', jade: '#34D399', jadeB: '#22D399', violet: '#A78BFA', crimson: '#DC2626', pink: '#EC4899',
+  onGreen: '#050E1A',                                         // text on a green fill
+  promoA: '#0F2050', promoB: '#0C3040',                       // GRADIENTS.promo stops (FREE banner on /experience)
+  // IVR keypad (green "device" panel on the call screen)
+  padBg: '#0A1A0F', padKey: '#0F2518', padKeyHi: '#1A2E1F', padEdge: '#1E3A2A', padSub: '#064E3B',
+  padText: '#E0E4EC', padDim: '#4B5563', padLit: '#4ADE80',
+  onAmber: '#080D18',                                         // text on an amber fill
+  scrim: 'rgba(5,10,18,.82)', panel: 'rgba(11,19,32,.97)',    // modal backdrop / floating panel
+  // older palette in globals.css (:root --bg/--card/…), also written inline on /experience and the demo panels
+  xBg: '#070D1A', xSurf: '#0B1320', xCard: '#0F1824', xCard2: '#121E2D', xB1: '#1A2B40', xB2: '#1F3350',
+  xDim: '#3D5570', xText: '#A8C0E0', xBright: '#D8ECFF', xGreen: '#18C48A', xAmber: '#E09820', xPurple: '#8A4EE8',
 } as const
 export type Token = keyof typeof DARK
 
@@ -63,18 +81,15 @@ export function v(token: Token): string {
 // alpha is written exactly as the old code did: 2 hex digits ('15' → #RRGGBB15) or a decimal ('.08' →
 // rgba(r,g,b,.08)), so the fallback string is byte-for-byte the old colour. Every (token, alpha) used
 // must be listed here: BrandingProvider sets exactly these variables for a branded theme.
-export const TINTS: ReadonlyArray<readonly [Token, string]> = [
-  ['teal', '08'], ['teal', '10'], ['teal', '12'], ['teal', '15'], ['teal', '20'], ['teal', '25'], ['teal', '30'], ['teal', '40'],
-  ['tx3', '12'], ['tx3', '15'], ['tx3', '20'], ['tx3', '25'], ['tx3', '40'],
-  ['s1', '80'],
-  ['blue', '04'], ['blue', '08'], ['blue', '10'], ['blue', '12'], ['blue', '15'], ['blue', '20'], ['blue', '25'], ['blue', '30'], ['blue', '40'],
-  ['tx2', '08'], ['tx2', '12'], ['tx2', '15'], ['tx2', '20'], ['tx2', '25'], ['tx2', '30'], ['tx2', '40'],
-  ['amber', '08'], ['amber', '12'], ['amber', '15'], ['amber', '20'], ['amber', '25'], ['amber', '30'], ['amber', '40'],
-  ['red', '08'], ['red', '12'], ['red', '15'], ['red', '20'], ['red', '25'], ['red', '30'], ['red', '40'],
-  ['purple', '08'], ['purple', '12'], ['purple', '15'], ['purple', '20'], ['purple', '25'], ['purple', '30'], ['purple', '40'],
-  ['danger', '.05'], ['danger', '.06'], ['danger', '.08'], ['danger', '.12'], ['danger', '.15'], ['danger', '.2'], ['danger', '.5'],
-  ['green', '.08'], ['green', '.12'], ['green', '.2'],
-]
+// Every alpha the pages use (hex suffix → #RRGGBBhh, decimal → rgba()). A test checks every tint()/alpha() call
+// in src uses one of these. Every hex colour token gets every alpha, so nothing can be "unregistered" at runtime.
+export const ALPHAS = [
+  '04', '08', '10', '11', '12', '15', '18', '1F', '20', '22', '25', '30', '33', '40', '44', '50', '66', '80', '88',
+  '.02', '.03', '.04', '.05', '.06', '.07', '.08', '.1', '.12', '.15', '.18', '.2', '.25', '.3', '.4', '.5', '.6', '.8', '.96',
+] as const
+/** Tokens whose value is a hex colour (the rgba tokens — teal2, overlay, headerBg … — are not tinted). */
+export const COLOR_TOKENS = (Object.keys(DARK) as Token[]).filter(t => /^#[0-9a-fA-F]{3,6}$/.test(DARK[t]))
+export const TINTS: ReadonlyArray<readonly [Token, string]> = COLOR_TOKENS.flatMap(t => ALPHAS.map(a => [t, a] as const))
 const TINT_SET = new Set(TINTS.map(([t, a]) => `${t}:${a}`))
 
 function rgbOf(hex: string): [number, number, number] {
@@ -89,11 +104,23 @@ export function tintValue(hex: string, alpha: string): string {
   return `rgba(${r},${g},${b},${alpha})`
 }
 export function tintName(token: Token, alpha: string): string {
-  return `${cssName(token)}-a${alpha.replace('.', 'd')}`
+  return `${cssName(token)}-a${alpha.replace('.', 'd').toLowerCase()}`
 }
 export function tint(token: Token, alpha: string): string {
   if (!TINT_SET.has(`${token}:${alpha}`)) throw new Error(`tint(${token}, ${alpha}) is not registered in theme.ts TINTS`)
   return `var(${tintName(token, alpha)}, ${tintValue(DARK[token], alpha)})`
+}
+
+const TOKEN_BY_VAR = new Map((Object.keys(DARK) as Token[]).map(t => [cssName(t), t]))
+const VAR_REF = /^var\((--brand-[a-z0-9-]+), [^)]*\)$/
+/**
+ * Alpha variant of a colour held in a variable/map (replaces `${color}22` / color + '40'): a T value maps back to
+ * its token → tint(token, alpha). A raw hex keeps the legacy string (old behaviour, unthemed).
+ */
+export function alpha(color: string, a: string): string {
+  const tok = TOKEN_BY_VAR.get(VAR_REF.exec(color)?.[1] || '')
+  if (tok && TINT_SET.has(`${tok}:${a}`)) return tint(tok, a)
+  return /^#[0-9a-fA-F]{6}$/.test(color) ? tintValue(color, a) : color
 }
 
 // ── Themed tokens for styling (CSS variable references) ───────────
@@ -102,14 +129,18 @@ export const BRAND = {
   cyan: BRAND_HEX.cyan,
 } as const
 
-export const T = {
-  blue: v('blue'), blueAlt: v('blueAlt'), teal: v('teal'), amber: v('amber'), red: v('red'), green: v('green'), purple: v('purple'),
-  teal2: v('teal2'), amber2: v('amber2'), red2: v('red2'), green2: v('green2'), blue2: v('blue2'), purple2: v('purple2'),
-  tx: v('tx'), tx2: v('tx2'), tx3: v('tx3'), tx3Dim: v('tx3Dim'),
-  bg: v('bg'), s1: v('s1'), s2: v('s2'), s3: v('s3'), b1: v('b1'), b2: v('b2'),
-  danger: v('danger'), onTeal: v('onTeal'), onBlue: v('onBlue'), onDanger: v('onDanger'), white: v('white'),
-  navText: v('navText'), overlay: v('overlay'),
-} as const
+/** Every token as var(--brand-<token>, <AiIVRs dark value>). */
+export const T = Object.fromEntries((Object.keys(DARK) as Token[]).map(k => [k, v(k)])) as { readonly [K in Token]: string }
+
+/**
+ * The dashboard / Telephony local palette (R90: merged here). Identical to T except blue = #3D85E0 (blueAlt)
+ * and tx3 = #364D6A (tx3Dim) — kept so AiIVRs stays pixel-identical.
+ */
+export const T_DASH = { ...T, blue: T.blueAlt, tx3: T.tx3Dim } as const
+/** Token names behind T_DASH.blue / T_DASH.tx3 (for tint()). */
+export const DASH_TOKEN = { blue: 'blueAlt', tx3: 'tx3Dim' } as const
+/** The session-dashboard local palette (R90: merged here): T with blue = #3D85E0 (blueAlt). */
+export const T_SESSION = { ...T, blue: T.blueAlt } as const
 
 // ── Typography (brand fonts arrive as --brand-font-* from the allow-list) ──
 const UI_STACK = "'DM Sans', 'Inter', system-ui, -apple-system, sans-serif"
