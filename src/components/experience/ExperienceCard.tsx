@@ -69,7 +69,7 @@ export default function ExperienceCard({ exp, visible, delay, compact, isActive,
             )}
           </div>
           <div className="text-[8px]" style={{ color: 'var(--dim)' }}>{exp.persona}</div>
-          <div className="font-mono text-[9px] font-bold mt-0.5" style={{ color }}>{formatCost(rate, currency)}/intent</div>
+          <div className="font-mono text-[9px] font-bold mt-0.5" style={{ color }}>{formatCost(rate, currency, 4)}/intent</div>
           {exp.idealFor && (
             <div className="text-[7px] mt-0.5" style={{ color: '#6ee7b7' }}>{exp.idealFor}</div>
           )}
@@ -85,7 +85,7 @@ export default function ExperienceCard({ exp, visible, delay, compact, isActive,
       <div className="absolute top-1 right-1.5 text-[7px] px-1 py-px rounded" style={{ background: 'rgba(255,255,255,.06)', color: 'var(--dim)' }}>Soon</div>
       <div className="font-bold text-[11px] mb-0.5" style={{ color }}>{exp.badge}</div>
       <div className="font-semibold text-[10px]" style={{ color: 'var(--bright)' }}>{exp.name}</div>
-      <div className="font-mono text-[10px] mt-1 font-semibold" style={{ color }}>{formatCost(rate, currency)}/intent</div>
+      <div className="font-mono text-[10px] mt-1 font-semibold" style={{ color }}>{formatCost(rate, currency, 4)}/intent</div>
     </div>
   )
 
@@ -110,7 +110,7 @@ export default function ExperienceCard({ exp, visible, delay, compact, isActive,
       {exp.idealFor && (
         <div className="text-[8px] leading-snug mb-1 px-1.5 py-0.5 rounded" style={{ background: 'rgba(34,197,94,.06)', color: '#6ee7b7' }}>{exp.idealFor}</div>
       )}
-      <div className="font-mono text-[10px] font-semibold" style={{ color }}>{formatCost(rate, currency)}/intent</div>
+      <div className="font-mono text-[10px] font-semibold" style={{ color }}>{formatCost(rate, currency, 4)}/intent</div>
     </div>
   )
 }

@@ -127,13 +127,32 @@ export const GRADIENTS = {
 } as const
 
 // ── Header Spec ──────────────────────────────────────────────────
+// R176 (2b621d4): 56px header, 28px logo, one step larger header type. Sizes live here as tokens; the
+// header uses only these (class strings are scanned by Tailwind: content ./src/**/*.ts).
 export const HEADER = {
-  height:  44,           // px — h-11 in tailwind
+  height:  56,           // px — comfortable breathing room (R176)
   bg:      v('headerBg'),
   blur:    'blur(12px)',
-  logoSize: 22,          // px — w-[22px] h-[22px]
-  logoRadius: 7,         // px — rounded-[7px]
+  logoSize: 28,          // px — more visible (R176)
+  logoRadius: 8,         // px — rounded-[8px] (R176)
+  avatar:  32,           // px — user avatar circle (R176)
+  subLabel: 11,          // px — "Zero Integration / Ecosystem" two-line label (R176)
   zIndex:  50,
+} as const
+
+/** Header type/spacing scale (R176) as Tailwind class strings. */
+export const HEADER_TEXT = {
+  pad:      'px-4 sm:px-6',                                  // <nav> side padding
+  chip:     'text-[11px] px-2.5 py-1',                       // ← Home link, tenant / session chips
+  nav:      'text-[13px] lg:text-[14px]',                    // marketing nav links, Migrate Your IVR
+  tab:      'px-3.5 py-2 text-[12px]',                       // dashboard tabs
+  avatar:   'text-[12px]',                                   // avatar initial
+  userName: 'text-[12px]',
+  userRole: 'text-[10px]',
+  chevron:  'text-[10px]',
+  login:    'px-4 py-1.5 text-[12px]',                       // Log In
+  cta:      'px-3 sm:px-4 py-1.5 text-[11px] sm:text-[12px]', // Get Started / Try Live
+  signup:   'px-4 py-1.5 text-[11px]',                       // Sign Up Free (session view)
 } as const
 
 // ── Border Radius Tokens ─────────────────────────────────────────

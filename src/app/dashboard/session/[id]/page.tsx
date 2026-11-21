@@ -99,7 +99,7 @@ export default function SessionDashboard() {
   const [audioError, setAudioError] = useState('')
   const [showSignUp, setShowSignUp] = useState(false)
 
-  const cc = CURRENCY_CONFIG[currency]
+  const cc = CURRENCY_CONFIG[currency] ?? CURRENCY_CONFIG[currency.toLowerCase() as Currency] ?? CURRENCY_CONFIG["inr"]
   const fmt = (inr: number, d=2) => `${cc.symbol}${(inr * cc.rate).toFixed(d)}`
 
   useEffect(() => {

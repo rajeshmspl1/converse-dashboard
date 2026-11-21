@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { T, BRAND, GRADIENTS, HEADER, FONTS, tint } from '@/lib/theme'
+import { T, BRAND, GRADIENTS, HEADER, HEADER_TEXT, FONTS, tint } from '@/lib/theme'
 import { CURRENCY_CONFIG } from '@/lib/data'
 import Logo from '@/components/ui/Logo'
 import type { Currency } from '@/types'
@@ -89,7 +89,7 @@ export default function UnifiedHeader({
 
   return (
     <nav
-      className="flex items-center justify-between px-3 sm:px-5 border-b flex-shrink-0 sticky top-0"
+      className={`flex items-center justify-between ${HEADER_TEXT.pad} border-b flex-shrink-0 sticky top-0`}
       style={{
         height: HEADER.height,
         borderColor: T.b1,
@@ -104,7 +104,7 @@ export default function UnifiedHeader({
       <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
         <div className="flex items-center gap-1.5 cursor-pointer" onClick={handleLogoClick}>
           {showTenantLogo ? (
-            // Tenant logo (blob: URL from BrandingProvider). Fits the 44px header: plate max 32px tall.
+            // Tenant logo (blob: URL from BrandingProvider). Fits the 56px header (R176): plate 30px tall.
             <span
               className="flex items-center justify-center rounded-md max-w-[92px] sm:max-w-[150px]"
               style={brand.logoPlate
@@ -129,7 +129,7 @@ export default function UnifiedHeader({
           <React.Fragment>
             <a
               href="/"
-              className="text-[10px] px-2 py-0.5 rounded hover:opacity-80"
+              className={`${HEADER_TEXT.chip} rounded hover:opacity-80`}
               style={{
                 color: T.tx2,
                 background: T.s2,
@@ -145,7 +145,7 @@ export default function UnifiedHeader({
 
         {variant === 'dashboard' && (tenantLabel ?? brand.displayName) && (
           <span
-            className="hidden sm:flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded whitespace-nowrap"
+            className={`hidden sm:flex items-center gap-1.5 ${HEADER_TEXT.chip} rounded whitespace-nowrap`}
             style={{ background: T.s2, border: '1px solid ' + T.b1, color: T.tx2 }}
             data-testid="tenant-chip"
           >
@@ -156,7 +156,7 @@ export default function UnifiedHeader({
 
         {variant === 'session' && sessionLabel && (
           <span
-            className="hidden sm:flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded"
+            className={`hidden sm:flex items-center gap-1.5 ${HEADER_TEXT.chip} rounded`}
             style={{ background: T.s2, border: '1px solid ' + T.b1, color: T.tx2 }}
           >
             <span className="w-1.5 h-1.5 rounded-full" style={{ background: BRAND.teal }} />
@@ -171,7 +171,7 @@ export default function UnifiedHeader({
           {['Product', 'Pricing', 'Industries', 'Docs', 'Dashboard'].map(link => (
             <a
               key={link}
-              className="text-[12px] lg:text-[13px] cursor-pointer transition-colors hover:text-white whitespace-nowrap"
+              className={`${HEADER_TEXT.nav} cursor-pointer transition-colors hover:text-white whitespace-nowrap`}
               style={{ color: T.navText, textDecoration: 'none' }}
               onClick={() => {
                 if (link === 'Dashboard') {
@@ -203,7 +203,7 @@ export default function UnifiedHeader({
           ))}
           {/* AiIVRs product link — hidden for partner tenants (white-label) */}
           {!brand.partnerName && <a
-            className="text-[12px] lg:text-[13px] cursor-pointer transition-colors hover:text-white whitespace-nowrap font-semibold flex flex-col items-center leading-[1.15]"
+            className={`${HEADER_TEXT.nav} cursor-pointer transition-colors hover:text-white whitespace-nowrap font-semibold flex flex-col items-center leading-[1.15]`}
             style={{ color: BRAND.teal, textDecoration: 'none' }}
             data-testid="zero-integration-link"
             onClick={() => {
@@ -239,11 +239,11 @@ export default function UnifiedHeader({
               }
             }}
           >
-            <span style={{ fontSize: 10, lineHeight: 1.2 }}>Zero Integration</span>
-            <span style={{ fontSize: 10, lineHeight: 1.2, opacity: 0.7 }}>Ecosystem</span>
+            <span style={{ fontSize: HEADER.subLabel, lineHeight: 1.2 }}>Zero Integration</span>
+            <span style={{ fontSize: HEADER.subLabel, lineHeight: 1.2, opacity: 0.7 }}>Ecosystem</span>
           </a>}
           <a
-            className="text-[12px] lg:text-[13px] cursor-pointer transition-colors font-semibold whitespace-nowrap"
+            className={`${HEADER_TEXT.nav} cursor-pointer transition-colors font-semibold whitespace-nowrap`}
             style={{ color: brand.accentText, textDecoration: 'none' }}
             onClick={() => {
               if (onMigrateClick) onMigrateClick()
@@ -261,7 +261,7 @@ export default function UnifiedHeader({
             <button
               key={t.key}
               onClick={() => onTabChange?.(t.key)}
-              className="px-3 py-1.5 rounded text-[11px] font-medium transition-all whitespace-nowrap"
+              className={`${HEADER_TEXT.tab} rounded font-medium transition-all whitespace-nowrap`}
               style={{
                 background: activeTab === t.key ? brand.accent + '1F' : 'transparent',
                 color: activeTab === t.key ? brand.accentText : T.tx2,
@@ -359,9 +359,9 @@ export default function UnifiedHeader({
             >
               {/* Avatar circle */}
               <div
-                className="flex items-center justify-center rounded-full text-[11px] font-bold flex-shrink-0"
+                className={`flex items-center justify-center rounded-full ${HEADER_TEXT.avatar} font-bold flex-shrink-0`}
                 style={{
-                  width: 28, height: 28,
+                  width: HEADER.avatar, height: HEADER.avatar,
                   background: brand.branded ? brand.accent : `linear-gradient(135deg, ${BRAND.blue}, ${BRAND.teal})`,
                   color: brand.branded ? brand.onAccent : '#fff',
                 }}
@@ -370,16 +370,16 @@ export default function UnifiedHeader({
               </div>
               {/* Name + role (desktop) */}
               <div className="text-left hidden sm:block">
-                <div className="text-[11px] font-semibold leading-tight" style={{ color: T.tx }}>
+                <div className={`${HEADER_TEXT.userName} font-semibold leading-tight`} style={{ color: T.tx }}>
                   {user?.full_name || user?.email}
                 </div>
-                <div className="text-[9px] leading-tight" style={{ color: T.tx3 }}>
+                <div className={`${HEADER_TEXT.userRole} leading-tight`} style={{ color: T.tx3 }}>
                   {roleLabel(user?.role)}
                 </div>
               </div>
               {/* Chevron */}
               <span
-                className="text-[9px] hidden sm:block transition-transform"
+                className={`${HEADER_TEXT.chevron} hidden sm:block transition-transform`}
                 style={{ color: T.tx3, transform: userMenu ? 'rotate(180deg)' : 'rotate(0deg)' }}
               >▾</span>
             </button>
@@ -534,7 +534,7 @@ export default function UnifiedHeader({
           <React.Fragment>
             <button
               onClick={onSignIn}
-              className="hidden sm:block px-3 py-1 text-[11px] font-semibold rounded border"
+              className={`hidden sm:block ${HEADER_TEXT.login} font-semibold rounded border`}
               style={{ borderColor: T.b2, color: T.tx, background: 'transparent' }}
             >
               Log In
@@ -542,7 +542,7 @@ export default function UnifiedHeader({
             {(isHomepage || isJourney) && (
               <button
                 onClick={onGetStarted}
-                className="px-2 sm:px-3 py-1 text-[10px] sm:text-[11px] font-semibold rounded"
+                className={`${HEADER_TEXT.cta} font-semibold rounded`}
                 style={{ background: BRAND.blue, color: T.onBlue }}
               >
                 {isJourney ? 'Try Live →' : 'Get Started'}
@@ -551,7 +551,7 @@ export default function UnifiedHeader({
             {variant === 'session' && (
               <button
                 onClick={onSignIn}
-                className="px-3 py-1 text-[10px] font-semibold rounded cursor-pointer"
+                className={`${HEADER_TEXT.signup} font-semibold rounded cursor-pointer`}
                 style={{ background: BRAND.teal, color: T.onTeal }}
               >
                 Sign Up Free
