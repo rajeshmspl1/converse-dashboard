@@ -190,6 +190,15 @@ await t('display swaps wired (experience, infra demo, post-call); Service A unto
   assert.ok(read('src/components/demo/InfraMigrationDemo.tsx').includes('brandCopy(s, brand.partnerName, brand.displayName)'))
   assert.ok(read('src/components/demo/PostCallCelebration.tsx').includes('brandCopy(scenario.dataResides'))
 })
+await t('R176 header sizes are theme tokens (56px header, 28px logo, type scale) and the header uses them', () => {
+  assert.equal(TH.HEADER.height, 56); assert.equal(TH.HEADER.logoSize, 28); assert.equal(TH.HEADER.logoRadius, 8)
+  assert.equal(TH.HEADER.avatar, 32); assert.equal(TH.HEADER.subLabel, 11)
+  assert.equal(TH.HEADER_TEXT.nav, 'text-[13px] lg:text-[14px]'); assert.equal(TH.HEADER_TEXT.chip, 'text-[11px] px-2.5 py-1')
+  const h = read('src/components/layout/UnifiedHeader.tsx')
+  for (const k of Object.keys(TH.HEADER_TEXT)) assert.ok(h.includes(`HEADER_TEXT.${k}`), `header uses HEADER_TEXT.${k}`)
+  assert.doesNotMatch(h, /className="[^"]*text-\[(9|10|11|12|13|14)px\][^"]*(px-|lg:text|leading-tight|font-bold flex-shrink)/, 'literal R176 size left in a header className')
+  assert.doesNotMatch(h, /width: (28|32), height: (28|32)/)
+})
 await t('header: Zero Integration hidden for partner tenants; show_name drives the name span', () => {
   const h = read('src/components/layout/UnifiedHeader.tsx')
   assert.ok(h.includes('{!brand.partnerName && <a'))

@@ -16,10 +16,15 @@ const t = async (name, fn) => { await fn(); passed++; console.log('PASS', name) 
 
 /** Fresh module + fakes. routes: (url, init, n) => {status, body}; returns the env. */
 async function setup(routes, { loggedIn = true } = {}) {
+  // In-memory Storage fakes (getItem/setItem/removeItem/length/key) — auth.ts walks both stores when it
+  // clears the branding cache (R174), so sessionStorage must exist too.
+  const fakeStorage = m => ({
+    getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k),
+    get length() { return m.size }, key: i => [...m.keys()][i] ?? null,
+  })
   const store = new Map()
-  globalThis.localStorage = {
-    getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k),
-  }
+  globalThis.localStorage = fakeStorage(store)
+  globalThis.sessionStorage = fakeStorage(new Map())
   globalThis.window = { location: { hostname: 'app.test', href: '/migrate' } }
   if (loggedIn) {
     store.set('cx_access_token', 'old-access'); store.set('cx_refresh_token', 'refresh-1'); store.set('cx_user', '{"id":8}')
