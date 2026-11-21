@@ -103,6 +103,21 @@ await t('no AiIVRs palette hex left in the STEP 1/2 files (outside var() fallbac
     assert.doesNotMatch(line, PALETTE, `${f}:${i + 1}: raw palette colour`)
   })
 })
+await t('partner tab title survives Next metadata rewrites (MutationObserver on <head>)', () => {
+  const p = read('src/components/branding/BrandingProvider.tsx')
+  assert.ok(p.includes('new MutationObserver(keep)') && p.includes("obs.observe(document.head, { subtree: true, childList: true, characterData: true })"))
+})
+await t('journey colours are tokens; the one comparison uses the token too', () => {
+  const j = read('src/lib/journeyData.ts')
+  assert.doesNotMatch(j, /(c|color|bg): ?'(#[0-9a-fA-F]{3,8}|rgba\()/)
+  assert.ok(read('src/app/experience/page.tsx').includes('jConfig?.color === T.red ? T.white : T.onColor'))
+})
+await t('light-only overrides for dimmed rows and border-coloured separators', () => {
+  const g = read('src/app/globals.css')
+  assert.ok(g.includes('html[data-theme="light"] .brand-hint { opacity: 1 !important; }'))
+  assert.ok(g.includes('html[data-theme="light"] .brand-sep { color: var(--brand-tx-3) !important; }'))
+  assert.match(read('src/components/dashboard/TelephonyTab.tsx'), /className="brand-hint" style=\{\{opacity:\.4\}\}/)
+})
 await t('light accents stay >= 4.5:1 on their own 20% tint (badges/chips)', () => {
   const mix = (c, s, a) => '#' + [1, 3, 5].map(i => Math.round(parseInt(c.slice(i, i + 2), 16) * a + parseInt(s.slice(i, i + 2), 16) * (1 - a)).toString(16).padStart(2, '0')).join('')
   for (const tok of B.TEXT_TOKENS) {

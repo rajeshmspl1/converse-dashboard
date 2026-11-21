@@ -457,7 +457,7 @@ export default function TelephonyTab({ user }: Props) {
               {name:'Airtel (India)',countries:'IN',api:'Manual SIP'},
               {name:'Twilio',countries:'Global',api:'REST'},
             ].map(c=>(
-              <tr key={c.name} style={{opacity:.4}}>
+              <tr key={c.name} className="brand-hint" style={{opacity:.4}}>
                 <td className="px-3 py-2.5 text-[11px] font-semibold" style={{borderBottom:`1px solid ${alpha(T.b1,'30')}`}}>{c.name}</td>
                 <td className="px-3 py-2.5 text-[11px]" style={{borderBottom:`1px solid ${alpha(T.b1,'30')}`}}>{c.countries}</td>
                 <td className="px-3 py-2.5 text-[10px]" style={{color:T.tx3,borderBottom:`1px solid ${alpha(T.b1,'30')}`}}>{c.api}</td>

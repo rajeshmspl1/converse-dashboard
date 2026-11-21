@@ -48,7 +48,8 @@ html { scrollbar-gutter: stable; }
 /* ── B4 tenant theme (variables set by BrandingProvider / the pre-paint script; AiIVRs = none set) ── */
 html.brand-pending body { visibility: hidden; }                    /* logged in, theme not resolved yet (max 1.5 s) */
 html[data-theme="light"] body { background: var(--brand-bg, #F4F5F7); color: var(--brand-tx, #0F172A); }
-html[data-theme="light"] .brand-hint { opacity: 1; }
+html[data-theme="light"] .brand-hint { opacity: 1 !important; }   /* dimmed hints/rows: tertiary text alone meets 4.5:1 on light (beats inline opacity) */
+html[data-theme="light"] .brand-sep { color: var(--brand-tx-3) !important; }  /* text separators drawn in a border colour */
 /* STEP 2: the older :root palette used by /experience and the demo panels follows the light theme too
    (light only — logged-out and AiIVRs dark never get data-theme, so :root above stays exactly as is). */
 html[data-theme="light"] {

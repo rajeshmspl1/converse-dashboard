@@ -703,7 +703,7 @@ function BillingPanel({billing,title}:{billing:any;title?:string}){
           <div className="text-[9px] font-semibold uppercase tracking-wider" style={{color:T.tx3}}>Resolution</div>
           <div className="text-[10px] mt-1" style={{color:T.tx2}}>
             <span style={{color:T.green}}>✅ {t.resolved} resolved = ₹{fmt(t.sessions>0?(t.cost_inr*t.resolved/t.sessions):0,2)}</span>
-            <span className="mx-2" style={{color:T.b2}}>|</span>
+            <span className="mx-2 brand-sep" style={{color:T.b2}}>|</span>
             <span style={{color:T.red}}>✕ {t.not_resolved} unresolved = -₹{fmt(t.sessions>0?(t.cost_inr*t.not_resolved/t.sessions):0,2)}</span>
           </div>
         </div>

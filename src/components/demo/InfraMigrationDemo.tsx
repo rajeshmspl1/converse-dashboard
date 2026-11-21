@@ -89,7 +89,7 @@ export default function InfraMigrationDemo({ onComplete }: Props) {
               <div className="text-[8px]" style={{ color: 'var(--dim)' }}>{copy(DATA_LOCATIONS[currentInfra].split('—')[0].trim())}</div>
             </div>
           </div>
-          <div className="text-[10px]" style={{ color: 'var(--b2)' }}>·</div>
+          <div className="text-[10px] brand-sep" style={{ color: 'var(--b2)' }}>·</div>
           <div className="flex items-center gap-1.5">
             <span className="text-[14px]">{deployCfg.icon}</span>
             <div>

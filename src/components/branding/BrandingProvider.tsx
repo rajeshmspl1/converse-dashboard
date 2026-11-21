@@ -158,8 +158,16 @@ export default function BrandingProvider({ children }: { children: React.ReactNo
     return () => { window.removeEventListener(AUTH_CLEARED_EVENT, onCleared); revoke() }
   }, [load, revoke, resetDom])
 
-  // Next can rewrite <title> on client navigation: keep the partner title.
+  // Next can rewrite <title> (metadata after hydration, client navigation): keep the partner title.
   useEffect(() => { if (brandTitle.current) document.title = brandTitle.current }, [pathname])
+  useEffect(() => {
+    if (!state.partnerName || !state.displayName) return
+    const keep = () => { if (brandTitle.current && document.title !== brandTitle.current) document.title = brandTitle.current }
+    const obs = new MutationObserver(keep)
+    obs.observe(document.head, { subtree: true, childList: true, characterData: true })
+    keep()
+    return () => obs.disconnect()
+  }, [state.partnerName, state.displayName])
 
   return <Ctx.Provider value={{ ...state, reload }}>{children}</Ctx.Provider>
 }

@@ -755,7 +755,7 @@ function HomeInner() {
                     className="inline-flex items-center gap-2 px-12 py-4 rounded-xl text-[17px] font-bold cursor-pointer transition-all hover:-translate-y-0.5 mb-1 border-none"
                     style={{
                       background: jConfig?.color,
-                      color: (jConfig?.color === '#f03060' ? '#fff' : '#000'),
+                      color: (jConfig?.color === T.red ? T.white : T.onColor),
                       boxShadow: `0 4px 20px ${tint('shade','.3')}`,
                       cursor: 'pointer',
                     }}>
@@ -976,7 +976,7 @@ function HomeInner() {
                         style={{ background: 'none', border: 'none', color: T.xGreen, cursor: 'pointer', fontSize: '9px' }}>
                         📅 Book a call →
                       </button>
-                      <span style={{ color: 'var(--b2)' }}>|</span>
+                      <span className="brand-sep" style={{ color: 'var(--b2)' }}>|</span>
                       <button
                         onClick={() => setShowIVRBar(true)}
                         className="font-bold transition-colors hover:underline"
