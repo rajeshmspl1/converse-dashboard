@@ -72,31 +72,31 @@ export default function IvrDialpad({ visible, onPress, lastDigit, trigger, entry
             className="rounded-lg border px-2.5 py-2 mb-2.5"
             style={{ background: T.padKey, borderColor: T.padEdge }}
           >
-            <div className="flex items-center gap-2">
-              <div
-                data-testid="keypad-entry-digits"
-                aria-live="polite"
-                aria-label={entry.masked ? `${entry.serverLen} of ${entry.lengths[0] || 4} PIN digits entered` : `${entry.serverLen} digits entered`}
-                className="flex-1 font-mono text-[17px] font-bold tracking-wider min-h-[26px] leading-[26px] whitespace-nowrap overflow-hidden text-ellipsis"
-                style={{ color: T.padText }}
-              >
-                {shown || <span style={{ color: T.padDim }}>{entry.masked ? '••••' : '— — — —'}</span>}
+            <div
+              data-testid="keypad-entry-digits"
+              aria-live="polite"
+              aria-label={entry.masked ? `${entry.serverLen} of ${entry.lengths[0] || 4} PIN digits entered` : `${entry.serverLen} digits entered`}
+              className="font-mono font-bold min-h-[26px] leading-[26px] whitespace-nowrap overflow-hidden"
+              style={{ color: T.padText, fontSize: shown.length > 19 ? '14px' : '16px' }}
+            >
+              {shown || <span style={{ color: T.padDim }}>{entry.masked ? '••••' : '— — — —'}</span>}
+            </div>
+            <div className="flex items-center justify-between gap-2 mt-1">
+              <div className="text-[9px]" style={{ color: T.padDim }}>
+                {lengthHint(entry)}{entry.serverLen ? ` · ${entry.serverLen} entered` : ''}
               </div>
               {entry.canClear && onClear && (
                 <button
                   type="button"
                   data-testid="keypad-entry-clear"
                   onMouseDown={e => { e.preventDefault(); onClear() }}
-                  className="rounded-md border px-2 py-1 text-[10px] font-bold uppercase tracking-wider select-none cursor-pointer"
+                  className="rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider select-none cursor-pointer"
                   style={{ background: T.padBg, borderColor: T.padEdge, color: T.ok }}
                   title="Clear (Backspace)"
                 >
                   Clear
                 </button>
               )}
-            </div>
-            <div className="text-[9px] mt-0.5" style={{ color: T.padDim }}>
-              {lengthHint(entry)}{entry.serverLen ? ` · ${entry.serverLen} entered` : ''}
             </div>
           </div>
         )}
