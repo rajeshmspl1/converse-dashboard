@@ -1,5 +1,6 @@
 'use client'
 import { T, tint } from '@/lib/theme'
+import { displayText, lengthHint, type EntryState } from '@/lib/keypadEntry'
 
 const KEYS = [
   { digit: '1', sub: '' },
@@ -21,9 +22,14 @@ interface Props {
   onPress: (digit: string) => void
   lastDigit: string | null
   trigger?: string
+  /* KP1: pending numeric entry (shown above the grid only while open) + Clear */
+  entry?: EntryState
+  onClear?: () => void
 }
 
-export default function IvrDialpad({ visible, onPress, lastDigit, trigger }: Props) {
+export default function IvrDialpad({ visible, onPress, lastDigit, trigger, entry, onClear }: Props) {
+  const entryOpen = !!entry?.open
+  const shown = entry && entryOpen ? displayText(entry) : ''
   return (
     <div
       className="overflow-hidden transition-all duration-500"
@@ -59,12 +65,48 @@ export default function IvrDialpad({ visible, onPress, lastDigit, trigger }: Pro
           )}
         </div>
 
+        {/* KP1: entry display — what the server holds, groups of four, plus Clear */}
+        {entry && entryOpen && (
+          <div
+            data-testid="keypad-entry"
+            className="rounded-lg border px-2.5 py-2 mb-2.5"
+            style={{ background: T.padKey, borderColor: T.padEdge }}
+          >
+            <div className="flex items-center gap-2">
+              <div
+                data-testid="keypad-entry-digits"
+                aria-live="polite"
+                aria-label={entry.masked ? `${entry.serverLen} of ${entry.lengths[0] || 4} PIN digits entered` : `${entry.serverLen} digits entered`}
+                className="flex-1 font-mono text-[17px] font-bold tracking-wider min-h-[26px] leading-[26px] whitespace-nowrap overflow-hidden text-ellipsis"
+                style={{ color: T.padText }}
+              >
+                {shown || <span style={{ color: T.padDim }}>{entry.masked ? '••••' : '— — — —'}</span>}
+              </div>
+              {entry.canClear && onClear && (
+                <button
+                  type="button"
+                  data-testid="keypad-entry-clear"
+                  onMouseDown={e => { e.preventDefault(); onClear() }}
+                  className="rounded-md border px-2 py-1 text-[10px] font-bold uppercase tracking-wider select-none cursor-pointer"
+                  style={{ background: T.padBg, borderColor: T.padEdge, color: T.ok }}
+                  title="Clear (Backspace)"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="text-[9px] mt-0.5" style={{ color: T.padDim }}>
+              {lengthHint(entry)}{entry.serverLen ? ` · ${entry.serverLen} entered` : ''}
+            </div>
+          </div>
+        )}
+
         {/* Grid */}
         <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
           {KEYS.map(({ digit, sub }) => (
             <button
               key={digit}
-              onMouseDown={() => onPress(digit)}
+              onMouseDown={e => { if (entryOpen) e.preventDefault(); onPress(digit) }}
               className="rounded-xl border flex flex-col items-center justify-center py-3 transition-all active:scale-95 select-none cursor-pointer"
               style={{
                 background: lastDigit === digit ? T.ok : T.padKey,
@@ -90,7 +132,7 @@ export default function IvrDialpad({ visible, onPress, lastDigit, trigger }: Pro
 
         {/* Last digit feedback */}
         <div className="text-center mt-2.5 h-5">
-          {lastDigit && (
+          {lastDigit && !entryOpen && (
             <span
               className="font-mono text-[11px] px-2.5 py-0.5 rounded"
               style={{ background: T.padKey, color: T.ok }}

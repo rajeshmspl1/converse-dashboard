@@ -4,6 +4,10 @@ import {
   HANDOFF_GRACE_MS, createGraceTimer, isHandoffParticipant, ivrModeAfterServiceDLeft, onAgentLeft,
 } from '@/lib/callPresence'
 import {
+  CLOSED_ENTRY, applyServerMessage, clearLocal, isEditableTarget, keyAction, logKey, recordPress,
+  type EntryState,
+} from '@/lib/keypadEntry'
+import {
   Room,
   RoomEvent,
   ConnectionState,
@@ -89,6 +93,9 @@ export interface UseLiveKitCallReturn {
   disconnect: () => Promise<void>
   retryMic: () => Promise<boolean>
   pressDTMF: (digit: string) => void
+  /* KP1: numeric entry shown above the pad (counts from service-a, digits from this page only) */
+  entry: EntryState
+  clearEntry: () => void
   /* ── Live data from Service A data channel ── */
   liveTranscript: TxLine[]
   liveLog: string[]
@@ -129,8 +136,18 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
   // jk_r9_silent_r1 FIX 2b: grace timer after the agent leaves (replaces the 1.5 s hang-up)
   const graceRef = useRef<ReturnType<typeof createGraceTimer> | null>(null)
 
+  // KP1: live copies for the keyboard handler and pressDTMF (no stale closures — Step 0 race)
+  const stateRef = useRef<LiveCallState>(INITIAL_STATE)
+  const [entry, setEntryState] = useState<EntryState>(CLOSED_ENTRY)
+  const entryRef = useRef<EntryState>(CLOSED_ENTRY)
+  const lastDigitTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const setEntry = useCallback((next: EntryState) => {
+    entryRef.current = next
+    setEntryState(next)
+  }, [])
+
   const patch = useCallback((p: Partial<LiveCallState>) =>
-    setState(s => ({ ...s, ...p })), [])
+    setState(s => { const n = { ...s, ...p }; stateRef.current = n; return n }), [])
 
   const addLog = useCallback((msg: string) => {
     const ts = new Date().toLocaleTimeString('en-GB', { hour12: false })
@@ -141,15 +158,25 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
     setLiveTranscript(prev => [...prev, { ...line, ts: line.ts || Date.now() }])
   }, [])
 
-  // Keyboard listener — active only when in IVR mode
+  // Keyboard listener — the ONE window keydown listener (R82: one key press → one publishData).
+  // IVR mode: pad keys as before. While a numeric entry is open (KP1/T3) the keyboard acts like
+  // the on-screen pad, Backspace = Clear, and Space/Enter/Tab never activate a focused button.
+  // Always: key repeat, Cmd/Ctrl/Alt and keys typed in text fields are ignored. Reads live refs.
+  const keyHandlersRef = useRef<{ press: (d: string) => void; clear: () => void }>({ press: () => {}, clear: () => {} })
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (state.mode !== 'ivr') return
-      if ('0123456789*#'.includes(e.key)) pressDTMF(e.key)
+      const act = keyAction({
+        key: e.key, repeat: e.repeat, metaKey: e.metaKey, ctrlKey: e.ctrlKey, altKey: e.altKey,
+        editable: isEditableTarget(e.target),
+      }, stateRef.current.mode === 'ivr', entryRef.current)
+      if (act.kind === 'ignore') return
+      if (entryRef.current.open) e.preventDefault()
+      if (act.kind === 'dtmf') keyHandlersRef.current.press(act.digit)
+      else if (act.kind === 'clear') keyHandlersRef.current.clear()
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [state.mode]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   /* ── Connect ────────────────────────────────────────────────────────────── */
 
@@ -160,6 +187,7 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
     const roomName = `${tenantKey}__${ivrKey}__${Date.now()}`
 
     // Reset live data
+    setEntry(CLOSED_ENTRY)
     setLiveTranscript([])
     setLiveLog([])
     setLiveIntents([])
@@ -174,7 +202,7 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
       // ── Step 1: Create session in Service B ──
       // This registers the call, creates the DB record, and triggers agent dispatch
       // ── Geo lookup (non-blocking, best-effort) ──
-      let callerGeo: any = {}
+      let callerGeo: Record<string, string | null> = {}
       try {
         const geoResp = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(3000) })
         if (geoResp.ok) {
@@ -373,6 +401,7 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
 
       room.on(RoomEvent.Disconnected, () => {
         graceRef.current?.cancel()
+        setEntry(CLOSED_ENTRY)
         patch({ status: 'disconnected', mode: 'ai', micEnabled: false })
         addLog('Disconnected from room')
         document.querySelectorAll('audio').forEach(el => el.remove())
@@ -383,6 +412,12 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
           patch({ status: 'connecting' })
           addLog('Reconnecting...')
         }
+      })
+
+      // KP1 (D4): back to 'connected' after a reconnect — otherwise every press is dropped.
+      room.on(RoomEvent.Reconnected, () => {
+        patch({ status: 'connected' })
+        addLog('Reconnected')
       })
 
       await room.connect(ws_url, token)
@@ -533,6 +568,12 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
         break
       }
 
+      // ── KP1: numeric entry state (counts only — never digits) ──
+      case 'numeric_entry': {
+        setEntry(applyServerMessage(entryRef.current, msg))
+        break
+      }
+
       // ── Generic status/log from Service A ──
       case 'status': {
         addLog(msg.msg as string || 'status update')
@@ -542,7 +583,7 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
       default:
         addLog(`Data: ${JSON.stringify(msg).substring(0, 100)}`)
     }
-  }, [addTx, addLog, patch]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [addTx, addLog, patch, setEntry]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Disconnect ─────────────────────────────────────────────────────────── */
 
@@ -553,8 +594,10 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
       await roomRef.current.disconnect()
       roomRef.current = null
     }
+    setEntry(CLOSED_ENTRY)
+    stateRef.current = INITIAL_STATE
     setState(INITIAL_STATE)
-  }, [])
+  }, [setEntry])
 
   /* ── Retry mic (call from a user gesture, e.g. overlay button) ───────────── */
 
@@ -578,13 +621,30 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
 
   const pressDTMF = useCallback((digit: string) => {
     const room = roomRef.current
-    if (!room || state.status !== 'connected') return
+    if (!room || stateRef.current.status !== 'connected') return
     const msg = JSON.stringify({ type: 'dtmf', digit })
     room.localParticipant.publishData(new TextEncoder().encode(msg), { reliable: true })
+    const before = entryRef.current
+    if (before.open) setEntry(recordPress(before, digit))
     patch({ lastDigit: digit })
-    addLog(`DTMF sent: ${digit}`)
-    setTimeout(() => patch({ lastDigit: null }), 1800)
-  }, [state.status, patch, addLog])
+    addLog(`DTMF sent: ${logKey(before, digit)}`)
+    if (lastDigitTimer.current) clearTimeout(lastDigitTimer.current)
+    lastDigitTimer.current = setTimeout(() => patch({ lastDigit: null }), 1800)
+  }, [patch, addLog, setEntry])
+
+  /* KP1: Clear the pending entry (button or Backspace). Not an attempt; ignored by service-a
+     unless an entry is pending. Never for the 4-digit PIN. */
+  const clearEntry = useCallback(() => {
+    const room = roomRef.current
+    const cur = entryRef.current
+    if (!room || !cur.open || !cur.canClear || stateRef.current.status !== 'connected') return
+    room.localParticipant.publishData(new TextEncoder().encode(JSON.stringify({ type: 'dtmf_clear' })), { reliable: true })
+    setEntry(clearLocal(cur))
+    addLog('Entry cleared')
+  }, [addLog, setEntry])
+
+  useEffect(() => { keyHandlersRef.current = { press: pressDTMF, clear: clearEntry } }, [pressDTMF, clearEntry])
+  useEffect(() => { stateRef.current = state }, [state])   // setState paths outside patch()
 
   return {
     state,
@@ -592,6 +652,8 @@ export function useLiveKitCall(): UseLiveKitCallReturn {
     disconnect,
     retryMic,
     pressDTMF,
+    entry,
+    clearEntry,
     liveTranscript,
     liveLog,
     liveIntents,

@@ -1015,6 +1015,8 @@ function HomeInner() {
                   onPress={liveCall.pressDTMF}
                   lastDigit={liveCall.state.lastDigit}
                   trigger="data_channel_signal"
+                  entry={liveCall.entry}
+                  onClear={liveCall.clearEntry}
                 />
                 <div className="text-center mt-2 text-[7px]" style={{ color: 'var(--dim)' }}>
                   Press ✱ for phone menu
